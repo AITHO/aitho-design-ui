@@ -1,0 +1,55 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { CustomMDXWrapper } from "./MdxWrapper.tsx";
+import { ThemeProvider } from "../lib/providers/theme/ThemeProvider.tsx";
+
+<Meta title="Providers/Theme Provider" />
+
+<CustomMDXWrapper>
+
+# ThemeProvider
+
+The `ThemeContext` manages the selection between the `light` and `dark` themes of the application. By using the `ThemeProvider`, we can define the theme at the top-level component, allowing all child components to access the current theme and use the `toggleTheme` function to change it.
+
+## How to use ThemeProvider
+
+Place the `ThemeProvider` in the main component of the app to use the `ThemeContext`.
+
+```tsx
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.tsx";
+import { ThemeProvider } from "@aitho/ui";
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </StrictMode>,
+);
+```
+
+## How to use toggleTheme
+
+Use `useTheme()` to access the current theme and the function that allows you to change it.
+
+```tsx
+import "./App.css";
+import { Input, useTheme } from "@aitho/ui";
+
+function App() {
+  const { toggleTheme } = useTheme();
+
+  return (
+    <>
+      <button onClick={toggleTheme}>Change theme</button>
+      <Input />
+    </>
+  );
+}
+
+export default App;
+```
+
+</CustomMDXWrapper>

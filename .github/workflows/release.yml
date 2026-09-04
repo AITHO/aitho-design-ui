@@ -1,0 +1,63 @@
+name: Release
+
+# Publishes @aitho/ui to the public npm registry when a version tag is pushed.
+# Tags may be written either as "4.1.2" or "v4.1.2".
+#
+# Required repository secret: NPM_TOKEN (an npm automation token for the @aitho
+# organisation). Once npm Trusted Publishing is configured for this repository,
+# the secret can be dropped and NODE_AUTH_TOKEN removed from the publish step.
+#
+# Consider attaching this job to a protected GitHub Environment so that a
+# publish requires a manual approval.
+
+on:
+  push:
+    tags:
+      # These are GitHub Actions filter patterns, not regular expressions and
+      # not POSIX globs: "+" means "one or more of the preceding character" and
+      # "[0-9]" is a one-character class, so "[0-9]+" reads as "one or more
+      # digits" and "." is a literal dot. GitHub documents this exact form for
+      # version tags ("v[12].[0-9]+.[0-9]+" matches "v1.10.1"); see the filter
+      # pattern cheat sheet in the workflow syntax reference.
+      #
+      # Matches 4.1.2 and v4.1.2, and prereleases such as 4.1.2-rc.1 through
+      # the trailing "*". A looser pattern like "*.*.*" would also let a
+      # non-version tag start a release run that could only fail later.
+      - "[0-9]+.[0-9]+.[0-9]+*"
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: read
+  id-token: write # required for npm provenance
+
+env:
+  HUSKY: 0
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      - name: Verify before publishing
+        run: |
+          npm run lint
+          npm run build
+          npm run test:coverage:ci
+
+      - name: Take the version from the tag
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

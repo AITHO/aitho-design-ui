@@ -1,0 +1,8 @@
+**/dist
+**/node_modules
+.github
+pnpm-lock.yaml
+package-lock.json
+CONTRIBUTING.md
+README.md
+.woodpecker/

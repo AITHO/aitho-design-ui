@@ -1,0 +1,43 @@
+name: Bug report
+description: A component does not behave as documented.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: "@aitho/ui version"
+      placeholder: 4.1.1
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      placeholder: Select, Table, DatePickerMonth...
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: >
+        The smallest snippet that shows the problem, or a link to a repository
+        or a StackBlitz. Please include the props you passed.
+      render: tsx
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: React version, bundler, browser.
+      placeholder: React 19.2, Vite 7, Chrome 141
+    validations:
+      required: true

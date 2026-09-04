@@ -1,0 +1,5 @@
+@layer aitho-reset, aitho-base, aitho-tokens, aitho-recipes, aitho-utilities;
+
+#root {
+  text-align: center;
+}

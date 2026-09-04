@@ -1,0 +1,80 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { CustomMDXWrapper } from "./MdxWrapper.tsx";
+import { ThemeProvider } from "../lib/providers/theme/ThemeProvider";
+
+<Meta title="Introduction" />
+
+<CustomMDXWrapper>
+
+# Welcome to Aitho Design UI
+
+Aitho Design UI is a React component library built with TypeScript, Radix UI
+primitives and Panda CSS. It is published on npm under the Apache-2.0 license.
+
+## Getting Started
+
+Install the package:
+
+```bash
+npm install @aitho/ui
+```
+
+`react` and `react-dom` (18 or 19) are peer dependencies and must already be
+installed in the consuming project. Pre-release builds cut from the default
+branch are published under the `next` tag:
+
+```bash
+npm install @aitho/ui@next
+```
+
+### Vite configuration
+
+The package exposes its ESM entrypoint through the `module` field, which
+bundlers such as Vite, webpack and Rollup honour. If your setup fails to resolve
+the package — a Node-based SSR pipeline, or a custom resolver — alias
+`@aitho/ui` to the built entrypoint explicitly:
+
+```ts
+import { resolve } from "node:path";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  ...
+  resolve: {
+    alias: {
+      "@aitho/ui": resolve(__dirname, "node_modules/@aitho/ui/dist/main.js"),
+    },
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
+  },
+  ...
+});
+```
+
+### Wrap configuration
+
+Wrap the main component of the app with the `<ThemeProvider>`.
+
+```jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import { ThemeProvider } from "@aitho/ui";
+
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <React.StrictMode>
+    <ThemeProvider>
+        <App />
+    </ThemeProvider>
+  </React.StrictMode>,
+);
+```
+
+### Import example
+
+Import the standard components from the main entrypoint:
+
+```jsx
+import { Button, Label } from "@aitho/ui";
+```
+
+</CustomMDXWrapper>

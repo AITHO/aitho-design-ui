@@ -1,0 +1,122 @@
+{
+  "name": "@aitho/ui",
+  "version": "0.0.0",
+  "description": "React component library built with TypeScript, Radix UI primitives and Panda CSS.",
+  "license": "Apache-2.0",
+  "author": "Aitho",
+  "homepage": "https://github.com/AITHO/aitho-design-ui#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AITHO/aitho-design-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AITHO/aitho-design-ui/issues"
+  },
+  "keywords": [
+    "react",
+    "component-library",
+    "design-system",
+    "typescript",
+    "radix-ui",
+    "panda-css",
+    "ui-components",
+    "accessibility"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "panda codegen && tsc && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write --list-different .",
+    "prepare": "husky && panda codegen",
+    "codegen": "panda codegen",
+    "component:new": "tsx utils/panda-components-generator.ts",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:coverage:ci": "vitest run --coverage"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,scss}": "prettier --write --list-different"
+  },
+  "module": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": [
+    "dist",
+    "styled-system"
+  ],
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.12",
+    "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-checkbox": "^1.3.3",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-icons": "^1.3.2",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-progress": "^1.1.8",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-switch": "^1.2.6",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-toast": "^1.2.15",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "case-anything": "^3.1.2",
+    "nanoid": "^5.1.7",
+    "perfect-debounce": "^2.1.0"
+  },
+  "devDependencies": {
+    "@chromatic-com/storybook": "^5.1.1",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@eslint/compat": "^2.0.3",
+    "@eslint/js": "^9.39.2",
+    "@pandacss/dev": "^1.9.1",
+    "@storybook/addon-a11y": "^10.3.3",
+    "@storybook/addon-docs": "^10.3.3",
+    "@storybook/addon-links": "^10.3.3",
+    "@storybook/addon-themes": "^10.3.3",
+    "@storybook/react-vite": "^10.3.3",
+    "@storybook/test-runner": "^0.24.3",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^11.0.0",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/ui": "^4.1.2",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "eslint-plugin-storybook": "^10.3.3",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.0.1",
+    "lint-staged": "^16.4.0",
+    "postcss": "^8.5.10",
+    "prettier": "^3.8.1",
+    "shiki": "^4.0.0",
+    "storybook": "^10.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.2",
+    "vite": "^7.3.2",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-lib-inject-css": "^2.2.2",
+    "vite-tsconfig-paths": "^6.0.4",
+    "vitest": "^4.1.2"
+  }
+}

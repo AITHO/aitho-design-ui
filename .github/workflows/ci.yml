@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  HUSKY: 0
+
+jobs:
+  verify:
+    name: Lint, build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format
+
+      - name: Build library
+        run: npm run build
+
+      - name: Unit tests with coverage
+        run: npm run test:coverage:ci
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  storybook:
+    name: Storybook build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build Storybook in test mode
+        run: npx storybook build --test
+
+  sbom:
+    name: SBOM
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate CycloneDX SBOM
+        run: npx --yes @cyclonedx/cyclonedx-npm --output-format JSON --output-file bom.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: bom.json
+          retention-days: 90

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/AITHO/aitho-design-ui/security/advisories/new
+    about: Report security problems privately, never in a public issue.
+  - name: Question or usage help
+    url: https://github.com/AITHO/aitho-design-ui/discussions
+    about: Ask how to use a component, or discuss an idea before opening an issue.
