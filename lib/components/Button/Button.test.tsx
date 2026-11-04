@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { Button, type ButtonProps } from "./Button";
 import "@testing-library/jest-dom";
 
@@ -50,5 +51,12 @@ describe("Button", () => {
 
     expect(button).toBeInTheDocument();
     expect(button?.textContent).toBe("");
+  });
+
+  it("should forward the ref to the button element", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<Button ref={ref}>Click Me</Button>);
+
+    expect(ref.current).toBe(screen.getByRole("button"));
   });
 });

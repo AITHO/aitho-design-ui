@@ -6,13 +6,11 @@ const defaultProps = {
   item: { key: "test-key", text: "Test Item" },
   hasSubItems: false,
   expandedItems: new Set<string>(),
-  toggleSubItems: vi.fn(),
   handleMenuOpenChange: vi.fn(),
   classes: { itemMenuButton: "test-class" },
 };
 
 const nonDropdownOnClick = vi.fn();
-const subItemsToggleSubItems = vi.fn();
 const propagationOnClick = vi.fn();
 
 const renderItemMenuButton = (props = {}) =>
@@ -89,8 +87,7 @@ describe("ItemMenuButton", () => {
       hasSubItems: true,
       expandedItems: new Set(),
     });
-    const button = screen.getByRole("button");
-    const initialMarkup = button.innerHTML;
+    const initialMarkup = screen.getByTestId("sub-items-indicator").innerHTML;
 
     rerender(
       <ItemMenuButton
@@ -100,18 +97,18 @@ describe("ItemMenuButton", () => {
       />,
     );
 
-    expect(screen.getByRole("button")).toBeInTheDocument();
-    expect(screen.getByRole("button").innerHTML).not.toBe(initialMarkup);
+    expect(screen.getByTestId("sub-items-indicator").innerHTML).not.toBe(
+      initialMarkup,
+    );
   });
 
-  it("should call toggleSubItems when clicking on the subitems arrow", () => {
-    renderItemMenuButton({
-      hasSubItems: true,
-      toggleSubItems: subItemsToggleSubItems,
-    });
+  it("should render the subitems arrow as a non-interactive, hidden indicator", () => {
+    renderItemMenuButton({ hasSubItems: true });
 
-    fireEvent.click(screen.getByRole("button"));
-    expect(subItemsToggleSubItems).toHaveBeenCalledWith("test-key");
+    const indicator = screen.getByTestId("sub-items-indicator");
+    expect(indicator.tagName).toBe("SPAN");
+    expect(indicator).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByRole("button", { hidden: true })).toBeNull();
   });
 
   it("should prevent event propagation on menu button click", () => {

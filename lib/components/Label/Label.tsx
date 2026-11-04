@@ -22,13 +22,10 @@ export type LabelProps = LabelVariantProps &
  * @param required - *(optional)* If the label is required. Options: 'none', 'primary', 'bold', 'text', 'textBold' or boolean.
  */
 
-export const Label: React.FC<LabelProps> = ({
-  children,
-  size,
-  variant,
-  required,
-  ...props
-}) => {
+export const Label = React.forwardRef<
+  React.ComponentRef<typeof LabelPrimitive.Root>,
+  LabelProps
+>(({ children, size, variant, required, ...props }, ref) => {
   const requiredVariant = required === true ? "primary" : required;
 
   const styles = label({
@@ -38,8 +35,10 @@ export const Label: React.FC<LabelProps> = ({
   });
 
   return (
-    <LabelPrimitive.Root className={styles.root} {...props}>
+    <LabelPrimitive.Root ref={ref} className={styles.root} {...props}>
       {children}
     </LabelPrimitive.Root>
   );
-};
+});
+
+Label.displayName = "Label";

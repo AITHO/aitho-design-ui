@@ -96,23 +96,28 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  render: (args) => <FileUpload id="file_default" {...args} />,
+  args: {
+    id: "file_default",
+  },
+  render: (args) => <FileUpload {...args} />,
 };
 
 export const MultipleFiles: Story = {
   args: {
+    id: "file_multiple",
     label: "Multiple Files Upload",
     placeholder: "Multiple Files Upload",
     multiple: true,
   },
-  render: (args) => <FileUpload id="file_multiple" {...args} />,
+  render: (args) => <FileUpload {...args} />,
 };
 
 export const WithError: Story = {
   args: {
+    id: "file_error",
     errorMessage: "Invalid file format",
     error: true,
     placeholder: "File Upload error",
   },
-  render: (args) => <FileUpload id="file_error" {...args} />,
+  render: (args) => <FileUpload {...args} />,
 };

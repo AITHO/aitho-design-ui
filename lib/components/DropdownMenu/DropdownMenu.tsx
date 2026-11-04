@@ -193,6 +193,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
   const computedContainer = React.useMemo(() => {
     if (container) return container;
+    if (typeof document === "undefined") return undefined;
     return document.querySelector("#root") ?? document.body;
   }, [container]);
 

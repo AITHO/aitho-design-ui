@@ -89,13 +89,13 @@ const TYPE_MAPS = {
     "&:before": {
       animation: "spinnerRotatingDots1 1.3s infinite",
       backgroundColor: "accent",
-      boxShadow: "30px 0 0 #000",
+      boxShadow: "30px 0 0 var(--accent)",
       marginBottom: "0.625rem",
     },
     "&:after": {
       animation: "spinnerRotatingDots2 1.3s infinite",
       backgroundColor: "color-primary",
-      boxShadow: "30px 0 0 #000",
+      boxShadow: "30px 0 0 var(--color-primary)",
     },
   },
 } as const;

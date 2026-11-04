@@ -193,155 +193,174 @@ export type TextAreaProps = TextAreaVariantProps & {
  * @param borderColor - *(optional)* The border color of the input field. Options: 'text', 'primary'.
  */
 
-export const TextArea: React.FC<TextAreaProps> = ({
-  label,
-  sendButton,
-  helperText,
-  maxLength,
-  showCount = false,
-  autoResize = false,
-  value,
-  defaultValue,
-  onChange,
-  onTextChange,
-  onLimitReached,
-  type,
-  size,
-  borderColor,
-  ...props
-}) => {
-  const isControlled = typeof value !== "undefined";
-
-  const [uncontrolledText, setUncontrolledText] = React.useState<string>(
-    (defaultValue ?? "").toString(),
-  );
-
-  const text = React.useMemo(
-    () => (isControlled ? value.toString() : uncontrolledText),
-    [isControlled, value, uncontrolledText],
-  );
-
-  const uniqueId = React.useId();
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const adjustHeight = useAutoResize(textareaRef, autoResize);
-
-  const handleSendButtonClick = React.useCallback(() => {
-    if (!sendButton?.onClick) return;
-
-    sendButton.onClick(text);
-    if (!isControlled) {
-      setUncontrolledText("");
-    }
-    if (autoResize) {
-      adjustHeight();
-    }
-  }, [sendButton, text, adjustHeight, isControlled, autoResize]);
-
-  const handleChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newText = maxLength
-        ? e.target.value.slice(0, maxLength)
-        : e.target.value;
-
-      if (!isControlled) {
-        setUncontrolledText(newText);
-      }
-
-      if (autoResize) {
-        adjustHeight();
-      }
-
-      onChange?.(e);
-      onTextChange?.(newText);
-
-      if (maxLength && newText.length === maxLength) {
-        onLimitReached?.();
-      }
-    },
-    [
-      isControlled,
+export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
+  (
+    {
+      label,
+      sendButton,
+      helperText,
       maxLength,
-      autoResize,
-      adjustHeight,
+      showCount = false,
+      autoResize = false,
+      value,
+      defaultValue,
       onChange,
       onTextChange,
       onLimitReached,
-    ],
-  );
+      type,
+      size,
+      borderColor,
+      id,
+      "aria-describedby": ariaDescribedBy,
+      ...props
+    },
+    ref,
+  ) => {
+    const isControlled = typeof value !== "undefined";
 
-  React.useEffect(() => {
-    if (!sendButton?.sendWithEnter) return;
+    const [uncontrolledText, setUncontrolledText] = React.useState<string>(
+      (defaultValue ?? "").toString(),
+    );
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSendButtonClick();
-        textareaRef.current?.blur();
+    const text = React.useMemo(
+      () => (isControlled ? value.toString() : uncontrolledText),
+      [isControlled, value, uncontrolledText],
+    );
+
+    const generatedId = React.useId();
+    const uniqueId = id ?? generatedId;
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    React.useImperativeHandle(
+      ref,
+      () => textareaRef.current as HTMLTextAreaElement,
+    );
+    const adjustHeight = useAutoResize(textareaRef, autoResize);
+
+    const handleSendButtonClick = React.useCallback(() => {
+      if (!sendButton?.onClick) return;
+
+      sendButton.onClick(text);
+      if (!isControlled) {
+        setUncontrolledText("");
       }
-    };
+      if (autoResize) {
+        adjustHeight();
+      }
+    }, [sendButton, text, adjustHeight, isControlled, autoResize]);
 
-    const textareaElement = textareaRef.current;
-    if (textareaElement) {
-      textareaElement.addEventListener("keydown", handleKeyDown);
-      return () =>
-        textareaElement.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [handleSendButtonClick, sendButton?.sendWithEnter]);
+    const handleChange = React.useCallback(
+      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newText = maxLength
+          ? e.target.value.slice(0, maxLength)
+          : e.target.value;
 
-  const classes = textArea({ type, size, borderColor });
-  const helperId = `${uniqueId}-helper`;
+        if (!isControlled) {
+          setUncontrolledText(newText);
+        }
 
-  return (
-    <fieldset className={classes.root}>
-      {label && (
-        <label htmlFor={uniqueId} className={classes.label}>
-          {label}
-        </label>
-      )}
+        if (autoResize) {
+          adjustHeight();
+        }
 
-      <div className={classes.wrapper}>
-        <textarea
-          ref={textareaRef}
-          id={uniqueId}
-          value={text}
-          onChange={handleChange}
-          className={classes.textarea}
-          maxLength={maxLength}
-          {...props}
-        />
+        onChange?.(e);
+        onTextChange?.(newText);
 
-        {sendButton && (
-          <SendButton
-            onClick={handleSendButtonClick}
-            disabled={text.length === 0}
-            loading={sendButton.loading}
-            loadingElement={sendButton.loadingElement}
-            icon={sendButton.icon}
-            className={classes.sendButton}
+        if (maxLength && newText.length === maxLength) {
+          onLimitReached?.();
+        }
+      },
+      [
+        isControlled,
+        maxLength,
+        autoResize,
+        adjustHeight,
+        onChange,
+        onTextChange,
+        onLimitReached,
+      ],
+    );
+
+    React.useEffect(() => {
+      if (!sendButton?.sendWithEnter) return;
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleSendButtonClick();
+          textareaRef.current?.blur();
+        }
+      };
+
+      const textareaElement = textareaRef.current;
+      if (textareaElement) {
+        textareaElement.addEventListener("keydown", handleKeyDown);
+        return () =>
+          textareaElement.removeEventListener("keydown", handleKeyDown);
+      }
+    }, [handleSendButtonClick, sendButton?.sendWithEnter]);
+
+    const classes = textArea({ type, size, borderColor });
+    const helperId = `${uniqueId}-helper`;
+    const describedBy =
+      [ariaDescribedBy, helperText ? helperId : undefined]
+        .filter(Boolean)
+        .join(" ") || undefined;
+
+    return (
+      <fieldset className={classes.root}>
+        {label && (
+          <label htmlFor={uniqueId} className={classes.label}>
+            {label}
+          </label>
+        )}
+
+        <div className={classes.wrapper}>
+          <textarea
+            ref={textareaRef}
+            id={uniqueId}
+            value={text}
+            onChange={handleChange}
+            className={classes.textarea}
+            maxLength={maxLength}
+            aria-describedby={describedBy}
+            {...props}
           />
-        )}
-      </div>
 
-      <footer className={classes.footer}>
-        {helperText && (
-          <small id={helperId} className={classes.indicator}>
-            {helperText}
-          </small>
-        )}
+          {sendButton && (
+            <SendButton
+              onClick={handleSendButtonClick}
+              disabled={text.length === 0}
+              loading={sendButton.loading}
+              loadingElement={sendButton.loadingElement}
+              icon={sendButton.icon}
+              className={classes.sendButton}
+            />
+          )}
+        </div>
 
-        {showCount && (
-          <small
-            className={classes.counter}
-            data-state={
-              maxLength && text.length >= maxLength
-                ? "char-length-exceeded"
-                : ""
-            }
-          >
-            {maxLength ? `${text.length}/${maxLength}` : text.length}
-          </small>
-        )}
-      </footer>
-    </fieldset>
-  );
-};
+        <footer className={classes.footer}>
+          {helperText && (
+            <small id={helperId} className={classes.indicator}>
+              {helperText}
+            </small>
+          )}
+
+          {showCount && (
+            <small
+              className={classes.counter}
+              data-state={
+                maxLength && text.length >= maxLength
+                  ? "char-length-exceeded"
+                  : ""
+              }
+            >
+              {maxLength ? `${text.length}/${maxLength}` : text.length}
+            </small>
+          )}
+        </footer>
+      </fieldset>
+    );
+  },
+);
+
+TextArea.displayName = "TextArea";

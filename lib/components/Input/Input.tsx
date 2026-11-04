@@ -5,7 +5,6 @@ import {
   MagnifyingGlassIcon,
 } from "@radix-ui/react-icons";
 import { input, type InputVariantProps } from "@styled/recipes";
-import { nanoid } from "nanoid";
 import React, { useState } from "react";
 import { Label } from "../Label/Label";
 import "./Input.css";
@@ -94,11 +93,20 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       borderColor,
       type,
       value,
+      id,
+      "aria-describedby": ariaDescribedBy,
       ...props
     },
     ref,
   ) => {
-    const uniqueId = nanoid();
+    const generatedId = React.useId();
+    const uniqueId = id ?? generatedId;
+    const errorId = `${uniqueId}-error`;
+    const showError = Boolean(error && errorMessage);
+    const describedBy =
+      [ariaDescribedBy, showError ? errorId : undefined]
+        .filter(Boolean)
+        .join(" ") || undefined;
     const classes = input({ borderRadius, borderColor });
     const internalRef = React.useRef<HTMLInputElement>(null);
     const inputRef = (ref as React.RefObject<HTMLInputElement>) ?? internalRef;
@@ -152,6 +160,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               value={val}
               onChange={onValChange}
               type={isPasswordVisible ? "text" : type}
+              aria-invalid={error || undefined}
+              aria-required={required || undefined}
+              aria-describedby={describedBy}
               {...props}
             />
             {inputSearch && type === "search" && (
@@ -199,7 +210,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </div>
         </div>
 
-        {error && <span className={classes.errorText}>{errorMessage}</span>}
+        {showError && (
+          <span id={errorId} role="alert" className={classes.errorText}>
+            {errorMessage}
+          </span>
+        )}
       </>
     );
   },

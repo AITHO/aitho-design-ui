@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { Checkbox, CheckboxProps } from "./Checkbox";
 
 const renderCheckbox = (props: Partial<CheckboxProps> = {}) =>
@@ -28,5 +29,12 @@ describe("Checkbox", () => {
 
     const squareIcon = root.querySelector("[class*='checkbox__squareIcon']");
     expect(squareIcon).not.toBeNull();
+  });
+
+  it("should forward the ref to the checkbox element", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<Checkbox ref={ref} />);
+
+    expect(ref.current).toBe(screen.getByRole("checkbox"));
   });
 });

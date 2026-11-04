@@ -152,4 +152,55 @@ describe("Input", () => {
     fireEvent.change(input, { target: { value: "new value" } });
     expect(input).toHaveValue("new value");
   });
+
+  it("should keep the label associated with a consumer-provided id", () => {
+    renderInput({ label: "Email", id: "email-field" });
+
+    expect(screen.getByLabelText(/email/i)).toHaveAttribute(
+      "id",
+      "email-field",
+    );
+  });
+
+  it("should link and announce the error message when error is true", () => {
+    renderInput({ label: "Email", error: true, errorMessage: "Required" });
+
+    const input = screen.getByRole("textbox");
+    const alert = screen.getByRole("alert");
+
+    expect(alert).toHaveTextContent("Required");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAccessibleDescription("Required");
+  });
+
+  it("should merge a consumer aria-describedby with the error message id", () => {
+    render(
+      <>
+        <span id="hint">Use your work email</span>
+        <Input aria-describedby="hint" error errorMessage="Required" />
+      </>,
+    );
+
+    expect(screen.getByRole("textbox")).toHaveAccessibleDescription(
+      "Use your work email Required",
+    );
+  });
+
+  it("should not mark the input as invalid when there is no error", () => {
+    renderInput({ errorMessage: "Required" });
+
+    const input = screen.getByRole("textbox");
+    expect(input).not.toHaveAttribute("aria-invalid");
+    expect(input).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("should expose aria-required when required is true", () => {
+    renderInput({ label: "Name", required: true });
+
+    expect(screen.getByRole("textbox")).toHaveAttribute(
+      "aria-required",
+      "true",
+    );
+  });
 });

@@ -14,7 +14,6 @@ import { filterChipBarRecipe } from "./components/FilterChipBar/FilterChipBar.re
 import { inputRecipe } from "./components/Input/Input.recipe";
 import { labelRecipe } from "./components/Label/Label.recipe";
 import { listRecipe } from "./components/List/List.recipe";
-import { loginButtonRecipe } from "./components/LoginButton/LoginButton.recipe";
 import { monthStepperRecipe } from "./components/MonthStepper/MonthStepper.recipe";
 import { numberStepperRecipe } from "./components/NumberStepper/NumberStepper.recipe";
 import { paginationRecipe } from "./components/Pagination/Pagination.recipe";
@@ -53,7 +52,6 @@ export const preset = definePreset({
       input: inputRecipe,
       label: labelRecipe,
       list: listRecipe,
-      loginButton: loginButtonRecipe,
       monthStepper: monthStepperRecipe,
       numberStepper: numberStepperRecipe,
       pagination: paginationRecipe,
@@ -91,7 +89,6 @@ export const preset = definePreset({
       input: ["*"],
       label: ["*"],
       list: ["*"],
-      loginButton: ["*"],
       monthStepper: ["*"],
       numberStepper: ["*"],
       pagination: ["*"],

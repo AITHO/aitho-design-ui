@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { createRef } from "react";
 import { FileUpload } from "./FileUpload";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -131,5 +132,12 @@ describe("FileUpload", () => {
     fireEvent.click(deleteIcon);
 
     expect(screen.getByText("hello.png")).toBeInTheDocument();
+  });
+
+  it("forwards the ref to the file input", () => {
+    const ref = createRef<HTMLInputElement>();
+    render(<FileUpload id="file-upload" ref={ref} />);
+
+    expect(ref.current).toBe(screen.getByTestId("input"));
   });
 });

@@ -81,7 +81,46 @@ export type PaginationProps = PaginationVariantProps & {
    * @default false
    */
   hideNavigationOnDisabled?: boolean;
+
+  /** *(optional)*
+   * Accessible label of the pagination navigation landmark.
+   * @default "Pagination"
+   */
+  navigationLabel?: string;
+
+  /** *(optional)*
+   * Accessible label for the "first" page button.
+   * @default "First page"
+   */
+  firstLabel?: string;
+
+  /** *(optional)*
+   * Accessible label for the "previous" page button.
+   * @default "Previous page"
+   */
+  previousLabel?: string;
+
+  /** *(optional)*
+   * Accessible label for the "next" page button.
+   * @default "Next page"
+   */
+  nextLabel?: string;
+
+  /** *(optional)*
+   * Accessible label for the "last" page button.
+   * @default "Last page"
+   */
+  lastLabel?: string;
+
+  /** *(optional)*
+   * Function that builds the accessible label of a numbered page button.
+   * @default (page) => `Page ${page}`
+   */
+  pageLabel?: (page: number) => string;
 };
+
+// Module-level default: an inline arrow default would invalidate the page buttons memo on every render.
+const defaultPageLabel = (page: number) => `Page ${page}`;
 
 /**
  * Provides ability to change the visible content in a table.
@@ -98,6 +137,12 @@ export type PaginationProps = PaginationVariantProps & {
  * @param firstButtonContent - *(optional)* The content of the first button.
  * @param lastButtonContent - *(optional)* The content of the last button.
  * @param hideNavigationOnDisabled - *(optional)* Whether to hide the navigation button when disabled.
+ * @param navigationLabel - *(optional)* Accessible label of the pagination navigation landmark.
+ * @param firstLabel - *(optional)* Accessible label for the "first" page button.
+ * @param previousLabel - *(optional)* Accessible label for the "previous" page button.
+ * @param nextLabel - *(optional)* Accessible label for the "next" page button.
+ * @param lastLabel - *(optional)* Accessible label for the "last" page button.
+ * @param pageLabel - *(optional)* Function that builds the accessible label of a numbered page button.
  */
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -112,6 +157,12 @@ export const Pagination: React.FC<PaginationProps> = ({
   maxVisiblePages = 5,
   firstButtonContent = <DoubleArrowLeftIcon height={21} />,
   lastButtonContent = <DoubleArrowRightIcon height={21} />,
+  navigationLabel = "Pagination",
+  firstLabel = "First page",
+  previousLabel = "Previous page",
+  nextLabel = "Next page",
+  lastLabel = "Last page",
+  pageLabel = defaultPageLabel,
   ...props
 }) => {
   const classes = pagination();
@@ -170,6 +221,8 @@ export const Pagination: React.FC<PaginationProps> = ({
         onClick={() => handlePageChange(page)}
         size="xs"
         disabled={currentPage === page}
+        aria-label={pageLabel(page)}
+        aria-current={currentPage === page ? "page" : undefined}
       >
         {page.toString()}
       </Button>
@@ -180,6 +233,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     maxVisiblePages,
     props.variant,
     handlePageChange,
+    pageLabel,
   ]);
 
   const shouldShowNavButton = (
@@ -192,7 +246,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className={classes.root} {...props}>
+    <nav className={classes.root} aria-label={navigationLabel} {...props}>
       {shouldShowNavButton(showFirstLast, isFirstPage) && (
         <Button
           variant={props.variant}
@@ -200,6 +254,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={isFirstPage}
           size="xs"
           data-testid="First"
+          aria-label={firstLabel}
         >
           {firstButtonContent}
         </Button>
@@ -211,8 +266,9 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={isFirstPage}
           size="xs"
           data-testid="Prev"
+          aria-label={previousLabel}
         >
-          <ChevronLeftIcon height={21} />
+          <ChevronLeftIcon height={21} aria-hidden />
         </Button>
       )}
       {showPageNumbers && buttons.map((button) => button)}
@@ -223,8 +279,9 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={isLastPage}
           size="xs"
           data-testid="Next"
+          aria-label={nextLabel}
         >
-          <ChevronRightIcon height={21} />
+          <ChevronRightIcon height={21} aria-hidden />
         </Button>
       )}
       {shouldShowNavButton(showFirstLast, isLastPage) && (
@@ -234,11 +291,12 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => handlePageChange(totalPages)}
           disabled={isLastPage}
           data-testid="Last"
+          aria-label={lastLabel}
         >
           {lastButtonContent}
         </Button>
       )}
-    </div>
+    </nav>
   );
 };
 

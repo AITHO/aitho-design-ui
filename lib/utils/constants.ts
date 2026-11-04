@@ -16,15 +16,10 @@ const BASE_COLORS = [
   "yellow",
   "gray",
   "white",
+  "brand",
 ] as const;
 export const COLORS_WITH_TRANSPARENT = [...BASE_COLORS, "transparent"] as const;
 export const COLORS_WITH_BLACK = [...BASE_COLORS, "black"] as const;
-
-// LOGIN PROVIDERS
-export const LOGIN_PROVIDERS = {
-  GOOGLE: "google",
-  MICROSOFT: "microsoft",
-} as const;
 
 // CHILDREN
 export const argTypeChildren = () => ({

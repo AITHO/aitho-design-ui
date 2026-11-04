@@ -1,10 +1,28 @@
-/// <reference types="vitest" />
+/// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { libInjectCss } from "vite-plugin-lib-inject-css";
+import { readFileSync } from "node:fs";
+
+const pkg = JSON.parse(
+  readFileSync(resolve(__dirname, "package.json"), "utf-8"),
+) as {
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
+
+// Runtime and peer dependencies are installed by the consumer, so they stay
+// out of the bundle (subpath imports such as "react/jsx-runtime" included).
+const externalPackages = [
+  ...Object.keys(pkg.dependencies ?? {}),
+  ...Object.keys(pkg.peerDependencies ?? {}),
+];
+
+const isExternal = (id: string) =>
+  externalPackages.some((name) => id === name || id.startsWith(`${name}/`));
 
 export default defineConfig({
   plugins: [
@@ -17,6 +35,8 @@ export default defineConfig({
         "**/*.stories.{js,jsx,ts,tsx}",
         "**/*.test.{js,jsx,ts,tsx}",
         "**/*.recipe.{js,jsx,ts,tsx}",
+        "lib/keyframes/**",
+        "lib/preset.ts",
       ],
       tsconfigPath: resolve(__dirname, "tsconfig.app.json"),
     }),
@@ -27,8 +47,14 @@ export default defineConfig({
       formats: ["es"],
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
+      external: isExternal,
       output: {
+        // One file per module, so bundlers can drop unused components.
+        preserveModules: true,
+        preserveModulesRoot: "lib",
+        // Components use hooks and browser APIs: mark every module as a client
+        // module so React Server Components frameworks (e.g. Next.js) accept it.
+        banner: '"use client";',
         entryFileNames: "[name].js",
         assetFileNames: "assets/[name][extname]",
         globals: {
@@ -56,7 +82,7 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
+      reporter: ["text", "json", "json-summary", "html", "lcov"],
       include: [
         "lib/components/**/*.{ts,tsx}",
         "lib/providers/**/*.{ts,tsx}",

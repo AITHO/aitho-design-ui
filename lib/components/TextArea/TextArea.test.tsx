@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { TextArea } from "lib/main";
 import { BASE_SIZES, TYPES_FOR_TEXT_AREA } from "lib/utils/constants";
 
@@ -302,5 +303,12 @@ describe("TextArea", () => {
 
     await userEvent.type(textarea, "{enter}");
     expect(sendButtonClickMock).toHaveBeenCalledWith("test message\n");
+  });
+
+  it("forwards the ref to the textarea element", () => {
+    const ref = createRef<HTMLTextAreaElement>();
+    render(<TextArea ref={ref} />);
+
+    expect(ref.current).toBe(screen.getByRole("textbox"));
   });
 });

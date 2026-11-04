@@ -94,7 +94,7 @@ export const fileUploadRecipe = defineSlotRecipe({
       padding: "0.5rem",
       transitionDuration: "300ms",
       _hover: {
-        bg: "#66666615",
+        bg: "background-secondary",
         "& [class*='deleteIcon']": {
           opacity: "1",
         },

@@ -337,11 +337,12 @@ breaking changes with a `!` or a `BREAKING CHANGE:` footer.
 
 ## Licensing of Contributions
 
-This project is released under the [Apache License 2.0](LICENSE). By submitting
-a pull request you confirm that you have the right to contribute the code and
-that your contribution is licensed under those terms, as described in section 5
-of the License. Please do not add code taken from other projects unless its
-license is compatible, and say so in the pull request when you do.
+This project is released under the [Apache License 2.0](LICENSE). By
+submitting a pull request, you confirm that you have the right to contribute
+the code and agree that your contribution is distributed under those terms,
+unless a separate written agreement applies. Please do not add code taken from
+other projects unless its license is compatible, and identify it in the pull
+request.
 
 Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
 Security problems must be reported privately — see [SECURITY.md](SECURITY.md),

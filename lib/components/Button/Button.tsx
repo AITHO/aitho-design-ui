@@ -37,47 +37,53 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
  * @param compact - *(optional)* When true, the button width/height shrink to min-content.
  */
 
-export const Button: React.FC<ButtonProps> = ({
-  icon,
-  iconPosition = "start",
-  children,
-  size,
-  borderRadius,
-  variant,
-  layout,
-  disabled,
-  compact,
-  ...props
-}) => {
-  const classes = button({
-    size,
-    borderRadius,
-    variant,
-    layout,
-    disabled,
-    compact,
-  });
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      icon,
+      iconPosition = "start",
+      children,
+      size,
+      borderRadius,
+      variant,
+      layout,
+      disabled,
+      compact,
+      ...props
+    },
+    ref,
+  ) => {
+    const classes = button({
+      size,
+      borderRadius,
+      variant,
+      layout,
+      disabled,
+      compact,
+    });
 
-  const renderIcon = React.useCallback(() => {
-    if (!icon) return null;
+    const renderIcon = React.useCallback(() => {
+      if (!icon) return null;
 
-    const IconComponent = icon.data;
-    return <IconComponent className={classes.icon} />;
-  }, [icon, classes.icon]);
+      const IconComponent = icon.data;
+      return <IconComponent className={classes.icon} />;
+    }, [icon, classes.icon]);
 
-  return (
-    <button
-      className={classes.root}
-      {...props}
-      disabled={disabled}
-      data-full-start={icon && children && iconPosition === "start"}
-      data-full-end={icon && children && iconPosition === "end"}
-    >
-      {iconPosition === "start" && renderIcon()}
-      {children && <span className={classes.content}>{children}</span>}
-      {iconPosition === "end" && renderIcon()}
-    </button>
-  );
-};
+    return (
+      <button
+        ref={ref}
+        className={classes.root}
+        {...props}
+        disabled={disabled}
+        data-full-start={icon && children && iconPosition === "start"}
+        data-full-end={icon && children && iconPosition === "end"}
+      >
+        {iconPosition === "start" && renderIcon()}
+        {children && <span className={classes.content}>{children}</span>}
+        {iconPosition === "end" && renderIcon()}
+      </button>
+    );
+  },
+);
 
 Button.displayName = "Button";

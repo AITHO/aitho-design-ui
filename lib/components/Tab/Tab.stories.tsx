@@ -160,8 +160,8 @@ export const TabsWithImages: Story = {
         children: (
           <div>
             <h3>Tab 1: Images</h3>
-            <img src="https://via.placeholder.com/150" alt="Placeholder 1" />
-            <img src="https://via.placeholder.com/150" alt="Placeholder 2" />
+            <div style={{ width: 150, height: 150 }}>Image placeholder 1</div>
+            <div style={{ width: 150, height: 150 }}>Image placeholder 2</div>
           </div>
         ),
       },
@@ -171,8 +171,8 @@ export const TabsWithImages: Story = {
         children: (
           <div>
             <h3>Tab 2: More Images</h3>
-            <img src="https://via.placeholder.com/150" alt="Placeholder 3" />
-            <img src="https://via.placeholder.com/150" alt="Placeholder 4" />
+            <div style={{ width: 150, height: 150 }}>Image placeholder 3</div>
+            <div style={{ width: 150, height: 150 }}>Image placeholder 4</div>
           </div>
         ),
       },

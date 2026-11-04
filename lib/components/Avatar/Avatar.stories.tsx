@@ -30,7 +30,7 @@ const meta = {
         defaultValue: { summary: "gray" },
         type: {
           summary:
-            "red | green | blue | purple | yellow | gray | white | transparent",
+            "red | green | blue | purple | yellow | gray | white | brand | transparent",
         },
       },
     },
@@ -42,7 +42,7 @@ const meta = {
         defaultValue: { summary: "gray" },
         type: {
           summary:
-            "red | green | blue | purple | yellow | gray | white | black",
+            "red | green | blue | purple | yellow | gray | white | brand | black",
         },
       },
     },
@@ -79,7 +79,8 @@ export const Default: Story = {
 export const WithImage: Story = {
   args: {
     name: "Rick Sanchez",
-    src: "https://avatar.iran.liara.run/public",
+    src: "avatar-placeholder.svg",
+    alt: "Illustrated avatar placeholder",
   },
 };
 
@@ -113,6 +114,25 @@ export const TextColors: Story = {
   ),
 };
 
+export const BrandColor: Story = {
+  render: (args) => (
+    <Avatar
+      {...args}
+      backgroundColor="brand"
+      textColor="brand"
+      name="Sample User"
+    />
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Unlike the fixed hues above, `brand` tracks the active theme's `color-primary`/`text-on-primary` — pass a `brand` prop to `ThemeProvider` and this avatar re-tints with it.",
+      },
+    },
+  },
+};
+
 export const ProfileExample: Story = {
   render: (args) => (
     <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
@@ -121,8 +141,8 @@ export const ProfileExample: Story = {
         backgroundColor="blue"
         textColor="blue"
         size="lg"
-        src="https://avatar.iran.liara.run/public"
-        alt="User Profile"
+        src="avatar-placeholder.svg"
+        alt="Illustrated avatar placeholder"
       />
       <div>
         <p style={{ fontWeight: 500 }}>Rick Sanchez</p>
@@ -139,7 +159,8 @@ export const GroupedAvatars: Story = {
         {...args}
         backgroundColor="blue"
         textColor="blue"
-        src="https://avatar.iran.liara.run/public"
+        src="avatar-placeholder.svg"
+        alt="Illustrated avatar placeholder"
       />
       <Avatar
         {...args}

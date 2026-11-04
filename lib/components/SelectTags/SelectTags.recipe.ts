@@ -44,7 +44,7 @@ export const selectTagsRecipe = defineSlotRecipe({
     inputField: {
       width: "100%",
       _placeholder: {
-        color: "background-popup",
+        color: "text-secondary",
       },
       _focusVisible: {
         outlineWidth: "2px",

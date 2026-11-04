@@ -87,6 +87,12 @@ export type DialogProps = DialogVariantProps & {
    * @default true
    */
   close?: boolean;
+
+  /** *(optional)*
+   * Accessible label for the close button.
+   * @default "Close dialog"
+   */
+  closeLabel?: string;
 };
 
 /**
@@ -104,6 +110,7 @@ export type DialogProps = DialogVariantProps & {
  * @param cancelText - *(optional)* Custom text for the "Cancel" button.
  * @param okText - *(optional)* Custom text for the "Ok" button.
  * @param close - *(optional)* Boolean value to toggle the visibility of the close button.
+ * @param closeLabel - *(optional)* Accessible label for the close button.
  * @param children - *(optional)* Content of the dialog body.
  */
 
@@ -119,6 +126,7 @@ export const Dialog: React.FC<DialogProps> = ({
   cancelText = "Cancel",
   okText = "Ok",
   close = true,
+  closeLabel = "Close dialog",
   container,
   width,
   ...props
@@ -135,21 +143,21 @@ export const Dialog: React.FC<DialogProps> = ({
 
   const computedContainer = React.useMemo(() => {
     if (container) return container;
+    if (typeof document === "undefined") return undefined;
     return document.querySelector("#root") ?? document.body;
   }, [container]);
 
   return (
     <DialogPrimitive.Root
       open={open}
+      // Single entry point for every dismissal (close button, overlay click,
+      // Escape): wiring onCancel on those elements too would fire it twice.
       onOpenChange={(isOpen) => {
         if (!isOpen) onCancel?.();
       }}
     >
       <DialogPrimitive.Portal container={computedContainer}>
-        <DialogPrimitive.Overlay
-          className={classes.overlay}
-          onClick={onCancel}
-        />
+        <DialogPrimitive.Overlay className={classes.overlay} />
         <DialogPrimitive.Content
           className={classes.content}
           onCloseAutoFocus={(e) => {
@@ -168,9 +176,9 @@ export const Dialog: React.FC<DialogProps> = ({
             <header className={classes.header}>
               <DialogPrimitive.Close asChild>
                 <button
+                  type="button"
                   className={classes.close}
-                  onClick={onCancel}
-                  aria-label={`Close dialog`}
+                  aria-label={closeLabel}
                 >
                   <Cross1Icon data-testid="cross-icon" aria-hidden />
                 </button>

@@ -1,13 +1,10 @@
 import * as React from "react";
 import { useCallback, useMemo, useState } from "react";
 import { table, type TableVariantProps } from "@styled/recipes";
-import {
-  Button,
-  Checkbox,
-  Pagination,
-  PaginationProps,
-  Spinner,
-} from "lib/main";
+import { Button } from "../Button/Button";
+import { Checkbox } from "../Checkbox/Checkbox";
+import { Pagination, type PaginationProps } from "../Pagination/Pagination";
+import { Spinner } from "../Spinner/Spinner";
 import {
   CaretSortIcon,
   CaretDownIcon,
@@ -150,7 +147,43 @@ export type TableProps = TableVariantProps & {
    * e quando questo prop cambia
    */
   selectedRows?: string[];
+
+  /** *(optional)*
+   * Visually hidden caption that gives the table an accessible name.
+   */
+  caption?: string;
+
+  /** *(optional)*
+   * Function that builds the accessible label of a column's sort button.
+   * @default (columnTitle) => `Sort by ${columnTitle}`
+   */
+  sortLabel?: (columnTitle: string) => string;
+
+  /** *(optional)*
+   * Accessible label of the "select all rows" checkbox.
+   * @default "Select all rows"
+   */
+  selectAllLabel?: string;
+
+  /** *(optional)*
+   * Function that builds the accessible label of a row's selection checkbox.
+   * @default (row, index) => `Select row ${index + 1}`
+   */
+  selectRowLabel?: (row: DataItem, index: number) => string;
 };
+
+const ARIA_SORT: Record<
+  NonNullable<TableSortDirection>,
+  "ascending" | "descending"
+> = {
+  ascend: "ascending",
+  descend: "descending",
+};
+
+// Module-level defaults: inline arrow defaults would be new functions on every render.
+const defaultSortLabel = (columnTitle: string) => `Sort by ${columnTitle}`;
+const defaultSelectRowLabel = (_row: DataItem, index: number) =>
+  `Select row ${index + 1}`;
 
 /**
  * A table displays rows of data.
@@ -171,6 +204,10 @@ export type TableProps = TableVariantProps & {
  * @param checkable - *(optional)* If true, adds a checkbox column to allow row selection.
  * @param onSelectionChange - *(optional)* Callback fired when row selection changes, provides array of selected row data.
  * @param selectedRows - *(optional)* Array of row IDs to pre-selezionare when the table renders or when this prop changes.
+ * @param caption - *(optional)* Visually hidden caption that gives the table an accessible name.
+ * @param sortLabel - *(optional)* Function that builds the accessible label of a column's sort button.
+ * @param selectAllLabel - *(optional)* Accessible label of the "select all rows" checkbox.
+ * @param selectRowLabel - *(optional)* Function that builds the accessible label of a row's selection checkbox.
  */
 
 export const Table: React.FC<TableProps> = ({
@@ -190,6 +227,10 @@ export const Table: React.FC<TableProps> = ({
   checkable = false,
   onSelectionChange,
   selectedRows = [],
+  caption,
+  sortLabel = defaultSortLabel,
+  selectAllLabel = "Select all rows",
+  selectRowLabel = defaultSelectRowLabel,
   ...props
 }) => {
   const classes = table({
@@ -380,43 +421,55 @@ export const Table: React.FC<TableProps> = ({
         renderPagination()}
       <div className={classes.tableContainer}>
         <table className={classes.table}>
+          {caption && <caption className={classes.caption}>{caption}</caption>}
           <thead>
             <tr className={classes.row}>
               {checkable && (
-                <th className={classes.header}>
+                <th scope="col" className={classes.header}>
                   <Checkbox
                     squareIcon
                     variant="white"
                     checked={areAllRowsSelected}
                     onCheckedChange={handleSelectAll}
                     size="sm"
+                    aria-label={selectAllLabel}
                     data-testid="select-all-checkbox"
                   />
                 </th>
               )}
-              {columns.map((column) => (
-                <th key={column.dataIndex} className={classes.header}>
-                  <div className="header-content">
-                    {column.title}
-                    {column.onSort && column.onSort !== undefined && (
-                      <Button
-                        variant="transparent"
-                        compact
-                        layout="vertical"
-                        onClick={() => handleSort(column)}
-                        data-testid="sort-icon"
-                      >
-                        <div className={classes.sortIcons}>
-                          {getSortIcon(
-                            column,
-                            sortDirections[column.dataIndex],
-                          )}
-                        </div>
-                      </Button>
-                    )}
-                  </div>
-                </th>
-              ))}
+              {columns.map((column) => {
+                const direction = sortDirections[column.dataIndex];
+                const isSortable = Boolean(column.onSort);
+
+                return (
+                  <th
+                    key={column.dataIndex}
+                    scope="col"
+                    className={classes.header}
+                    aria-sort={
+                      isSortable && direction ? ARIA_SORT[direction] : undefined
+                    }
+                  >
+                    <div className="header-content">
+                      {column.title}
+                      {isSortable && (
+                        <Button
+                          variant="transparent"
+                          compact
+                          layout="vertical"
+                          onClick={() => handleSort(column)}
+                          aria-label={sortLabel(column.title)}
+                          data-testid="sort-icon"
+                        >
+                          <div className={classes.sortIcons} aria-hidden>
+                            {getSortIcon(column, direction)}
+                          </div>
+                        </Button>
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -430,6 +483,7 @@ export const Table: React.FC<TableProps> = ({
                       checked={selectedRowIds.includes(row.id)}
                       onCheckedChange={() => handleRowSelect(row.id)}
                       size="sm"
+                      aria-label={selectRowLabel(row, rowIndex)}
                       data-testid={`select-row-${row.id}`}
                     />
                   </td>

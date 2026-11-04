@@ -1,6 +1,4 @@
 @layer aitho-reset, aitho-base, aitho-tokens, aitho-recipes, aitho-utilities;
-@import url("https://use.typekit.net/soi6buk.css");
-@import url("https://fonts.googleapis.com/css2?family=Roboto&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 
 :root {
   --radius-sm: 0.25rem;
@@ -38,10 +36,10 @@
   --color-attention-hover: #eb5a0b;
   --color-warning: #ffbf00;
   --color-warning-hover: #ffb300;
-  --color-success: #388e3c;
-  --color-success-hover: #2e7d32;
-  --color-info: #0288d1;
-  --color-info-hover: #0277bd;
+  --color-success: #2e7d32;
+  --color-success-hover: #1b5e20;
+  --color-info: #0277bd;
+  --color-info-hover: #01579b;
 
   --border-color: #dcdcdc;
 
@@ -52,6 +50,7 @@
   --dark: #1f1f1f;
   --transparent: #00000000;
   --background-popup: #666666;
+  --text-on-popup: #f0f3ff;
   --checkbox-square-color: #0000ad;
   --table-base-color: #f2f2f2;
   --table-striped-color: #eaeaea;
@@ -96,6 +95,7 @@
   --dark: #1f1f1f;
   --transparent: #00000000;
   --background-popup: #666666;
+  --text-on-popup: #f0f3ff;
   --checkbox-square-color: #3377ff;
   --table-base-color: #3e3e3e;
   --table-striped-color: #2c2c2c;

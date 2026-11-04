@@ -42,7 +42,7 @@ export const tabRecipe = defineSlotRecipe({
           left: "0",
           right: "0",
           height: "0.125rem",
-          backgroundColor: "blue",
+          backgroundColor: "color-primary-hover",
           animation: "tabAnimateBorder 300ms ease-in-out",
         },
       },

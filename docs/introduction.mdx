@@ -1,6 +1,5 @@
 import { Meta } from "@storybook/addon-docs/blocks";
 import { CustomMDXWrapper } from "./MdxWrapper.tsx";
-import { ThemeProvider } from "../lib/providers/theme/ThemeProvider";
 
 <Meta title="Introduction" />
 
@@ -9,7 +8,7 @@ import { ThemeProvider } from "../lib/providers/theme/ThemeProvider";
 # Welcome to Aitho Design UI
 
 Aitho Design UI is a React component library built with TypeScript, Radix UI
-primitives and Panda CSS. It is published on npm under the Apache-2.0 license.
+primitives and Panda CSS. It is distributed under the Apache-2.0 license.
 
 ## Getting Started
 
@@ -20,41 +19,27 @@ npm install @aitho/ui
 ```
 
 `react` and `react-dom` (18 or 19) are peer dependencies and must already be
-installed in the consuming project. Pre-release builds cut from the default
-branch are published under the `next` tag:
+installed in the consuming project.
 
-```bash
-npm install @aitho/ui@next
-```
+### Build and browser requirements
 
-### Vite configuration
+The package exposes its ESM entrypoint and TypeScript declarations through
+package `exports`. Import from `@aitho/ui` using an ESM-compatible build tool,
+such as Vite, that handles CSS imports. The JavaScript bundle imports the
+library styles, so no separate CSS import or resolver alias is needed.
 
-The package exposes its ESM entrypoint through the `module` field, which
-bundlers such as Vite, webpack and Rollup honour. If your setup fails to resolve
-the package — a Node-based SSR pipeline, or a custom resolver — alias
-`@aitho/ui` to the built entrypoint explicitly:
-
-```ts
-import { resolve } from "node:path";
-import { defineConfig } from "vite";
-
-export default defineConfig({
-  ...
-  resolve: {
-    alias: {
-      "@aitho/ui": resolve(__dirname, "node_modules/@aitho/ui/dist/main.js"),
-    },
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
-  },
-  ...
-});
-```
+Every module is marked `"use client"`, so components can be server-rendered by
+frameworks such as Next.js. `ThemeProvider` renders the light theme first and
+applies the theme saved in `localStorage` after mounting.
 
 ### Wrap configuration
 
-Wrap the main component of the app with the `<ThemeProvider>`.
+Mount one `<ThemeProvider>` at the application root. It applies the active
+theme and brand tokens to the whole document. Nested providers and separate
+brand scopes on the same page are unsupported. The light/dark preference is
+saved in `localStorage` under the `theme` key.
 
-```jsx
+```tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -63,7 +48,7 @@ import { ThemeProvider } from "@aitho/ui";
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider>
-        <App />
+      <App />
     </ThemeProvider>
   </React.StrictMode>,
 );
@@ -76,5 +61,40 @@ Import the standard components from the main entrypoint:
 ```jsx
 import { Button, Label } from "@aitho/ui";
 ```
+
+## Theming
+
+Every component reads its colors from a set of CSS custom properties
+(`--color-primary`, `--text-primary`, `--background-primary`, ...), each with a
+built-in light and dark value. `useTheme()` reads the active one and switches
+between them:
+
+```tsx
+import { useTheme } from "@aitho/ui";
+
+function ThemeSwitch() {
+  const { theme, toggleTheme } = useTheme();
+
+  return <button onClick={toggleTheme}>Current theme: {theme}</button>;
+}
+```
+
+To ship your own brand instead of the default palette, pass a `brand` prop to
+`ThemeProvider` — a `light`/`dark` pair of token overrides. Anything you don't
+override keeps the library's default value:
+
+```tsx
+<ThemeProvider
+  brand={{
+    light: { "color-primary": "#1a73e8" },
+    dark: { "color-primary": "#8ab4f8" },
+  }}
+>
+  <App />
+</ThemeProvider>
+```
+
+See the "Providers / Theme Provider" page for the full list of overridable
+tokens and more examples.
 
 </CustomMDXWrapper>

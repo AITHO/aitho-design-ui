@@ -39,7 +39,58 @@ describe("Dialog", () => {
     expect(closeButton).toBeInTheDocument();
 
     fireEvent.click(closeButton);
-    expect(onCancel).toHaveBeenCalledTimes(2);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("should call onCancel once when Escape is pressed", () => {
+    const onCancel = vi.fn();
+
+    renderDialog({ onCancel, description: undefined });
+
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("should label the close button with 'Close dialog' by default", () => {
+    renderDialog({ description: undefined });
+
+    expect(
+      screen.getByRole("button", { name: "Close dialog" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should label the close button with closeLabel when provided", () => {
+    renderDialog({ closeLabel: "Chiudi finestra", description: undefined });
+
+    expect(
+      screen.getByRole("button", { name: "Chiudi finestra" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should only close the topmost dialog when two dialogs are open", () => {
+    const onCancelOuter = vi.fn();
+    const onCancelInner = vi.fn();
+
+    const renderDialogs = (innerOpen: boolean) => (
+      <>
+        <Dialog open title="Outer" footer={false} onCancel={onCancelOuter} />
+        <Dialog
+          open={innerOpen}
+          title="Inner"
+          footer={false}
+          onCancel={onCancelInner}
+        />
+      </>
+    );
+
+    const { rerender } = render(renderDialogs(false));
+    rerender(renderDialogs(true));
+
+    const inner = screen.getByRole("dialog", { name: "Inner" });
+    fireEvent.keyDown(inner, { key: "Escape" });
+
+    expect(onCancelInner).toHaveBeenCalledTimes(1);
+    expect(onCancelOuter).not.toHaveBeenCalled();
   });
 
   it("should not render the close button when close is set to false", () => {

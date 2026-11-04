@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import * as React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { NumberStepper, NumberStepperProps } from "./NumberStepper";
 
@@ -17,11 +18,43 @@ const renderNumberStepper = (props: Partial<NumberStepperProps> = {}) => {
   return { ...utils, onChange };
 };
 
+const ControlledNumberStepper = ({
+  initialValue = 4,
+  onChange,
+}: {
+  initialValue?: number;
+  onChange: (value: number) => void;
+}) => {
+  const [value, setValue] = React.useState(initialValue);
+
+  return (
+    <NumberStepper
+      value={value}
+      onChange={(nextValue) => {
+        onChange(nextValue);
+        setValue(nextValue);
+      }}
+      label="Hours"
+    />
+  );
+};
+
 describe("NumberStepper", () => {
   it("should render the current value", () => {
     renderNumberStepper({ value: 4 });
 
     expect(screen.getByRole("textbox", { name: "Hours" })).toHaveValue("4");
+  });
+
+  it("should display an externally updated value when no draft is active", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <NumberStepper value={4} onChange={onChange} label="Hours" />,
+    );
+
+    rerender(<NumberStepper value={6} onChange={onChange} label="Hours" />);
+
+    expect(screen.getByRole("textbox", { name: "Hours" })).toHaveValue("6");
   });
 
   it("should increment by step when the plus button is clicked", () => {
@@ -39,6 +72,24 @@ describe("NumberStepper", () => {
 
     expect(onChange).toHaveBeenCalledWith(3.5);
   });
+
+  it.each([
+    ["+", "Hours: +0.5", 4.5],
+    ["−", "Hours: −0.5", 3.5],
+  ])(
+    "should discard a typed draft when clicking %s",
+    (_, buttonName, nextValue) => {
+      const onChange = vi.fn();
+      render(<ControlledNumberStepper onChange={onChange} />);
+
+      const input = screen.getByRole("textbox", { name: "Hours" });
+      fireEvent.change(input, { target: { value: "9" } });
+      fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+      expect(onChange).toHaveBeenCalledWith(nextValue);
+      expect(input).toHaveValue(String(nextValue));
+    },
+  );
 
   it("should disable the minus button at min and the plus button at max", () => {
     renderNumberStepper({ value: 8, min: 0, max: 8 });
@@ -65,6 +116,18 @@ describe("NumberStepper", () => {
     expect(onChange).toHaveBeenCalledWith(6.5);
   });
 
+  it("should show the controlled value after committing with blur", () => {
+    const onChange = vi.fn();
+    render(<ControlledNumberStepper onChange={onChange} />);
+
+    const input = screen.getByRole("textbox", { name: "Hours" });
+    fireEvent.change(input, { target: { value: "6.5" } });
+    fireEvent.blur(input);
+
+    expect(onChange).toHaveBeenCalledWith(6.5);
+    expect(input).toHaveValue("6.5");
+  });
+
   it("should commit a typed value on Enter", () => {
     const { onChange } = renderNumberStepper({ value: 4 });
 
@@ -74,6 +137,19 @@ describe("NumberStepper", () => {
     fireEvent.blur(input);
 
     expect(onChange).toHaveBeenCalledWith(7.5);
+  });
+
+  it("should show the controlled value after committing with Enter", () => {
+    const onChange = vi.fn();
+    render(<ControlledNumberStepper onChange={onChange} />);
+
+    const input = screen.getByRole("textbox", { name: "Hours" });
+    input.focus();
+    fireEvent.change(input, { target: { value: "7.5" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onChange).toHaveBeenCalledWith(7.5);
+    expect(input).toHaveValue("7.5");
   });
 
   it("should clamp typed values to the min/max range", () => {

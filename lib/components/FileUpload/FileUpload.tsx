@@ -1,6 +1,11 @@
 import { FileIcon, Link2Icon, TrashIcon } from "@radix-ui/react-icons";
 import { fileUpload, type FileUploadVariantProps } from "@styled/recipes";
-import React, { useCallback, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { Label } from "../Label/Label";
 
 export type FileUploadProps = React.InputHTMLAttributes<HTMLInputElement> &
@@ -72,105 +77,129 @@ export type FileUploadProps = React.InputHTMLAttributes<HTMLInputElement> &
  * @param onChange - *(optional)* Callback function called when the user does type or interact with the input field.
  */
 
-export const FileUpload: React.FC<FileUploadProps> = ({
-  label,
-  required,
-  errorMessage,
-  error,
-  placeholder,
-  multiple,
-  id,
-  onFileDelete,
-  disabled,
-  borderRadius,
-  borderColor,
-  onChange,
-  ...props
-}) => {
-  const classes = fileUpload({ borderRadius, borderColor });
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
-
-  const onValChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const filesValue = e.target.files;
-
-      if (!filesValue || filesValue.length === 0) return;
-
-      const newFiles = Array.from(filesValue);
-
-      setFiles((prev) => (multiple ? [...prev, ...newFiles] : [newFiles[0]]));
-
-      onChange?.(e);
+export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
+  (
+    {
+      label,
+      required,
+      errorMessage,
+      error,
+      placeholder,
+      multiple,
+      id,
+      onFileDelete,
+      disabled,
+      borderRadius,
+      borderColor,
+      onChange,
+      ...props
     },
-    [multiple, onChange],
-  );
+    ref,
+  ) => {
+    const classes = fileUpload({ borderRadius, borderColor });
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    useImperativeHandle(ref, () => fileInputRef.current as HTMLInputElement);
+    const [files, setFiles] = useState<File[]>([]);
 
-  const deleteValueFile = useCallback(
-    (index: number) => {
-      setFiles((prevFiles) => {
-        const deletedFile = prevFiles[index];
-        const newFiles = prevFiles.filter((_, i) => i !== index);
-        if (onFileDelete && deletedFile) {
-          onFileDelete(deletedFile);
-        }
-        if (fileInputRef.current && newFiles.length === 0) {
-          fileInputRef.current.value = "";
-        }
-        return newFiles;
-      });
-    },
-    [onFileDelete],
-  );
+    const onValChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const filesValue = e.target.files;
 
-  return (
-    <>
-      <div className={classes.inputWrapper}>
-        {label && (
-          <div className={classes.labelContainer}>
-            <Label htmlFor={id}>
-              {required && <span className={classes.requiredMark}>*</span>}
-              {label}:
-            </Label>
-          </div>
-        )}
+        if (!filesValue || filesValue.length === 0) return;
 
-        <div className={classes.inputContainer}>
-          <button
-            type="button"
-            className={classes.fileLabel}
-            data-disabled={disabled}
-            disabled={disabled}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <FileIcon
-              className={classes.iconFileInputStyle}
+        const newFiles = Array.from(filesValue);
+
+        setFiles((prev) => (multiple ? [...prev, ...newFiles] : [newFiles[0]]));
+
+        onChange?.(e);
+      },
+      [multiple, onChange],
+    );
+
+    const deleteValueFile = useCallback(
+      (index: number) => {
+        setFiles((prevFiles) => {
+          const deletedFile = prevFiles[index];
+          const newFiles = prevFiles.filter((_, i) => i !== index);
+          if (onFileDelete && deletedFile) {
+            onFileDelete(deletedFile);
+          }
+          if (fileInputRef.current && newFiles.length === 0) {
+            fileInputRef.current.value = "";
+          }
+          return newFiles;
+        });
+      },
+      [onFileDelete],
+    );
+
+    return (
+      <>
+        <div className={classes.inputWrapper}>
+          {label && (
+            <div className={classes.labelContainer}>
+              <Label htmlFor={id}>
+                {required && <span className={classes.requiredMark}>*</span>}
+                {label}:
+              </Label>
+            </div>
+          )}
+
+          <div className={classes.inputContainer}>
+            <button
+              type="button"
+              className={classes.fileLabel}
               data-disabled={disabled}
+              disabled={disabled}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <FileIcon
+                className={classes.iconFileInputStyle}
+                data-disabled={disabled}
+              />
+              {placeholder}
+            </button>
+            <input
+              ref={fileInputRef}
+              disabled={disabled}
+              data-testid="input"
+              id={id}
+              type="file"
+              multiple={multiple}
+              onChange={onValChange}
+              className={classes.hiddenFileInput}
+              {...props}
             />
-            {placeholder}
-          </button>
-          <input
-            ref={fileInputRef}
-            disabled={disabled}
-            data-testid="input"
-            id={id}
-            type="file"
-            multiple={multiple}
-            onChange={onValChange}
-            className={classes.hiddenFileInput}
-            {...props}
-          />
-          {files.length > 0 &&
-            (multiple ? (
-              files.map((item, index) => (
-                <div
-                  key={item.name}
-                  className={classes.filesContent}
-                  data-disabled={disabled}
-                >
+            {files.length > 0 &&
+              (multiple ? (
+                files.map((item, index) => (
+                  <div
+                    key={item.name}
+                    className={classes.filesContent}
+                    data-disabled={disabled}
+                  >
+                    <div className={classes.fileIcon}>
+                      <Link2Icon />
+                      <p className={classes.fileName}>{item.name}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      data-testid="icon_trash"
+                      className={classes.deleteIcon}
+                      data-disabled={disabled}
+                      disabled={disabled}
+                      onClick={() => !disabled && deleteValueFile(index)}
+                    >
+                      <TrashIcon width={24} height={24} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className={classes.filesContent} data-disabled={disabled}>
                   <div className={classes.fileIcon}>
                     <Link2Icon />
-                    <p className={classes.fileName}>{item.name}</p>
+                    <p className={classes.fileName}>{files[0]?.name}</p>
                   </div>
 
                   <button
@@ -179,42 +208,26 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                     className={classes.deleteIcon}
                     data-disabled={disabled}
                     disabled={disabled}
-                    onClick={() => !disabled && deleteValueFile(index)}
+                    onClick={() => {
+                      if (disabled) return;
+
+                      deleteValueFile(0);
+                      setFiles([]);
+
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
                   >
                     <TrashIcon width={24} height={24} />
                   </button>
                 </div>
-              ))
-            ) : (
-              <div className={classes.filesContent} data-disabled={disabled}>
-                <div className={classes.fileIcon}>
-                  <Link2Icon />
-                  <p className={classes.fileName}>{files[0]?.name}</p>
-                </div>
-
-                <button
-                  type="button"
-                  data-testid="icon_trash"
-                  className={classes.deleteIcon}
-                  data-disabled={disabled}
-                  disabled={disabled}
-                  onClick={() => {
-                    if (disabled) return;
-
-                    deleteValueFile(0);
-                    setFiles([]);
-
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                >
-                  <TrashIcon width={24} height={24} />
-                </button>
-              </div>
-            ))}
+              ))}
+          </div>
         </div>
-      </div>
 
-      {error && <span className={classes.errorText}>{errorMessage}</span>}
-    </>
-  );
-};
+        {error && <span className={classes.errorText}>{errorMessage}</span>}
+      </>
+    );
+  },
+);
+
+FileUpload.displayName = "FileUpload";

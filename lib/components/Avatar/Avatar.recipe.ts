@@ -11,6 +11,10 @@ const COLORS = [
   "white",
   "black",
   "transparent",
+  // "brand" is not a fixed hue like the others (Panda's base color scale) — it tracks the
+  // theme's own color-primary/text-on-primary, for callers that want the avatar to read as
+  // part of the active brand instead of picking one of the arbitrary fixed hues.
+  "brand",
 ] as const;
 const TEXT_COLORS = [...COLORS, "black"] as const;
 
@@ -35,6 +39,7 @@ const BG_COLOR_MAPS = {
   white: { bg: "white" },
   transparent: { bg: "transparent" },
   black: { bg: "black" },
+  brand: { bg: "color-primary" },
 } as const;
 
 const TEXT_COLOR_MAPS = {
@@ -47,6 +52,7 @@ const TEXT_COLOR_MAPS = {
   white: { color: "white" },
   black: { color: "black" },
   transparent: { color: "transparent" },
+  brand: { color: "text-on-primary" },
 } as const;
 
 export const avatarRecipe = defineSlotRecipe({

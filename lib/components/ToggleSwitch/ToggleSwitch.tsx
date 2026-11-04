@@ -13,15 +13,17 @@ export type ToggleSwitchProps = ToggleSwitchVariantProps &
  * @param disabled - *(optional)* If the toggleSwitch is disabled.
  */
 
-export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
-  size,
-  ...props
-}) => {
+export const ToggleSwitch = React.forwardRef<
+  React.ComponentRef<typeof SwitchPrimitive.Root>,
+  ToggleSwitchProps
+>(({ size, ...props }, ref) => {
   const styles = toggleSwitch({ size });
 
   return (
-    <SwitchPrimitive.Root className={styles.root} {...props}>
+    <SwitchPrimitive.Root ref={ref} className={styles.root} {...props}>
       <SwitchPrimitive.Thumb className={styles.thumb} />
     </SwitchPrimitive.Root>
   );
-};
+});
+
+ToggleSwitch.displayName = "ToggleSwitch";

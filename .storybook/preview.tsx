@@ -2,6 +2,9 @@ import type { Preview } from "@storybook/react-vite";
 import { withThemeByClassName } from "@storybook/addon-themes";
 import React from "react";
 import "../lib/main"; // import the main.ts file to ensure ThemeContext loads correctly
+// package.json marks only CSS as having side effects, so the production build
+// drops the bare import above together with its styles: import them explicitly.
+import "../lib/main.css";
 
 const StoryRenderer = (args: { Story }) => {
   const { Story } = args;

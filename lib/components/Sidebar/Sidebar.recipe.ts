@@ -38,6 +38,7 @@ export const sidebarRecipe = defineSlotRecipe({
     "item",
     "alwaysOpenSubItems",
     "itemContainer",
+    "itemAction",
     "itemIcon",
     "itemText",
     "itemMenuButton",
@@ -84,6 +85,8 @@ export const sidebarRecipe = defineSlotRecipe({
       color: "text-secondary",
     },
     item: {
+      // Positioning context for the stretched hit area of itemAction.
+      position: "relative",
       display: "flex",
       width: "full",
       alignItems: "center",
@@ -128,6 +131,33 @@ export const sidebarRecipe = defineSlotRecipe({
       alignItems: "center",
       gap: "3",
     },
+    itemAction: {
+      // The item's primary action is a native <button>: reset its UA styles
+      // so it looks like the row it sits in.
+      flex: "1",
+      minWidth: "0",
+      padding: "0",
+      border: "none",
+      background: "transparent",
+      color: "inherit",
+      font: "inherit",
+      textAlign: "left",
+      cursor: "inherit",
+      borderRadius: "radius-sm",
+      _focusVisible: {
+        outlineWidth: "2px",
+        outlineStyle: "solid",
+        outlineColor: "color-primary",
+        outlineOffset: "2px",
+      },
+      // Stretched hit area: covers the whole row (padding included) so the
+      // row is clickable without a mouse-only handler on the row itself.
+      _after: {
+        content: '""',
+        position: "absolute",
+        inset: "0",
+      },
+    },
     itemIcon: {
       flexShrink: "0",
       width: "5",
@@ -148,6 +178,9 @@ export const sidebarRecipe = defineSlotRecipe({
       ...commonTransitions,
     },
     itemMenuButton: {
+      // Above the item's stretched hit area, so the menu stays clickable.
+      position: "relative",
+      zIndex: 1,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",

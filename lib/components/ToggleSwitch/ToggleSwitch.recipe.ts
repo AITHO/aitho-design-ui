@@ -17,7 +17,7 @@ export const toggleSwitchRecipe = defineSlotRecipe({
       _checked: { backgroundColor: "color-primary" },
       _disabled: {
         cursor: "not-allowed",
-        backgroundColor: "grey",
+        backgroundColor: "background-tertiary",
         _checked: {
           backgroundColor: "color-primary-disabled",
         },

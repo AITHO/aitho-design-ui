@@ -1,4 +1,4 @@
-import { ToastProps } from "lib/main";
+import type { ToastProps } from "../../components/Toast/Toast";
 import { createContext } from "react";
 
 export interface ToastContextType {
