@@ -29,15 +29,15 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run typecheck && vite build",
-    "typecheck": "panda codegen && tsc -b",
+    "typecheck": "panda codegen --clean && tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
     "format": "prettier --check .",
     "format:fix": "prettier --write --list-different .",
-    "prepare": "husky && panda codegen",
-    "codegen": "panda codegen",
+    "prepare": "husky && panda codegen --clean",
+    "codegen": "panda codegen --clean",
     "component:new": "tsx utils/panda-components-generator.ts",
     "test": "vitest run",
     "test:ui": "vitest --ui",
@@ -50,7 +50,8 @@
   "module": "./dist/main.js",
   "types": "./dist/main.d.ts",
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "./dist/main.js"
   ],
   "exports": {
     ".": {
