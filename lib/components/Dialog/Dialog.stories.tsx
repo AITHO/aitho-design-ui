@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Dialog } from "./Dialog";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Input, Label } from "lib/main";
 import { argTypeChildren, argTypeSize, BASE_SIZES } from "lib/utils/constants";
 
@@ -11,10 +11,6 @@ const DialogWrapper = ({
   ...args
 }: React.ComponentProps<typeof Dialog>) => {
   const [isOpen, setIsOpen] = useState(open || false);
-
-  useEffect(() => {
-    setIsOpen(open);
-  }, [open]);
 
   const handleCancel = () => {
     setIsOpen(false);
@@ -139,7 +135,7 @@ export const Default: Story = {
     title: "Default Dialog",
     description: "This is a description for the default dialog.",
   },
-  render: (args) => <DialogWrapper {...args} />,
+  render: (args) => <DialogWrapper key={String(args.open)} {...args} />,
 };
 
 export const WithoutFooter: Story = {
@@ -147,7 +143,7 @@ export const WithoutFooter: Story = {
     title: "No Footer Dialog",
     description: "This dialog does not have a footer.",
   },
-  render: (args) => <DialogWrapper {...args} />,
+  render: (args) => <DialogWrapper key={String(args.open)} {...args} />,
 };
 
 export const LoadingState: Story = {
@@ -157,7 +153,7 @@ export const LoadingState: Story = {
     children: "The buttons in this dialog are disabled due to loading.",
     loading: true,
   },
-  render: (args) => <DialogWrapper {...args} />,
+  render: (args) => <DialogWrapper key={String(args.open)} {...args} />,
 };
 
 export const Widths: Story = {
@@ -166,7 +162,11 @@ export const Widths: Story = {
       {BASE_SIZES.map((arg) => (
         <div key={arg}>
           <Label>{`Width ${arg}`}</Label>
-          <DialogWrapper {...args} width={arg} />
+          <DialogWrapper
+            key={`${String(args.open)}-${arg}`}
+            {...args}
+            width={arg}
+          />
         </div>
       ))}
     </div>
@@ -181,7 +181,7 @@ export const CustomFooterButtons: Story = {
     cancelText: "Nope",
     okText: "Sure!",
   },
-  render: (args) => <DialogWrapper {...args} />,
+  render: (args) => <DialogWrapper key={String(args.open)} {...args} />,
 };
 
 export const FormDialog: Story = {
@@ -207,5 +207,5 @@ export const FormDialog: Story = {
       </form>
     ),
   },
-  render: (args) => <DialogWrapper {...args} />,
+  render: (args) => <DialogWrapper key={String(args.open)} {...args} />,
 };

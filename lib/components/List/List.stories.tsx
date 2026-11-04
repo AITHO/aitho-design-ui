@@ -77,13 +77,14 @@ export const Default: Story = {
       {
         leftSlot: [<Avatar name="3" key="5" />, "Nome 3"],
         rightSlot: [
-          <img
+          <div
             key="6"
-            alt=""
+            aria-hidden="true"
             style={{
               height: "150px",
               width: "150px",
-              backgroundImage: `url("https://images.pexels.com/photos/164005/pexels-photo-164005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2")`,
+              background:
+                "linear-gradient(135deg, #1f2937 25%, #475569 25%, #475569 50%, #1f2937 50%, #1f2937 75%, #475569 75%)",
             }}
           />,
         ],

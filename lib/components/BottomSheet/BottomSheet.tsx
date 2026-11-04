@@ -84,9 +84,17 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const panelRef = React.useRef<HTMLDivElement>(null);
   const previouslyFocused = React.useRef<HTMLElement | null>(null);
   const touchStartY = React.useRef<number | null>(null);
+  // The portal needs document.body, which does not exist on the server: it is
+  // created only after mount, so the first client render matches the server
+  // HTML (null) during hydration.
+  const [isMounted, setIsMounted] = React.useState(false);
 
   React.useEffect(() => {
-    if (!isOpen) {
+    setIsMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!isOpen || !isMounted) {
       return undefined;
     }
 
@@ -100,7 +108,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       document.body.style.overflow = overflow;
       previouslyFocused.current?.focus?.();
     };
-  }, [isOpen]);
+  }, [isOpen, isMounted]);
 
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
@@ -131,7 +139,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     [onClose],
   );
 
-  if (!isOpen) {
+  if (!isOpen || !isMounted) {
     return null;
   }
 

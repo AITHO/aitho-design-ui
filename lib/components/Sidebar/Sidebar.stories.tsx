@@ -12,7 +12,6 @@ import {
 } from "@radix-ui/react-icons";
 import { Sidebar, SidebarProps } from "./Sidebar";
 import { Avatar, Button } from "lib/main";
-import { AithoIcon } from "lib/Icons/AithoIcon";
 import { useState } from "react";
 import {
   argTypeChildren,
@@ -201,7 +200,7 @@ const header = (
         <HamburgerMenuIcon />
       </button>
     )}
-    <AithoIcon width={100} />
+    <strong>Workspace</strong>
   </div>
 );
 
@@ -216,8 +215,8 @@ const footer = (
   >
     <Avatar
       size="md"
-      src="https://avatar.iran.liara.run/public"
-      alt="User Profile"
+      src="avatar-placeholder.svg"
+      alt="Illustrated avatar placeholder"
     />
     <div style={{ overflow: "hidden" }}>
       <p

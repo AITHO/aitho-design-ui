@@ -64,66 +64,82 @@ export type AccordionProps = AccordionVariantProps &
  * @param borderColor - *(optional)* The border color of the input field. Options: 'base', 'primary'.
  */
 
-export const Accordion: React.FC<AccordionProps> = ({
-  items,
-  width = "15.625rem",
-  triggerHeight = "2.813rem",
-  borderColor,
-  ...props
-}) => {
-  const classes = accordion({ borderColor });
-  return (
-    <AccordionPrimitive.Root
-      className={classes.root}
-      style={{
-        width: width,
-      }}
-      {...props}
-    >
-      {items.map(
-        ({ value, header, content, disabled, ariaLabel, ariaDescription }) => {
-          const descriptionId = ariaDescription
-            ? `accordion-desc-${value}`
-            : undefined;
-          return (
-            <AccordionPrimitive.Item
-              key={value}
-              className={classes.item}
-              value={value}
-              disabled={disabled}
-            >
-              <AccordionPrimitive.Header className={classes.header}>
-                {ariaDescription && (
-                  <span id={descriptionId} style={{ display: "none" }}>
-                    {ariaDescription}
-                  </span>
-                )}
-                <AccordionPrimitive.Trigger
-                  className={classes.trigger}
-                  style={{
-                    height: triggerHeight,
-                  }}
-                  aria-label={ariaLabel}
-                  aria-describedby={descriptionId}
-                >
-                  <ChevronRightIcon className={classes.chevron} aria-hidden />
-                  {header}
-                </AccordionPrimitive.Trigger>
-              </AccordionPrimitive.Header>
-              {content.map((contentItem, i) => (
-                <AccordionPrimitive.Content
-                  key={`${value}-content-${i}`}
-                  className={classes.content}
-                >
-                  {contentItem}
-                </AccordionPrimitive.Content>
-              ))}
-            </AccordionPrimitive.Item>
-          );
-        },
-      )}
-    </AccordionPrimitive.Root>
-  );
-};
+export const Accordion = React.forwardRef<
+  React.ComponentRef<typeof AccordionPrimitive.Root>,
+  AccordionProps
+>(
+  (
+    {
+      items,
+      width = "15.625rem",
+      triggerHeight = "2.813rem",
+      borderColor,
+      ...props
+    },
+    ref,
+  ) => {
+    const classes = accordion({ borderColor });
+    return (
+      <AccordionPrimitive.Root
+        ref={ref}
+        className={classes.root}
+        style={{
+          width: width,
+        }}
+        {...props}
+      >
+        {items.map(
+          ({
+            value,
+            header,
+            content,
+            disabled,
+            ariaLabel,
+            ariaDescription,
+          }) => {
+            const descriptionId = ariaDescription
+              ? `accordion-desc-${value}`
+              : undefined;
+            return (
+              <AccordionPrimitive.Item
+                key={value}
+                className={classes.item}
+                value={value}
+                disabled={disabled}
+              >
+                <AccordionPrimitive.Header className={classes.header}>
+                  {ariaDescription && (
+                    <span id={descriptionId} style={{ display: "none" }}>
+                      {ariaDescription}
+                    </span>
+                  )}
+                  <AccordionPrimitive.Trigger
+                    className={classes.trigger}
+                    style={{
+                      height: triggerHeight,
+                    }}
+                    aria-label={ariaLabel}
+                    aria-describedby={descriptionId}
+                  >
+                    <ChevronRightIcon className={classes.chevron} aria-hidden />
+                    {header}
+                  </AccordionPrimitive.Trigger>
+                </AccordionPrimitive.Header>
+                {content.map((contentItem, i) => (
+                  <AccordionPrimitive.Content
+                    key={`${value}-content-${i}`}
+                    className={classes.content}
+                  >
+                    {contentItem}
+                  </AccordionPrimitive.Content>
+                ))}
+              </AccordionPrimitive.Item>
+            );
+          },
+        )}
+      </AccordionPrimitive.Root>
+    );
+  },
+);
 
 Accordion.displayName = "Accordion";

@@ -1,6 +1,5 @@
 import { Meta } from "@storybook/addon-docs/blocks";
 import { CustomMDXWrapper } from "./MdxWrapper.tsx";
-import { ThemeProvider } from "../lib/providers/theme/ThemeProvider.tsx";
 
 <Meta title="Providers/Theme Provider" />
 
@@ -8,7 +7,27 @@ import { ThemeProvider } from "../lib/providers/theme/ThemeProvider.tsx";
 
 # ThemeProvider
 
-The `ThemeContext` manages the selection between the `light` and `dark` themes of the application. By using the `ThemeProvider`, we can define the theme at the top-level component, allowing all child components to access the current theme and use the `toggleTheme` function to change it.
+`ThemeProvider` makes the active `light` or `dark` theme available to components
+through `useTheme()`. Mount it once at the application root. It sets
+`data-panda-theme` and brand CSS custom properties on the document's `<html>`
+element, so the selected theme applies to the entire page.
+
+## Browser requirements and scope
+
+The provider always renders `light` first, both on the server and in the
+browser, so server-rendered HTML hydrates without mismatches. Right after
+mounting it reads the theme saved in `localStorage` and applies it before the
+browser paints. In server-rendered apps, users who chose `dark` therefore see
+the light palette until the page hydrates. On the server it touches neither
+`localStorage` nor the DOM.
+
+Use one provider per page. Multiple providers write to the same document and
+can overwrite each other's theme and palette. Nested providers do not create
+independent theme scopes.
+
+The provider restores `dark` when `localStorage.getItem("theme")` is `"dark"`;
+otherwise it starts in `light`. Theme changes are saved under the key `theme`.
+It does not automatically follow the operating system's color scheme.
 
 ## How to use ThemeProvider
 
@@ -51,5 +70,115 @@ function App() {
 
 export default App;
 ```
+
+## How to customize the brand palette
+
+Pass a `brand` prop to override the default colors independently for each mode.
+`BrandTokens` accepts optional `light` and `dark` palettes; each palette is a
+partial map of the supported token names to CSS color values. Use the exported
+type to check token names in your application.
+
+```tsx
+import { Button, ThemeProvider, type BrandTokens } from "@aitho/ui";
+
+const brand: BrandTokens = {
+  light: {
+    "color-primary": "#1a73e8",
+    "color-primary-hover": "#1558b0",
+    "text-on-primary": "#ffffff",
+  },
+  dark: {
+    "color-primary": "#8ab4f8",
+    "color-primary-hover": "#aecbfa",
+    "text-on-primary": "#1a1a1a",
+  },
+};
+
+export function BrandedApp() {
+  return (
+    <ThemeProvider brand={brand}>
+      <Button>Continue</Button>
+    </ThemeProvider>
+  );
+}
+```
+
+Tokens omitted from the active palette use the built-in values for that theme.
+On a theme or `brand` change, the previous overrides are removed before the
+new palette is applied. Inline overrides are also removed on unmount.
+
+Each token is independent. Overriding `color-primary` does not calculate its
+hover, active, disabled, opacity, or text colors. Set related tokens together
+and verify their contrast and focus visibility in both themes. Tokens such as
+`checkbox-square-color` also have their own values.
+
+## Supported tokens
+
+Keys in `brand.light` and `brand.dark` omit the leading `--`; the provider adds
+it when writing CSS custom properties. The following table lists every key
+supported by `BrandTokens`.
+
+| Token key                  | CSS custom property          |
+| -------------------------- | ---------------------------- |
+| `color-primary`            | `--color-primary`            |
+| `color-primary-hover`      | `--color-primary-hover`      |
+| `color-primary-active`     | `--color-primary-active`     |
+| `color-primary-disabled`   | `--color-primary-disabled`   |
+| `color-primary-opacity-20` | `--color-primary-opacity-20` |
+| `color-primary-opacity-50` | `--color-primary-opacity-50` |
+| `text-primary`             | `--text-primary`             |
+| `text-secondary`           | `--text-secondary`           |
+| `text-on-primary`          | `--text-on-primary`          |
+| `background-primary`       | `--background-primary`       |
+| `background-secondary`     | `--background-secondary`     |
+| `background-tertiary`      | `--background-tertiary`      |
+| `background-contrast`      | `--background-contrast`      |
+| `background-overlay`       | `--background-overlay`       |
+| `color-error`              | `--color-error`              |
+| `color-error-hover`        | `--color-error-hover`        |
+| `color-error-opacity-80`   | `--color-error-opacity-80`   |
+| `color-attention`          | `--color-attention`          |
+| `color-attention-hover`    | `--color-attention-hover`    |
+| `color-warning`            | `--color-warning`            |
+| `color-warning-hover`      | `--color-warning-hover`      |
+| `color-success`            | `--color-success`            |
+| `color-success-hover`      | `--color-success-hover`      |
+| `color-info`               | `--color-info`               |
+| `color-info-hover`         | `--color-info-hover`         |
+| `border-color`             | `--border-color`             |
+| `accent`                   | `--accent`                   |
+| `white`                    | `--white`                    |
+| `grey-light`               | `--grey-light`               |
+| `light`                    | `--light`                    |
+| `dark`                     | `--dark`                     |
+| `transparent`              | `--transparent`              |
+| `background-popup`         | `--background-popup`         |
+| `text-on-popup`            | `--text-on-popup`            |
+| `checkbox-square-color`    | `--checkbox-square-color`    |
+| `table-base-color`         | `--table-base-color`         |
+| `table-striped-color`      | `--table-striped-color`      |
+
+`BrandTokenName` is the union of these keys and `BrandPalette` is the partial
+map used for each mode. `BRAND_TOKEN_NAMES` exposes the same list at runtime:
+
+```tsx
+import { BRAND_TOKEN_NAMES, type BrandTokenName } from "@aitho/ui";
+
+const tokenNames: readonly BrandTokenName[] = BRAND_TOKEN_NAMES;
+
+export function BrandTokenList() {
+  return (
+    <ul>
+      {tokenNames.map((name) => (
+        <li key={name}>{name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Font families and border radii are outside the `brand` prop's supported token
+list. Custom color values must be valid CSS; TypeScript checks the token names
+but does not validate color syntax or accessibility.
 
 </CustomMDXWrapper>

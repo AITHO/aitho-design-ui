@@ -35,27 +35,28 @@ const getInitials = (name: string): string => {
  * @param name - *(optional)* The name of the user, used to generate initials for the fallback.
  * @param children - *(optional)* Content to display when no image or name is provided.
  * @param size - *(optional)* The size of the tooltip component. Options: 'sm', 'md', 'lg', 'xl.
- * @param backgroundColor - *(optional)* The background color of the avatar. Options: 'red', 'green', 'blue', 'purple', 'yellow', 'gray', 'white', 'transparent'.
- * @param textColor - *(optional)* The text color of the avatar. Options: 'red', 'green', 'blue', 'purple', 'yellow', 'gray', 'white', 'transparent'.
+ * @param backgroundColor - *(optional)* The background color of the avatar. Options: 'red', 'green', 'blue', 'purple', 'yellow', 'gray', 'white', 'transparent', 'brand' (tracks the theme's color-primary).
+ * @param textColor - *(optional)* The text color of the avatar. Options: 'red', 'green', 'blue', 'purple', 'yellow', 'gray', 'white', 'transparent', 'brand' (tracks the theme's text-on-primary).
  */
-export const Avatar: React.FC<AvatarProps> = ({
-  src,
-  alt,
-  children,
-  name,
-  size,
-  backgroundColor,
-  textColor,
-  ...props
-}) => {
-  const classes = avatar({ size, backgroundColor, textColor });
+export const Avatar = React.forwardRef<
+  React.ComponentRef<typeof AvatarPrimitive.Root>,
+  AvatarProps
+>(
+  (
+    { src, alt, children, name, size, backgroundColor, textColor, ...props },
+    ref,
+  ) => {
+    const classes = avatar({ size, backgroundColor, textColor });
 
-  return (
-    <AvatarPrimitive.Root className={classes.root} {...props}>
-      <AvatarPrimitive.Image src={src} alt={alt} className={classes.image} />
-      <AvatarPrimitive.Fallback className={classes.fallback}>
-        {name ? getInitials(name) : children}
-      </AvatarPrimitive.Fallback>
-    </AvatarPrimitive.Root>
-  );
-};
+    return (
+      <AvatarPrimitive.Root ref={ref} className={classes.root} {...props}>
+        <AvatarPrimitive.Image src={src} alt={alt} className={classes.image} />
+        <AvatarPrimitive.Fallback className={classes.fallback}>
+          {name ? getInitials(name) : children}
+        </AvatarPrimitive.Fallback>
+      </AvatarPrimitive.Root>
+    );
+  },
+);
+
+Avatar.displayName = "Avatar";

@@ -81,27 +81,25 @@ export const NumberStepper: React.FC<NumberStepperProps> = ({
   className,
 }) => {
   const classes = numberStepper();
-  const [text, setText] = React.useState(() => String(value));
-
-  React.useEffect(() => {
-    setText(String(value));
-  }, [value]);
+  const [text, setText] = React.useState<string | null>(null);
+  const displayedText = text ?? String(value);
 
   const commitText = React.useCallback(() => {
-    const parsed = Number.parseFloat(text.replace(",", "."));
+    const parsed = Number.parseFloat(displayedText.replace(",", "."));
     if (Number.isNaN(parsed)) {
-      setText(String(value));
+      setText(null);
       return;
     }
     const next = round2(clamp(parsed, min, max));
-    setText(String(next));
+    setText(null);
     if (next !== value) {
       onChange(next);
     }
-  }, [text, value, min, max, onChange]);
+  }, [displayedText, value, min, max, onChange]);
 
   const applyDelta = React.useCallback(
     (delta: number) => {
+      setText(null);
       const next = round2(clamp(value + delta, min, max));
       if (next !== value) {
         onChange(next);
@@ -133,7 +131,7 @@ export const NumberStepper: React.FC<NumberStepperProps> = ({
         className={classes.value}
         type="text"
         inputMode="decimal"
-        value={text}
+        value={displayedText}
         disabled={disabled}
         aria-label={label}
         onChange={(event) => setText(event.target.value)}

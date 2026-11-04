@@ -25,7 +25,12 @@ before disclosing publicly.
 
 ## Scope
 
-This is a browser-side component library: it renders UI and holds no
-credentials, no server code and no persistent storage. The most relevant classes
-of issue are therefore XSS through unescaped props or `dangerouslySetInnerHTML`,
-prototype pollution in prop merging, and vulnerable transitive dependencies.
+This is a browser-side component library with no server code. `ThemeProvider`
+persists the light/dark preference in browser `localStorage` under the `theme`
+key and applies the theme and brand tokens to the document root. The library
+does not provide authentication or credential storage.
+
+Relevant classes of issue include XSS through unescaped props or
+`dangerouslySetInnerHTML`, prototype pollution in prop merging, and vulnerable
+transitive dependencies. Consuming applications are responsible for the data
+they pass to components and their own storage and authentication.

@@ -310,4 +310,80 @@ describe("Table", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.queryByText("4")).toBeNull();
   });
+
+  describe("accessibility", () => {
+    it("should scope the header cells to their column", () => {
+      renderTable({ checkable: true });
+
+      screen
+        .getAllByRole("columnheader")
+        .forEach((header) => expect(header).toHaveAttribute("scope", "col"));
+    });
+
+    it("should name the table through the caption when provided", () => {
+      renderTable({ caption: "Employees" });
+
+      expect(
+        screen.getByRole("table", { name: "Employees" }),
+      ).toBeInTheDocument();
+    });
+
+    it("should give the sort button an accessible name", () => {
+      renderTable({ columns: sortableColumns });
+
+      expect(screen.getByTestId("sort-icon")).toHaveAccessibleName(
+        "Sort by Name",
+      );
+    });
+
+    it("should use the custom sort label when provided", () => {
+      renderTable({
+        columns: sortableColumns,
+        sortLabel: (title) => `Ordina per ${title}`,
+      });
+
+      expect(screen.getByTestId("sort-icon")).toHaveAccessibleName(
+        "Ordina per Name",
+      );
+    });
+
+    it("should expose the sort direction with aria-sort", () => {
+      renderTable({ columns: sortableColumns });
+
+      const header = screen.getByRole("columnheader");
+      expect(header).not.toHaveAttribute("aria-sort");
+
+      fireEvent.click(screen.getByTestId("sort-icon"));
+      expect(header).toHaveAttribute("aria-sort", "ascending");
+
+      fireEvent.click(screen.getByTestId("sort-icon"));
+      expect(header).toHaveAttribute("aria-sort", "descending");
+    });
+
+    it("should give the selection checkboxes an accessible name", () => {
+      renderTable({ checkable: true });
+
+      expect(screen.getByTestId("select-all-checkbox")).toHaveAccessibleName(
+        "Select all rows",
+      );
+      expect(screen.getByTestId("select-row-1")).toHaveAccessibleName(
+        "Select row 1",
+      );
+    });
+
+    it("should use the custom selection labels when provided", () => {
+      renderTable({
+        checkable: true,
+        selectAllLabel: "Seleziona tutte le righe",
+        selectRowLabel: (row) => `Seleziona ${row.name}`,
+      });
+
+      expect(screen.getByTestId("select-all-checkbox")).toHaveAccessibleName(
+        "Seleziona tutte le righe",
+      );
+      expect(screen.getByTestId("select-row-1")).toHaveAccessibleName(
+        "Seleziona John",
+      );
+    });
+  });
 });

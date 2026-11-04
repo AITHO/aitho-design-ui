@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Sidebar, SidebarProps } from "./Sidebar";
-import { ReactNode } from "react";
+import { ReactNode, createRef } from "react";
 
 vi.mock("lib/main", async (importOriginal) => {
   const actual = await importOriginal<typeof import("lib/main")>();
@@ -405,5 +405,12 @@ describe("Sidebar", () => {
     });
 
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("forwards the ref to the aside element", () => {
+    const ref = createRef<HTMLElement>();
+    render(<Sidebar ref={ref} />);
+
+    expect(ref.current?.tagName).toBe("ASIDE");
   });
 });

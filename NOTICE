@@ -3,12 +3,12 @@ Copyright 2024-2026 Aitho SRL SB
 
 This product includes software developed at Aitho (https://www.aitho.it/).
 
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-these files except in compliance with the License. A copy of the License is
-distributed with this product in the LICENSE file, and is also available at
+This project is licensed under the Apache License, Version 2.0 (Apache-2.0).
+A copy of the License is distributed with this product in the LICENSE file and
+is also available at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-"Aitho" and the Aitho logo are trademarks of Aitho SRL SB. The Apache License does not
-grant permission to use them: forks and derivative works must replace the
-branding assets under assets/ and any Aitho name or logo with their own.
+"Aitho" and the Aitho logo are trademarks of Aitho SRL SB. The Apache-2.0 does not
+grant rights to use these trademarks or the Aitho visual identity. See
+TRADEMARK.md for the trademark and brand-use policy.

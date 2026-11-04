@@ -13,7 +13,7 @@ export const tooltipRecipe = defineSlotRecipe({
       position: "relative",
     },
     content: {
-      color: "light",
+      color: "text-on-popup",
       backgroundColor: "background-popup",
       maxWidth: "15.625rem",
       borderRadius: "radius",

@@ -13,35 +13,31 @@ interface ItemMenuButtonProps {
   hasSubItems: boolean;
   menuConfig?: MenuConfiguration;
   expandedItems: Set<string>;
-  toggleSubItems: (key: string) => void;
   handleMenuOpenChange: (open: boolean) => void;
   classes: Record<string, string>;
 }
 
-interface SubItemsButtonProps {
+interface SubItemsIndicatorProps {
   expandedItems: Set<string>;
   itemKey: string;
-  toggleSubItems: (key: string) => void;
   classes: Record<string, string>;
 }
 
-const SubItemsButton = ({
+// Visual indicator only: the item's own button toggles the sub-items and
+// exposes aria-expanded; pointer events fall through to that button.
+const SubItemsIndicator = ({
   expandedItems,
   itemKey,
-  toggleSubItems,
   classes,
-}: SubItemsButtonProps) => (
-  <div className={classes.itemMenuButton}>
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleSubItems(itemKey);
-      }}
-    >
-      {expandedItems.has(itemKey) ? <ArrowUpIcon /> : <ArrowDownIcon />}
-    </button>
-  </div>
+}: SubItemsIndicatorProps) => (
+  <span
+    className={classes.itemMenuButton}
+    style={{ pointerEvents: "none" }}
+    aria-hidden
+    data-testid="sub-items-indicator"
+  >
+    {expandedItems.has(itemKey) ? <ArrowUpIcon /> : <ArrowDownIcon />}
+  </span>
 );
 
 interface SimpleMenuButtonProps {
@@ -73,17 +69,15 @@ export const ItemMenuButton = memo(
     hasSubItems,
     menuConfig,
     expandedItems,
-    toggleSubItems,
     handleMenuOpenChange,
     classes,
   }: ItemMenuButtonProps) => {
     if (item.disabled) return null;
     if (hasSubItems) {
       return (
-        <SubItemsButton
+        <SubItemsIndicator
           expandedItems={expandedItems}
           itemKey={item.key}
-          toggleSubItems={toggleSubItems}
           classes={classes}
         />
       );

@@ -6,6 +6,12 @@ export {
 } from "./providers/theme/ThemeProvider";
 export { useTheme } from "./providers/theme/useTheme";
 export { type ThemeContextType } from "./providers/theme/ThemeContext";
+export {
+  BRAND_TOKEN_NAMES,
+  type BrandTokenName,
+  type BrandPalette,
+  type BrandTokens,
+} from "./providers/theme/brandTokens";
 
 export {
   ToastProvider,
@@ -53,10 +59,6 @@ export { Input, type InputProps } from "./components/Input/Input";
 export { Label, type LabelProps } from "./components/Label/Label";
 export { List, type ListProps } from "./components/List/List";
 export {
-  LoginButton,
-  type LoginButtonProps,
-} from "./components/LoginButton/LoginButton";
-export {
   MonthStepper,
   type MonthStepperProps,
 } from "./components/MonthStepper/MonthStepper";
@@ -84,7 +86,13 @@ export { Spinner, type SpinnerProps } from "./components/Spinner/Spinner";
 export { Step, type StepProps } from "./components/Stepper/Stepper";
 export { Stepper, type StepperProps } from "./components/Stepper/Stepper";
 export { Tab, type TabProps } from "./components/Tab/Tab";
-export { Table, type TableProps } from "./components/Table/Table";
+export {
+  Table,
+  type DataItem,
+  type IColumn,
+  type TableProps,
+  type TableSortDirection,
+} from "./components/Table/Table";
 export { TextArea, type TextAreaProps } from "./components/TextArea/TextArea";
 export { Toast, type ToastProps } from "./components/Toast/Toast";
 export {

@@ -126,9 +126,10 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
   const [html, setHtml] = React.useState<string>("");
   const [isCopied, setIsCopied] = React.useState(false);
   const timeoutRef = React.useRef<number | undefined>(undefined);
-  const globalTheme = document.documentElement.getAttribute(
-    "data-panda-theme",
-  ) as Theme | undefined;
+  const globalTheme =
+    typeof document === "undefined"
+      ? undefined
+      : (document.documentElement.dataset.pandaTheme as Theme | undefined);
   const classes = codeBlock({ size, theme: globalTheme });
 
   React.useEffect(() => {

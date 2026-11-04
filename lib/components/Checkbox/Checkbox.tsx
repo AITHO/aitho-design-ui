@@ -24,41 +24,42 @@ export interface CheckboxProps
  * @param required - *(optional)* If the checkbox is required.  Options: 'none', 'primary' or boolean.
  * @param squareIcon - *(optional)* If true, displays a square icon instead of a checkmark.
  */
-export const Checkbox: React.FC<CheckboxProps> = ({
-  disabled,
-  size,
-  variant,
-  border,
-  required,
-  squareIcon = false,
-  ...props
-}) => {
-  const requiredVariant = required === true ? "primary" : required;
+export const Checkbox = React.forwardRef<
+  React.ComponentRef<typeof CheckboxPrimitive.Root>,
+  CheckboxProps
+>(
+  (
+    { disabled, size, variant, border, required, squareIcon = false, ...props },
+    ref,
+  ) => {
+    const requiredVariant = required === true ? "primary" : required;
 
-  const classes = checkbox({
-    size,
-    variant,
-    border,
-    required: requiredVariant as "primary" | "none" | undefined,
-  });
+    const classes = checkbox({
+      size,
+      variant,
+      border,
+      required: requiredVariant as "primary" | "none" | undefined,
+    });
 
-  return (
-    <CheckboxPrimitive.Root
-      className={classes.root}
-      disabled={disabled}
-      {...props}
-    >
-      <CheckboxPrimitive.Indicator className={classes.indicator}>
-        {squareIcon ? (
-          <div className={classes.icon}>
-            <div className={classes.squareIcon} />
-          </div>
-        ) : (
-          <CheckIcon className={classes.icon} />
-        )}
-      </CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Root>
-  );
-};
+    return (
+      <CheckboxPrimitive.Root
+        ref={ref}
+        className={classes.root}
+        disabled={disabled}
+        {...props}
+      >
+        <CheckboxPrimitive.Indicator className={classes.indicator}>
+          {squareIcon ? (
+            <div className={classes.icon}>
+              <div className={classes.squareIcon} />
+            </div>
+          ) : (
+            <CheckIcon className={classes.icon} />
+          )}
+        </CheckboxPrimitive.Indicator>
+      </CheckboxPrimitive.Root>
+    );
+  },
+);
 
 Checkbox.displayName = CheckboxPrimitive.Root.displayName;

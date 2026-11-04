@@ -102,15 +102,13 @@ export const SidebarItemComponent = memo(
           data-selected={itemIsSelected}
           data-disabled={item.disabled}
           aria-disabled={item.disabled}
-          onClick={item.disabled ? undefined : handleClick}
-          onKeyDown={item.disabled ? undefined : handleClick}
           style={{
             paddingLeft: indentation,
           }}
           data-testid="sidebar-item-button"
         >
-          <div className={classes.itemContainer}>
-            {isEditing ? (
+          {isEditing ? (
+            <div className={classes.itemContainer}>
               <div className={classes.editContainer}>
                 <input
                   ref={inputRef}
@@ -138,28 +136,43 @@ export const SidebarItemComponent = memo(
                   />
                 </div>
               </div>
-            ) : (
-              <>
-                <div className={classes.itemIcon} data-testid="item-icon">
-                  {item.icon}
-                </div>
-                <span
-                  className={classes.itemText}
-                  data-state={isSidebarOpen}
-                  data-testid="item-text"
-                >
-                  {item.text}
-                </span>
-              </>
-            )}
-          </div>
+            </div>
+          ) : (
+            // The button stretches over the whole row (see the itemAction
+            // slot), so clicking anywhere on the item activates it.
+            <button
+              type="button"
+              className={`${classes.itemContainer} ${classes.itemAction}`}
+              disabled={item.disabled}
+              onClick={handleClick}
+              // The text is visually hidden when the sidebar is collapsed.
+              aria-label={item.text}
+              aria-expanded={hasSubItems ? isExpanded : undefined}
+              aria-current={
+                !hasSubItems && itemIsSelected && !item.disabled
+                  ? "page"
+                  : undefined
+              }
+              data-testid="sidebar-item-action"
+            >
+              <span className={classes.itemIcon} data-testid="item-icon">
+                {item.icon}
+              </span>
+              <span
+                className={classes.itemText}
+                data-state={isSidebarOpen}
+                data-testid="item-text"
+              >
+                {item.text}
+              </span>
+            </button>
+          )}
           {!isEditing && (
             <ItemMenuButton
               item={{ ...item, menuItems }}
               hasSubItems={hasSubItems}
               menuConfig={menuConfig}
               expandedItems={expandedItems}
-              toggleSubItems={toggleSubItems}
               handleMenuOpenChange={handleMenuOpenChange}
               classes={classes}
             />

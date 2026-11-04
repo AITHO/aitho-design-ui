@@ -27,7 +27,7 @@ export default defineConfig({
         },
         fonts: {
           custom: { value: "'quatro', sans-serif" },
-          mono: { value: "'Space Mono', serif" },
+          mono: { value: "'Space Mono', monospace" },
         },
         colors: {
           "color-primary": { value: "var(--color-primary)" },
@@ -72,6 +72,7 @@ export default defineConfig({
           dark: { value: "var(--dark)" },
           transparent: { value: "var(--transparent)" },
           "background-popup": { value: "var(--background-popup)" },
+          "text-on-popup": { value: "var(--text-on-popup)" },
           "checkbox-square-color": { value: "var(--checkbox-square-color)" },
           "table-base-color": { value: "var(--table-base-color)" },
           "table-striped-color": { value: "var(--table-striped-color)" },

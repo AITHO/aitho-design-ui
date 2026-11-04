@@ -4,6 +4,7 @@ const config: StorybookConfig = {
   stories: ["../docs/*.mdx", "../lib/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
 
   addons: [
+    "@storybook/addon-a11y",
     "@storybook/addon-links",
     "@storybook/addon-themes",
     "@chromatic-com/storybook",

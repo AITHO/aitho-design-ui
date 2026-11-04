@@ -63,12 +63,16 @@ export const tableRecipe = defineSlotRecipe({
     "header",
     "sortIcons",
     "pagination",
+    "caption",
     ...POSITIONS,
   ],
   base: {
     root: {
       display: "block",
       width: "100%",
+    },
+    caption: {
+      srOnly: true,
     },
     table: {
       display: "table",

@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useEffect,
   useRef,
+  useImperativeHandle,
   memo,
 } from "react";
 import { sidebar, SidebarVariantProps } from "@styled/recipes";
@@ -113,280 +114,287 @@ export type SidebarProps = SidebarVariantProps &
  * />
  */
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  behaviour,
-  anchor,
-  open = true,
-  expandOnHover = false,
-  menuConfig,
-  header,
-  footer,
-  items = [],
-  onOpenChange,
-  children,
-  openLastSelected = false,
-  lastSelectedKey,
-  variant,
-  onItemTextChange,
-  itemsLoading = false,
-  position,
-  ...props
-}) => {
-  const asideRef = useRef<HTMLElement>(null);
-  const navRef = useRef<HTMLElement>(null);
-  const divRef = useRef<HTMLDivElement>(null);
-  const selectedItemRef = useRef<HTMLDivElement | null>(null);
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [prevIsOpenValue, setPrevIsOpenValue] = useState<boolean | undefined>(
-    undefined,
-  );
-  const [prevLastSelectedKey, setPrevLastSelectedKey] =
-    useState(lastSelectedKey);
-  const [hasExpandedForKey, setHasExpandedForKey] = useState(false);
-  const [interactionState, setInteractionState] = useState({
-    isMenuOpen: false,
-    isHovered: false,
-  });
+export const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
+  (
+    {
+      behaviour,
+      anchor,
+      open = true,
+      expandOnHover = false,
+      menuConfig,
+      header,
+      footer,
+      items = [],
+      onOpenChange,
+      children,
+      openLastSelected = false,
+      lastSelectedKey,
+      variant,
+      onItemTextChange,
+      itemsLoading = false,
+      position,
+      ...props
+    },
+    ref,
+  ) => {
+    const asideRef = useRef<HTMLElement>(null);
+    useImperativeHandle(ref, () => asideRef.current as HTMLElement);
+    const navRef = useRef<HTMLElement>(null);
+    const divRef = useRef<HTMLDivElement>(null);
+    const selectedItemRef = useRef<HTMLDivElement | null>(null);
+    const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+    const [prevIsOpenValue, setPrevIsOpenValue] = useState<boolean | undefined>(
+      undefined,
+    );
+    const [prevLastSelectedKey, setPrevLastSelectedKey] =
+      useState(lastSelectedKey);
+    const [hasExpandedForKey, setHasExpandedForKey] = useState(false);
+    const [interactionState, setInteractionState] = useState({
+      isMenuOpen: false,
+      isHovered: false,
+    });
 
-  const isOpen = useMemo(() => {
-    if (!expandOnHover) return open;
-    return interactionState.isMenuOpen || interactionState.isHovered;
-  }, [expandOnHover, open, interactionState]);
+    const isOpen = useMemo(() => {
+      if (!expandOnHover) return open;
+      return interactionState.isMenuOpen || interactionState.isHovered;
+    }, [expandOnHover, open, interactionState]);
 
-  // Update state during render when isOpen changes
-  if (isOpen !== prevIsOpenValue) {
-    setPrevIsOpenValue(isOpen);
-    if (!isOpen) {
-      setExpandedItems(new Set());
+    // Update state during render when isOpen changes
+    if (isOpen !== prevIsOpenValue) {
+      setPrevIsOpenValue(isOpen);
+      if (!isOpen) {
+        setExpandedItems(new Set());
+        setHasExpandedForKey(false);
+      }
+    }
+
+    // Expand parent items when sidebar opens with a selected item
+    if (openLastSelected && lastSelectedKey && isOpen && !hasExpandedForKey) {
+      const parentKeys = findParentKeys(items, lastSelectedKey);
+      setExpandedItems(new Set(parentKeys));
+      setHasExpandedForKey(true);
+    }
+
+    // Reset flag when lastSelectedKey changes
+    if (lastSelectedKey !== prevLastSelectedKey) {
+      setPrevLastSelectedKey(lastSelectedKey);
       setHasExpandedForKey(false);
     }
-  }
 
-  // Expand parent items when sidebar opens with a selected item
-  if (openLastSelected && lastSelectedKey && isOpen && !hasExpandedForKey) {
-    const parentKeys = findParentKeys(items, lastSelectedKey);
-    setExpandedItems(new Set(parentKeys));
-    setHasExpandedForKey(true);
-  }
+    const sidebarBehaviour = useMemo(
+      () => (expandOnHover ? "hover" : behaviour),
+      [expandOnHover, behaviour],
+    );
 
-  // Reset flag when lastSelectedKey changes
-  if (lastSelectedKey !== prevLastSelectedKey) {
-    setPrevLastSelectedKey(lastSelectedKey);
-    setHasExpandedForKey(false);
-  }
+    // The drawer behaviour is always a fixed full-height panel.
+    const sidebarPosition = useMemo(
+      () => (sidebarBehaviour === "drawer" ? "fixed" : position),
+      [sidebarBehaviour, position],
+    );
 
-  const sidebarBehaviour = useMemo(
-    () => (expandOnHover ? "hover" : behaviour),
-    [expandOnHover, behaviour],
-  );
+    const classes = useMemo(
+      () =>
+        sidebar({
+          behaviour: sidebarBehaviour,
+          anchor,
+          variant,
+          position: sidebarPosition,
+          ...props,
+        }),
+      [sidebarBehaviour, anchor, variant, props, sidebarPosition],
+    );
 
-  // The drawer behaviour is always a fixed full-height panel.
-  const sidebarPosition = useMemo(
-    () => (sidebarBehaviour === "drawer" ? "fixed" : position),
-    [sidebarBehaviour, position],
-  );
+    const handleHoverChange = useCallback(
+      (hovering: boolean) => {
+        if (!expandOnHover) return;
 
-  const classes = useMemo(
-    () =>
-      sidebar({
-        behaviour: sidebarBehaviour,
-        anchor,
-        variant,
-        position: sidebarPosition,
-        ...props,
-      }),
-    [sidebarBehaviour, anchor, variant, props, sidebarPosition],
-  );
+        setInteractionState((prev) => ({
+          ...prev,
+          isHovered: hovering,
+        }));
 
-  const handleHoverChange = useCallback(
-    (hovering: boolean) => {
-      if (!expandOnHover) return;
-
-      setInteractionState((prev) => ({
-        ...prev,
-        isHovered: hovering,
-      }));
-
-      if (!interactionState.isMenuOpen) {
-        onOpenChange?.(hovering);
-      }
-    },
-    [
-      expandOnHover,
-      onOpenChange,
-      interactionState.isMenuOpen,
-      setInteractionState,
-    ],
-  );
-
-  const debouncedHoverChange = useMemo(
-    () => debounce(handleHoverChange, HOVER_DEBOUNCE_MS),
-    [handleHoverChange],
-  );
-
-  const handleMenuOpenChange = useCallback(
-    (menuOpen: boolean) => {
-      setInteractionState((prev) => ({
-        ...prev,
-        isMenuOpen: menuOpen,
-      }));
-    },
-    [setInteractionState],
-  );
-
-  const handleMouseEnter = useCallback(() => {
-    debouncedHoverChange(true);
-  }, [debouncedHoverChange]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!interactionState.isMenuOpen) {
-      debouncedHoverChange(false);
-    }
-  }, [debouncedHoverChange, interactionState.isMenuOpen]);
-
-  useEffect(() => {
-    if (!openLastSelected || !lastSelectedKey || !isOpen) return;
-
-    const timeoutId = setTimeout(() => {
-      if (selectedItemRef.current && navRef.current) {
-        selectedItemRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, MENU_CLOSE_DELAY_MS);
-
-    return () => clearTimeout(timeoutId);
-  }, [openLastSelected, lastSelectedKey, isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!expandOnHover || !isOpen) return;
-
-      const clickedElement = event.target as Node;
-      const isOutside = [asideRef, navRef, divRef].every(
-        (ref) => ref.current && !ref.current.contains(clickedElement),
-      );
-
-      // This is a hack to prevent the sidebar from closing when clicking on the dropdown menu items. Ideally there should be only one dropdown menu open at a time.
-      const dropDownTrick =
-        document.querySelectorAll(".aitho-dropdown-menu__content").length > 0;
-
-      if (isOutside && !dropDownTrick) {
-        setInteractionState({
-          isMenuOpen: false,
-          isHovered: false,
-        });
-        onOpenChange?.(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [expandOnHover, isOpen, onOpenChange]);
-
-  useEffect(() => {
-    return debouncedHoverChange.cancel();
-  }, [debouncedHoverChange]);
-
-  const toggleSubItems = useCallback(
-    (itemKey: string) => {
-      setExpandedItems((prev) => {
-        const next = new Set(prev);
-        if (next.has(itemKey)) {
-          next.delete(itemKey);
-        } else {
-          next.add(itemKey);
+        if (!interactionState.isMenuOpen) {
+          onOpenChange?.(hovering);
         }
-        return next;
-      });
-    },
-    [setExpandedItems],
-  );
+      },
+      [
+        expandOnHover,
+        onOpenChange,
+        interactionState.isMenuOpen,
+        setInteractionState,
+      ],
+    );
 
-  const renderBody = useMemo(() => {
-    if (children) {
-      return (
-        <section ref={navRef} className={classes.nav}>
-          {children}
-        </section>
-      );
-    }
+    const debouncedHoverChange = useMemo(
+      () => debounce(handleHoverChange, HOVER_DEBOUNCE_MS),
+      [handleHoverChange],
+    );
 
-    if (itemsLoading) {
-      return (
-        <section ref={navRef} className={classes.nav}>
-          <Spinner type="circularFlashingDots" size="sm" />
-        </section>
-      );
-    }
+    const handleMenuOpenChange = useCallback(
+      (menuOpen: boolean) => {
+        setInteractionState((prev) => ({
+          ...prev,
+          isMenuOpen: menuOpen,
+        }));
+      },
+      [setInteractionState],
+    );
 
-    if (items.length > 0) {
-      return (
-        <nav ref={navRef} className={classes.nav}>
-          {items.map((item) => (
-            <SidebarItemComponent
-              key={item.key}
-              item={item}
-              level={0}
-              isOpen={isOpen}
-              expandedItems={expandedItems}
-              lastSelectedKey={lastSelectedKey}
-              toggleSubItems={toggleSubItems}
-              classes={classes}
-              menuConfig={menuConfig}
-              handleMenuOpenChange={handleMenuOpenChange}
-              selectedItemRef={selectedItemRef}
-              onItemTextChange={onItemTextChange}
-            />
-          ))}
-        </nav>
-      );
-    }
+    const handleMouseEnter = useCallback(() => {
+      debouncedHoverChange(true);
+    }, [debouncedHoverChange]);
 
-    return null;
-  }, [
-    children,
-    itemsLoading,
-    items,
-    isOpen,
-    expandedItems,
-    lastSelectedKey,
-    toggleSubItems,
-    classes,
-    menuConfig,
-    handleMenuOpenChange,
-    onItemTextChange,
-  ]);
+    const handleMouseLeave = useCallback(() => {
+      if (!interactionState.isMenuOpen) {
+        debouncedHoverChange(false);
+      }
+    }, [debouncedHoverChange, interactionState.isMenuOpen]);
 
-  return (
-    <>
-      {sidebarBehaviour === "drawer" && isOpen && (
-        <div
-          className={classes.overlay}
-          data-testid="sidebar-overlay"
-          aria-hidden="true"
-          onClick={() => onOpenChange?.(false)}
-        />
-      )}
-      <aside
-        {...props}
-        ref={asideRef}
-        className={classes.root}
-        data-state={isOpen ? "open" : "closed"}
-        data-direction={anchor}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className={classes.container} ref={divRef}>
-          {header && <header className={classes.header}>{header}</header>}
-          {renderBody}
-          {footer && <footer className={classes.footer}>{footer}</footer>}
-        </div>
-      </aside>
-    </>
-  );
-};
+    useEffect(() => {
+      if (!openLastSelected || !lastSelectedKey || !isOpen) return;
+
+      const timeoutId = setTimeout(() => {
+        if (selectedItemRef.current && navRef.current) {
+          selectedItemRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }, MENU_CLOSE_DELAY_MS);
+
+      return () => clearTimeout(timeoutId);
+    }, [openLastSelected, lastSelectedKey, isOpen]);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (!expandOnHover || !isOpen) return;
+
+        const clickedElement = event.target as Node;
+        const isOutside = [asideRef, navRef, divRef].every(
+          (ref) => ref.current && !ref.current.contains(clickedElement),
+        );
+
+        // This is a hack to prevent the sidebar from closing when clicking on the dropdown menu items. Ideally there should be only one dropdown menu open at a time.
+        const dropDownTrick =
+          document.querySelectorAll(".aitho-dropdown-menu__content").length > 0;
+
+        if (isOutside && !dropDownTrick) {
+          setInteractionState({
+            isMenuOpen: false,
+            isHovered: false,
+          });
+          onOpenChange?.(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }, [expandOnHover, isOpen, onOpenChange]);
+
+    useEffect(() => {
+      return debouncedHoverChange.cancel();
+    }, [debouncedHoverChange]);
+
+    const toggleSubItems = useCallback(
+      (itemKey: string) => {
+        setExpandedItems((prev) => {
+          const next = new Set(prev);
+          if (next.has(itemKey)) {
+            next.delete(itemKey);
+          } else {
+            next.add(itemKey);
+          }
+          return next;
+        });
+      },
+      [setExpandedItems],
+    );
+
+    const renderBody = useMemo(() => {
+      if (children) {
+        return (
+          <section ref={navRef} className={classes.nav}>
+            {children}
+          </section>
+        );
+      }
+
+      if (itemsLoading) {
+        return (
+          <section ref={navRef} className={classes.nav}>
+            <Spinner type="circularFlashingDots" size="sm" />
+          </section>
+        );
+      }
+
+      if (items.length > 0) {
+        return (
+          <nav ref={navRef} className={classes.nav}>
+            {items.map((item) => (
+              <SidebarItemComponent
+                key={item.key}
+                item={item}
+                level={0}
+                isOpen={isOpen}
+                expandedItems={expandedItems}
+                lastSelectedKey={lastSelectedKey}
+                toggleSubItems={toggleSubItems}
+                classes={classes}
+                menuConfig={menuConfig}
+                handleMenuOpenChange={handleMenuOpenChange}
+                selectedItemRef={selectedItemRef}
+                onItemTextChange={onItemTextChange}
+              />
+            ))}
+          </nav>
+        );
+      }
+
+      return null;
+    }, [
+      children,
+      itemsLoading,
+      items,
+      isOpen,
+      expandedItems,
+      lastSelectedKey,
+      toggleSubItems,
+      classes,
+      menuConfig,
+      handleMenuOpenChange,
+      onItemTextChange,
+    ]);
+
+    return (
+      <>
+        {sidebarBehaviour === "drawer" && isOpen && (
+          <div
+            className={classes.overlay}
+            data-testid="sidebar-overlay"
+            aria-hidden="true"
+            onClick={() => onOpenChange?.(false)}
+          />
+        )}
+        <aside
+          {...props}
+          ref={asideRef}
+          className={classes.root}
+          data-state={isOpen ? "open" : "closed"}
+          data-direction={anchor}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className={classes.container} ref={divRef}>
+            {header && <header className={classes.header}>{header}</header>}
+            {renderBody}
+            {footer && <footer className={classes.footer}>{footer}</footer>}
+          </div>
+        </aside>
+      </>
+    );
+  },
+);
 
 Sidebar.displayName = "Sidebar";
 

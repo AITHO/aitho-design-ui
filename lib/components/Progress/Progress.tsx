@@ -15,12 +15,10 @@ export type ProgressProps = ProgressVariantProps &
  * @param borderRadius - *(optional)* The border radius of the component. Options: 'none', 'sm', 'md', 'lg'.
  */
 
-export const Progress: React.FC<ProgressProps> = ({
-  variant,
-  size,
-  borderRadius,
-  ...props
-}) => {
+export const Progress = React.forwardRef<
+  React.ComponentRef<typeof ProgressPrimitive.Root>,
+  ProgressProps
+>(({ variant, size, borderRadius, ...props }, ref) => {
   const classes = progress({ variant, size, borderRadius });
   const max = props.max ?? 100;
   const value = props.value ?? 0;
@@ -28,6 +26,7 @@ export const Progress: React.FC<ProgressProps> = ({
 
   return (
     <ProgressPrimitive.Root
+      ref={ref}
       tabIndex={0}
       {...props}
       className={classes.root}
@@ -42,6 +41,6 @@ export const Progress: React.FC<ProgressProps> = ({
       />
     </ProgressPrimitive.Root>
   );
-};
+});
 
 Progress.displayName = "Progress";

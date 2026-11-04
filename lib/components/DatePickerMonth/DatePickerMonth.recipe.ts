@@ -18,7 +18,7 @@ export const datePickerMonthRecipe = defineSlotRecipe({
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      borderBottom: "1px solid #e0e0e0",
+      borderBottom: "1px solid var(--border-color)",
       padding: "4px 12px",
     },
     monthGrid: {

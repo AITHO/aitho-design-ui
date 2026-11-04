@@ -157,4 +157,59 @@ describe("Pagination", () => {
       expect(screen.queryByTestId("Next")).toBeNull();
     });
   });
+
+  describe("accessibility", () => {
+    it("should render a labelled navigation landmark", () => {
+      renderPagination();
+
+      expect(
+        screen.getByRole("navigation", { name: "Pagination" }),
+      ).toBeInTheDocument();
+    });
+
+    it("should give the icon buttons an accessible name", () => {
+      renderPagination({ showFirstLast: true, showPrevNext: true, page: 3 });
+
+      expect(screen.getByTestId("First")).toHaveAccessibleName("First page");
+      expect(screen.getByTestId("Prev")).toHaveAccessibleName("Previous page");
+      expect(screen.getByTestId("Next")).toHaveAccessibleName("Next page");
+      expect(screen.getByTestId("Last")).toHaveAccessibleName("Last page");
+    });
+
+    it("should mark the current page with aria-current", () => {
+      renderPagination({ page: 2 });
+
+      expect(screen.getByText("2").closest("button")).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      expect(screen.getByText("1").closest("button")).not.toHaveAttribute(
+        "aria-current",
+      );
+    });
+
+    it("should use the custom labels when provided", () => {
+      renderPagination({
+        showPrevNext: true,
+        page: 2,
+        navigationLabel: "Paginazione",
+        previousLabel: "Pagina precedente",
+        nextLabel: "Pagina successiva",
+        pageLabel: (page) => `Pagina ${page}`,
+      });
+
+      expect(
+        screen.getByRole("navigation", { name: "Paginazione" }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("Prev")).toHaveAccessibleName(
+        "Pagina precedente",
+      );
+      expect(screen.getByTestId("Next")).toHaveAccessibleName(
+        "Pagina successiva",
+      );
+      expect(
+        screen.getByRole("button", { name: "Pagina 3" }),
+      ).toBeInTheDocument();
+    });
+  });
 });

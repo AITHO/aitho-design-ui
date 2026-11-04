@@ -74,7 +74,7 @@ export const inputRecipe = defineSlotRecipe({
         borderRadius: "radius-sm",
       },
       _placeholder: {
-        color: "background-popup",
+        color: "text-secondary",
       },
       _hover: {
         bg: "background-secondary",

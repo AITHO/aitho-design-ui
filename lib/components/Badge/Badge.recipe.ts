@@ -62,27 +62,30 @@ export const badgeRecipe = defineSlotRecipe({
           bg: "color-attention",
         },
       },
+      // Status colors are dark in the light theme and bright in the dark one:
+      // text-on-primary flips with them (white / near-black) to keep 4.5:1.
       error: {
         badge: {
-          color: "white",
+          color: "text-on-primary",
           bg: "color-error",
         },
       },
       info: {
         badge: {
-          color: "white",
+          color: "text-on-primary",
           bg: "color-info",
         },
       },
       success: {
         badge: {
-          color: "white",
+          color: "text-on-primary",
           bg: "color-success",
         },
       },
+      // Warning is a bright yellow in both themes, so its text stays dark.
       warning: {
         badge: {
-          color: "text-primary",
+          color: "dark",
           bg: "color-warning",
         },
       },

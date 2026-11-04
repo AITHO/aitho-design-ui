@@ -28,7 +28,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "panda codegen && tsc && vite build",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "panda codegen && tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
@@ -38,6 +39,7 @@
     "prepare": "husky && panda codegen",
     "codegen": "panda codegen",
     "component:new": "tsx utils/panda-components-generator.ts",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:coverage:ci": "vitest run --coverage"
@@ -47,9 +49,22 @@
   },
   "module": "./dist/main.js",
   "types": "./dist/main.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.js",
+      "default": "./dist/main.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist",
-    "styled-system"
+    "styled-system",
+    "NOTICE",
+    "TRADEMARK.md"
   ],
   "peerDependencies": {
     "react": "^18 || ^19",
@@ -70,7 +85,6 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "case-anything": "^3.1.2",
     "nanoid": "^5.1.7",
     "perfect-debounce": "^2.1.0"
   },
@@ -91,11 +105,11 @@
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.1.2",
     "@vitest/ui": "^4.1.2",
     "autoprefixer": "^10.4.27",
+    "case-anything": "^3.1.2",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",

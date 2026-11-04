@@ -1,5 +1,8 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
+import { act } from "react";
+import { hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { BottomSheet, BottomSheetProps } from "./BottomSheet";
 
 const renderBottomSheet = (props: Partial<BottomSheetProps> = {}) => {
@@ -113,5 +116,34 @@ describe("BottomSheet", () => {
     renderBottomSheet({ fullScreen: true });
 
     expect(screen.queryByTestId("bottom-sheet-grabber")).toBeNull();
+  });
+
+  it("should hydrate an initially open sheet without mismatch and focus the panel", async () => {
+    const ui = (
+      <BottomSheet isOpen onClose={vi.fn()} title="Sheet title">
+        <div>Sheet content</div>
+      </BottomSheet>
+    );
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(ui);
+    document.body.appendChild(container);
+    const onRecoverableError = vi.fn();
+
+    expect(container.innerHTML).toBe("");
+
+    let root: Root | undefined;
+    try {
+      await act(async () => {
+        root = hydrateRoot(container, ui, { onRecoverableError });
+      });
+
+      expect(onRecoverableError).not.toHaveBeenCalled();
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(screen.getByRole("dialog")).toHaveFocus();
+    } finally {
+      // hydrateRoot is not tracked by Testing Library's automatic cleanup.
+      act(() => root?.unmount());
+      container.remove();
+    }
   });
 });

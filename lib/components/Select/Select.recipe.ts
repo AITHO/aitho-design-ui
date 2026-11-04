@@ -40,7 +40,7 @@ export const selectRecipe = defineSlotRecipe({
         flexShrink: 0,
       },
       _placeholder: {
-        color: "background-popup",
+        color: "text-secondary",
       },
     },
 

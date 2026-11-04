@@ -153,7 +153,7 @@ describe("SidebarItemComponent", () => {
       item: { ...mockItem, onClick: leafItemOnClick },
     });
 
-    fireEvent.click(screen.getByTestId("sidebar-item-button"));
+    fireEvent.click(screen.getByTestId("sidebar-item-action"));
     expect(leafItemOnClick).toHaveBeenCalled();
   });
 
@@ -166,7 +166,7 @@ describe("SidebarItemComponent", () => {
 
     expect(screen.queryByTestId("sub-items-container")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("sidebar-item-button"));
+    fireEvent.click(screen.getByTestId("sidebar-item-action"));
     expect(nestedToggleSubItems).toHaveBeenCalledWith("parent");
 
     rerender(
@@ -295,5 +295,140 @@ describe("SidebarItemComponent", () => {
     expect(inputItemOnClick).not.toHaveBeenCalled();
     expect(inputToggleSubItems).not.toHaveBeenCalled();
     expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+
+  describe("accessibility", () => {
+    const INTERACTIVE = "button, input, a, select, textarea, [tabindex]";
+
+    it("should expose a native button named after the item", () => {
+      renderSidebarItemComponent();
+
+      const action = screen.getByRole("button", { name: "Test Item" });
+      expect(action.tagName).toBe("BUTTON");
+      expect(action).toHaveAttribute("type", "button");
+    });
+
+    it("should keep the row itself non-interactive", () => {
+      renderSidebarItemComponent();
+
+      const row = screen.getByTestId("sidebar-item-button");
+      expect(row).not.toHaveAttribute("role");
+      expect(row).not.toHaveAttribute("tabindex");
+    });
+
+    it("should disable the button of a disabled item", () => {
+      renderSidebarItemComponent({ item: { ...mockItem, disabled: true } });
+
+      expect(screen.getByTestId("sidebar-item-action")).toBeDisabled();
+    });
+
+    it("should activate a leaf item exactly once from its button", () => {
+      const onClick = vi.fn();
+      renderSidebarItemComponent({ item: { ...mockItem, onClick } });
+
+      fireEvent.click(screen.getByRole("button", { name: "Test Item" }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not nest interactive controls inside the item button", () => {
+      renderSidebarItemComponent({
+        menuConfig: { visible: true, defaultItems: [] },
+      });
+
+      const action = screen.getByTestId("sidebar-item-action");
+      expect(action.querySelector(INTERACTIVE)).toBeNull();
+    });
+
+    it("should render the menu button as a sibling, not a descendant, of the item button", () => {
+      const onClick = vi.fn();
+      renderSidebarItemComponent({
+        item: { ...mockItem, onClick },
+        menuConfig: { visible: true, defaultItems: [] },
+      });
+
+      const action = screen.getByTestId("sidebar-item-action");
+      const menuButton = screen
+        .getAllByRole("button")
+        .find((button) => button !== action);
+
+      expect(menuButton).toBeDefined();
+      expect(action.contains(menuButton as HTMLElement)).toBe(false);
+
+      fireEvent.click(menuButton as HTMLElement);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it("should not wrap the rename controls in a button", () => {
+      renderSidebarItemComponent({
+        item: { ...mockItem, editable: true, menuItems: defaultMenuItems },
+        menuConfig: {
+          visible: true,
+          customIcon: <Pencil1Icon data-testid="icon-menu-test" />,
+        },
+      });
+
+      fireEvent.click(screen.getByTestId("icon-menu-test"));
+
+      expect(screen.queryByTestId("sidebar-item-action")).toBeNull();
+      const row = screen.getByTestId("sidebar-item-button");
+      row.querySelectorAll(INTERACTIVE).forEach((control) => {
+        expect(control.parentElement?.closest("button")).toBeNull();
+      });
+      expect(screen.getByRole("textbox")).toBeInTheDocument();
+      expect(screen.getByTestId("save-button")).toBeInTheDocument();
+      expect(screen.getByTestId("cancel-button")).toBeInTheDocument();
+    });
+
+    it("should mark the selected leaf item as the current page", () => {
+      renderSidebarItemComponent({ item: { ...mockItem, selected: true } });
+
+      expect(screen.getByTestId("sidebar-item-action")).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+    });
+
+    it("should expose and toggle the expanded state of an item with sub-items", () => {
+      const toggleSubItems = vi.fn();
+      const { rerender } = renderSidebarItemComponent({
+        item: mockNestedItem,
+        toggleSubItems,
+      });
+
+      const parent = screen.getByRole("button", { name: "Parent Item" });
+      expect(parent).toHaveAttribute("aria-expanded", "false");
+      expect(parent).not.toHaveAttribute("aria-current");
+
+      fireEvent.click(parent);
+      expect(toggleSubItems).toHaveBeenCalledTimes(1);
+      expect(toggleSubItems).toHaveBeenCalledWith("parent");
+
+      rerender(
+        <SidebarItemComponent
+          {...defaultProps}
+          item={mockNestedItem}
+          expandedItems={new Set(["parent"])}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: "Parent Item" }),
+      ).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("should let clicks on the arrow indicator fall through to the item button", () => {
+      renderSidebarItemComponent({ item: mockNestedItem });
+
+      expect(screen.getByTestId("sub-items-indicator")).toHaveStyle({
+        pointerEvents: "none",
+      });
+    });
+
+    it("should not attach a mouse-only click handler to the row", () => {
+      const onClick = vi.fn();
+      renderSidebarItemComponent({ item: { ...mockItem, onClick } });
+
+      fireEvent.click(screen.getByTestId("sidebar-item-button"));
+      expect(onClick).not.toHaveBeenCalled();
+    });
   });
 });
