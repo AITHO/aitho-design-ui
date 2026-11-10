@@ -5,7 +5,13 @@ export const tooltipRecipe = defineSlotRecipe({
   slots: ["content", "trigger", "arrow"],
   base: {
     trigger: {
-      color: "background-popup",
+      // The trigger wraps any content (an icon, a cell value): it takes the surrounding text colour.
+      // It used to be the popup background, which made text inside a tooltip unreadable.
+      color: "inherit",
+      font: "inherit",
+      background: "none",
+      border: "none",
+      padding: "0",
       cursor: "pointer",
       display: "flex",
       alignItems: "center",

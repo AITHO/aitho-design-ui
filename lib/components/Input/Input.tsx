@@ -95,6 +95,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       type,
       value,
       id,
+      className,
       "aria-describedby": ariaDescribedBy,
       ...props
     },
@@ -109,6 +110,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         .filter(Boolean)
         .join(" ") || undefined;
     const classes = input({ borderRadius, borderColor });
+    // A caller's class adds to the field style instead of replacing it (it used to drop the
+    // whole recipe, native number spinners included).
+    const fieldClassName = className
+      ? `${classes.inputField} ${className}`
+      : classes.inputField;
     const internalRef = React.useRef<HTMLInputElement>(null);
     const inputRef = (ref as React.RefObject<HTMLInputElement>) ?? internalRef;
 
@@ -184,7 +190,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 min={props.min === undefined ? undefined : String(props.min)}
                 max={props.max === undefined ? undefined : String(props.max)}
                 onValueChange={emitDate}
-                fieldClassName={classes.inputField}
+                fieldClassName={fieldClassName}
                 iconClassName={classes.iconStyle}
                 aria-invalid={error || undefined}
                 aria-required={required || undefined}
@@ -195,7 +201,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 id={uniqueId}
                 ref={inputRef}
                 data-testid="input"
-                className={classes.inputField}
+                className={fieldClassName}
                 value={val}
                 onChange={onValChange}
                 type={isPasswordVisible ? "text" : type}
