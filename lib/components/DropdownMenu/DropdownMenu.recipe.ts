@@ -15,6 +15,8 @@ export const dropdownMenuRecipe = defineSlotRecipe({
   ],
   base: {
     content: {
+      // Above fixed app chrome (a sidebar, a sticky header), like Select and Tooltip.
+      zIndex: "9999",
       padding: "4px",
       minWidth: "13.125rem",
       maxWidth: "18.75rem",

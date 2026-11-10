@@ -13,7 +13,8 @@ export const labelRecipe = defineSlotRecipe({
     root: {
       display: "flex",
       alignItems: "center",
-      justifyContent: "center",
+      // Text starts at the left edge: a full-width label (form column) was centred over its field.
+      justifyContent: "flex-start",
       position: "relative",
       fontWeight: "600",
       _disabled: {

@@ -5,6 +5,8 @@ export const popoverRecipe = defineSlotRecipe({
   slots: ["trigger", "content", "close", "arrow"],
   base: {
     content: {
+      // Above fixed app chrome (a sidebar, a sticky header), like Select and Tooltip.
+      zIndex: "9999",
       display: "flex",
       flexDirection: "column",
       gap: "1rem",
