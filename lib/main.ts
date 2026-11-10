@@ -38,6 +38,10 @@ export {
   type CodeBlockProps,
 } from "./components/CodeBlock/CodeBlock";
 export {
+  DatePicker,
+  type DatePickerProps,
+} from "./components/DatePicker/DatePicker";
+export {
   DatePickerMonth,
   type DatePickerMonthProps,
 } from "./components/DatePickerMonth/DatePickerMonth";

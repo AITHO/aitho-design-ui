@@ -6,6 +6,7 @@ import {
 } from "@radix-ui/react-icons";
 import { input, type InputVariantProps } from "@styled/recipes";
 import React, { useState } from "react";
+import { DatePicker } from "../DatePicker/DatePicker";
 import { Label } from "../Label/Label";
 import "./Input.css";
 
@@ -129,6 +130,27 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       }
     };
 
+    // The date field is the library DatePicker, not the browser's: callers still get a change
+    // event whose target.value is YYYY-MM-DD, like a native date input.
+    const emitDate = (iso: string) => {
+      setVal(iso);
+      if (!onChange) return;
+      const target = {
+        value: iso,
+        name: props.name ?? "",
+        id: uniqueId,
+        type: "date",
+      };
+      onChange({
+        target,
+        currentTarget: target,
+        type: "change",
+        preventDefault: () => undefined,
+        stopPropagation: () => undefined,
+        persist: () => undefined,
+      } as unknown as React.ChangeEvent<HTMLInputElement>);
+    };
+
     const deleteValue = () => {
       setVal("");
 
@@ -152,19 +174,37 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
 
           <div className={classes.inputContainer}>
-            <input
-              id={uniqueId}
-              ref={inputRef}
-              data-testid="input"
-              className={classes.inputField}
-              value={val}
-              onChange={onValChange}
-              type={isPasswordVisible ? "text" : type}
-              aria-invalid={error || undefined}
-              aria-required={required || undefined}
-              aria-describedby={describedBy}
-              {...props}
-            />
+            {type === "date" ? (
+              <DatePicker
+                {...props}
+                ref={inputRef}
+                id={uniqueId}
+                data-testid="input"
+                value={String(val ?? "")}
+                min={props.min === undefined ? undefined : String(props.min)}
+                max={props.max === undefined ? undefined : String(props.max)}
+                onValueChange={emitDate}
+                fieldClassName={classes.inputField}
+                iconClassName={classes.iconStyle}
+                aria-invalid={error || undefined}
+                aria-required={required || undefined}
+                aria-describedby={describedBy}
+              />
+            ) : (
+              <input
+                id={uniqueId}
+                ref={inputRef}
+                data-testid="input"
+                className={classes.inputField}
+                value={val}
+                onChange={onValChange}
+                type={isPasswordVisible ? "text" : type}
+                aria-invalid={error || undefined}
+                aria-required={required || undefined}
+                aria-describedby={describedBy}
+                {...props}
+              />
+            )}
             {inputSearch && type === "search" && (
               <>
                 {val === "" ? (

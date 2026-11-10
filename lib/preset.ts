@@ -6,6 +6,7 @@ import { bottomSheetRecipe } from "./components/BottomSheet/BottomSheet.recipe";
 import { buttonRecipe } from "./components/Button/Button.recipe";
 import { checkboxRecipe } from "./components/Checkbox/Checkbox.recipe";
 import { codeBlockRecipe } from "./components/CodeBlock/CodeBlock.recipe";
+import { datePickerRecipe } from "./components/DatePicker/DatePicker.recipe";
 import { datePickerMonthRecipe } from "./components/DatePickerMonth/DatePickerMonth.recipe";
 import { datePickerYearRecipe } from "./components/DatePickerYear/DatePickerYear.recipe";
 import { dialogRecipe } from "./components/Dialog/Dialog.recipe";
@@ -44,6 +45,7 @@ export const preset = definePreset({
       button: buttonRecipe,
       checkbox: checkboxRecipe,
       codeBlock: codeBlockRecipe,
+      datePicker: datePickerRecipe,
       datePickerMonth: datePickerMonthRecipe,
       datePickerYear: datePickerYearRecipe,
       dialog: dialogRecipe,
@@ -81,6 +83,7 @@ export const preset = definePreset({
       button: ["*"],
       checkbox: ["*"],
       codeBlock: ["*"],
+      datePicker: ["*"],
       datePickerMonth: ["*"],
       datePickerYear: ["*"],
       dialog: ["*"],
