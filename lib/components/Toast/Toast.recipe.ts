@@ -11,11 +11,12 @@ const SIZE_MAPS = {
   lg: { padding: "16px 16px 16px 18px", gap: "12px", fontSize: "md" },
 } as const;
 
-// Tone of the left border and the dot; the surface is the same for every variant.
+// Left border tone. Only warning and alert carry meaning; the others stay neutral, because apps
+// usually put their own status icon in the title (a blue edge on a success toast reads wrong).
 const VARIANT_TONES = {
-  base: "grey-light",
-  primary: "color-primary",
-  secondary: "color-attention",
+  base: "border-color",
+  primary: "border-color",
+  secondary: "border-color",
   warning: "color-warning",
   alert: "color-error",
 } as const;
@@ -74,25 +75,21 @@ export const toastRecipe = defineSlotRecipe({
       display: "flex",
       flexDirection: "row",
       alignItems: "flex-start",
-      maxWidth: "18.75rem",
+      // Room for a sentence-long message without wrapping every few words.
+      maxWidth: "24rem",
       backgroundColor: "background-secondary",
       color: "text-primary",
       borderWidth: "1px 1px 1px 3px",
       borderStyle: "solid",
       borderColor: "border-color",
       boxShadow: "overlay",
-      _before: {
-        content: '""',
-        width: "8px",
-        height: "8px",
-        marginTop: "6px",
-        borderRadius: "50%",
-        flexShrink: 0,
-      },
     },
     content: {
       display: "flex",
       flexDirection: "column",
+      // At least as tall as the close button and centred: a one-line toast reads balanced.
+      justifyContent: "center",
+      minHeight: "24px",
       gap: "2px",
       flex: 1,
       minWidth: 0,
@@ -126,7 +123,6 @@ export const toastRecipe = defineSlotRecipe({
         {
           root: {
             borderLeftColor: VARIANT_TONES[variant],
-            _before: { backgroundColor: VARIANT_TONES[variant] },
           },
           closeArea: CLOSE_AREA,
         },

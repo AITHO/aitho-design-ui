@@ -128,24 +128,27 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
               {children}
             </TriggerElement>
           </TooltipPrimitive.Trigger>
-          <TooltipPrimitive.Content
-            className={classes.content}
-            style={{
-              color: contentColor,
-              backgroundColor: contentBackgroundColor,
-            }}
-            sideOffset={sideOffset}
-            side={side}
-            align={align}
-          >
-            {textContent}
-            <TooltipPrimitive.Arrow
+          {/* Portal: inside tables or scroll areas the tooltip was clipped and covered by neighbours */}
+          <TooltipPrimitive.Portal>
+            <TooltipPrimitive.Content
+              className={classes.content}
               style={{
-                fill: contentBackgroundColor,
+                color: contentColor,
+                backgroundColor: contentBackgroundColor,
               }}
-              className={classes.arrow}
-            />
-          </TooltipPrimitive.Content>
+              sideOffset={sideOffset}
+              side={side}
+              align={align}
+            >
+              {textContent}
+              <TooltipPrimitive.Arrow
+                style={{
+                  fill: contentBackgroundColor,
+                }}
+                className={classes.arrow}
+              />
+            </TooltipPrimitive.Content>
+          </TooltipPrimitive.Portal>
         </TooltipPrimitive.Root>
       </TooltipPrimitive.Provider>
     );

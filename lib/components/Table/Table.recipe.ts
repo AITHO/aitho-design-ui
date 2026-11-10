@@ -89,7 +89,9 @@ export const tableRecipe = defineSlotRecipe({
       position: "relative",
       padding: "10px 14px",
       textAlign: "left",
-      whiteSpace: "nowrap",
+      // Labels wrap instead of running into the next column when columns are narrow.
+      whiteSpace: "normal",
+      overflowWrap: "break-word",
       fontSize: "xs",
       fontWeight: "semibold",
       color: "text-secondary",
@@ -220,7 +222,8 @@ export const tableRecipe = defineSlotRecipe({
   defaultVariants: {
     paginationPosition: "bottom",
     variant: "primary",
-    sideBorders: false,
+    // Framed by default: a table without its own border blends into the card around it.
+    sideBorders: true,
     bottomBorders: true,
   },
 });

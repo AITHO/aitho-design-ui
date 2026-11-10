@@ -13,10 +13,14 @@ export const tooltipRecipe = defineSlotRecipe({
       position: "relative",
       userSelect: "none",
     },
-    // Inverted colors, so it reads as a tooltip in both themes.
+    // A raised surface in the theme's own colors (inverted colors gave a white tooltip in dark mode).
     content: {
-      color: "background-primary",
-      backgroundColor: "text-primary",
+      color: "text-primary",
+      backgroundColor: "background-tertiary",
+      border: "1px solid",
+      borderColor: "border-color",
+      // Rendered in a portal: above tables, sticky headers and dialogs.
+      zIndex: 9999,
       maxWidth: "15.625rem",
       borderRadius: "radius-sm",
       padding: "6px 10px",
@@ -33,7 +37,7 @@ export const tooltipRecipe = defineSlotRecipe({
       _closed: { animation: "fadeOut 0.1s ease-in" },
     },
     arrow: {
-      fill: "text-primary",
+      fill: "background-tertiary",
     },
   },
   variants: {

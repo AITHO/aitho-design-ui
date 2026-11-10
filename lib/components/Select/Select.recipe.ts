@@ -96,6 +96,10 @@ export const selectRecipe = defineSlotRecipe({
     item: {
       position: "relative",
       padding: "0 0.625rem",
+      // Transparent 1px edges + padding-box background: adjacent filled rows (hover next to
+      // selected) get a 2px gap without changing the row height Select.tsx relies on.
+      borderBlock: "1px solid transparent",
+      backgroundClip: "padding-box",
       // Matches the per-option height Select.tsx uses to compute optionsShows.
       height: "2.188rem",
       cursor: "pointer",
@@ -115,6 +119,8 @@ export const selectRecipe = defineSlotRecipe({
         gap: "0.5rem",
         height: "100%",
         minWidth: 0,
+        // Fills the row, so an indicator pushed with margin-left: auto lands on the right edge.
+        flex: 1,
       },
 
       _highlighted: {
@@ -123,6 +129,9 @@ export const selectRecipe = defineSlotRecipe({
 
       "&[data-state='checked']": {
         fontWeight: "semibold",
+      },
+      // Draw our check only when the item doesn't render its own indicator (forks like Crew's do).
+      "&[data-state='checked']:not(:has(.select-item-indicator))": {
         _after: CHECK_MARK,
       },
 
@@ -141,9 +150,9 @@ export const selectRecipe = defineSlotRecipe({
       "[data-state=open] > &": {
         transform: "rotate(180deg)",
       },
+      // No stroke: icon sets like react-icons ship an invisible full-size bounding path that a
+      // stroke would draw as a box around the chevron.
       "& svg": {
-        strokeWidth: "0.013rem",
-        stroke: "currentColor",
         width: "100%",
         height: "100%",
       },

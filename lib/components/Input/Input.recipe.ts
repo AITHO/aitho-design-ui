@@ -98,6 +98,19 @@ export const inputRecipe = defineSlotRecipe({
         marginRight: "0.125rem",
         filter: "invert(0.7)",
       },
+      // Native number spinners don't follow the theme: hidden (arrow keys and typing still work).
+      "&[type=number]": {
+        MozAppearance: "textfield",
+        appearance: "textfield",
+      },
+      "&::-webkit-inner-spin-button": {
+        WebkitAppearance: "none",
+        margin: 0,
+      },
+      "&::-webkit-outer-spin-button": {
+        WebkitAppearance: "none",
+        margin: 0,
+      },
       "&::-ms-clear": {
         display: "none",
       },
