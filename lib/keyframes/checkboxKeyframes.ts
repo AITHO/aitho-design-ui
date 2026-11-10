@@ -3,7 +3,7 @@ import { CssKeyframes } from "@pandacss/dev";
 export const checkboxKeyframes: CssKeyframes = {
   check: {
     from: {
-      transform: "scale(0.8)",
+      transform: "scale(0)",
     },
     to: {
       transform: "scale(1)",
@@ -11,10 +11,10 @@ export const checkboxKeyframes: CssKeyframes = {
   },
   uncheck: {
     from: {
-      transform: "scale(1.1)",
+      transform: "scale(1)",
     },
     to: {
-      transform: "scale(1)",
+      transform: "scale(0)",
     },
   },
 };

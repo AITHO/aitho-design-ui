@@ -7,8 +7,10 @@ import { dialogKeyframes } from "./dialogKeyframes";
 import { checkboxKeyframes } from "./checkboxKeyframes";
 import { datePickerYearKeyframes } from "./datePickerYearKeyframes";
 import { bottomSheetKeyframes } from "./bottomSheetKeyframes";
+import { commonKeyframes } from "./commonKeyframes";
 
 export const keyframes = {
+  ...commonKeyframes,
   ...spinnerKeyframes,
   ...accordionKeyframes,
   ...toastKeyframes,

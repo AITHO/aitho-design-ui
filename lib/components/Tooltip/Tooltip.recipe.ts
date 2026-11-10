@@ -11,37 +11,47 @@ export const tooltipRecipe = defineSlotRecipe({
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
+      userSelect: "none",
     },
+    // Inverted colors, so it reads as a tooltip in both themes.
     content: {
-      color: "text-on-popup",
-      backgroundColor: "background-popup",
+      color: "background-primary",
+      backgroundColor: "text-primary",
       maxWidth: "15.625rem",
-      borderRadius: "radius",
-      padding: "0.5rem",
-      boxShadow: "0 4px 10px rgba(0, 0, 0, 0.25)",
-      animation: "tooltipFadeIn 300ms ease",
+      borderRadius: "radius-sm",
+      padding: "6px 10px",
+      fontWeight: 500,
+      boxShadow: "overlay",
       whiteSpace: "normal",
+      // Enters moving away from the trigger.
+      "&:not([data-state=closed])": {
+        "&[data-side=top]": { animation: "fromBelow 0.12s ease-out" },
+        "&[data-side=bottom]": { animation: "fromAbove 0.12s ease-out" },
+        "&[data-side=left]": { animation: "fromRight 0.12s ease-out" },
+        "&[data-side=right]": { animation: "fromLeft 0.12s ease-out" },
+      },
+      _closed: { animation: "fadeOut 0.1s ease-in" },
     },
     arrow: {
-      fill: "background-popup",
+      fill: "text-primary",
     },
   },
   variants: {
     size: {
       sm: {
-        content: { fontSize: "sm", lineHeight: "1.3" },
+        content: { fontSize: "xs", lineHeight: "1.4" },
         trigger: { fontSize: "sm" },
       },
       md: {
-        content: { fontSize: "base", lineHeight: "1.3" },
-        trigger: { fontSize: "base" },
+        content: { fontSize: "sm", lineHeight: "1.4" },
+        trigger: { fontSize: "md" },
       },
       lg: {
-        content: { fontSize: "lg", lineHeight: "1.4" },
+        content: { fontSize: "md", lineHeight: "1.4", padding: "8px 12px" },
         trigger: { fontSize: "lg" },
       },
       xl: {
-        content: { fontSize: "xl", lineHeight: "1.5" },
+        content: { fontSize: "lg", lineHeight: "1.5", padding: "10px 14px" },
         trigger: { fontSize: "xl" },
       },
     },

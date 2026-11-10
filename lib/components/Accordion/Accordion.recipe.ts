@@ -37,19 +37,20 @@ export const accordionRecipe = defineSlotRecipe({
   base: {
     root: {
       color: "text-primary",
-      borderRadius: "radius",
-      gap: "0.625rem",
       display: "flex",
       flexDirection: "column",
+      border: "1px solid",
+      borderRadius: "radius",
+      overflow: "hidden",
+      bg: "background-primary",
     },
     item: {
       maxWidth: "100%",
       display: "flex",
       flexDirection: "column",
-      gap: "0.625rem",
-      overflow: "hidden",
-      marginTop: "1px",
-      borderRadius: "radius",
+      "& + &": {
+        borderTopWidth: "1px",
+      },
     },
     header: {
       display: "flex",
@@ -57,48 +58,56 @@ export const accordionRecipe = defineSlotRecipe({
     trigger: {
       cursor: "pointer",
       width: "100%",
-      padding: "0 0.625rem",
+      padding: "0.75rem 0.875rem",
       display: "flex",
-      flexDirection: "row",
-      gap: "0.313rem",
       alignItems: "center",
-      lineHeight: 1,
-      borderRadius: "radius",
-      border: "1px solid",
-      "&[data-state='open']": {
-        color: "color-primary",
+      justifyContent: "space-between",
+      gap: "0.5rem",
+      fontWeight: "600",
+      textAlign: "left",
+      userSelect: "none",
+      transition:
+        "background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
+      _hover: {
+        bg: "color-primary-softer",
       },
-      "&[data-state='open'] svg": {
-        transform: "rotate(90deg)",
+      _disabled: {
+        cursor: "not-allowed",
+        opacity: 0.5,
+        _hover: {
+          bg: "transparent",
+        },
       },
+      // Inset: the root clips anything drawn outside the trigger.
       _focusVisible: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "-2px",
+        outline: "none",
+        boxShadow: "inset 0 0 0 2px var(--color-primary)",
       },
     },
     content: {
-      border: "1px solid",
       display: "flex",
       flexDirection: "column",
       gap: "1rem",
-      padding: "0.625rem",
-      color: "text-primary",
+      padding: "0 0.875rem 0.875rem",
+      color: "text-secondary",
       overflow: "hidden",
-      borderRadius: "radius",
       "&[data-state='open']": {
-        animation: "accordionSlideDown 300ms cubic-bezier(0.87, 0, 0.13, 1)",
+        animation: "accordionSlideDown 0.25s ease",
       },
       "&[data-state='closed']": {
-        animation: "accordionSlideUp 300ms cubic-bezier(0.87, 0, 0.13, 1)",
-      },
-      _hover: {
-        backgroundColor: "background-secondary",
+        animation: "accordionSlideUp 0.25s ease",
       },
     },
     chevron: {
-      transition: "transform 300ms cubic-bezier(0.87, 0, 0.13, 1)",
+      // Rendered before the header text: moved to the trailing edge, pointing down.
+      order: 1,
+      flexShrink: 0,
+      color: "text-secondary",
+      transform: "rotate(90deg)",
+      transition: "transform 0.2s ease",
+      "[data-state='open'] > &": {
+        transform: "rotate(-90deg)",
+      },
     },
   },
   variants: {
@@ -123,8 +132,8 @@ export const accordionRecipe = defineSlotRecipe({
       BORDER_COLORS.map((variant) => [
         variant,
         {
-          trigger: BORDER_COLOR_MAPS[variant],
-          content: BORDER_COLOR_MAPS[variant],
+          root: BORDER_COLOR_MAPS[variant],
+          item: BORDER_COLOR_MAPS[variant],
         },
       ]),
     ),

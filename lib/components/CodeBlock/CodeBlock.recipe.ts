@@ -1,5 +1,10 @@
 import { defineSlotRecipe } from "@pandacss/dev";
 
+// A shade darker than the page, derived from the theme colors.
+const lightCodeBg =
+  "color-mix(in srgb, {colors.background-primary} 94%, {colors.text-primary})";
+const darkCodeBg = "color-mix(in srgb, {colors.background-primary} 80%, black)";
+
 export const codeBlockRecipe = defineSlotRecipe({
   className: "code-block",
   slots: [
@@ -15,99 +20,100 @@ export const codeBlockRecipe = defineSlotRecipe({
     root: {
       width: "full",
       borderRadius: "radius",
-      fontFamily: "mono",
       position: "relative",
-      overflowX: "scroll",
-      backgroundColor: "background",
+      overflow: "hidden",
+      backgroundColor: lightCodeBg,
       border: "1px solid",
       borderColor: "border-color",
-      boxShadow: "sm",
-      _focusVisible: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "2px",
-      },
     },
     container: {
       display: "flex",
       width: "full",
-      borderBottomRadius: "radius",
+      overflowX: "auto",
+      fontFamily: "mono",
     },
     pre: {
       margin: "0",
       padding: "0",
       flex: "1",
-      fontSize: "sm",
-      lineHeight: "1.5",
+      fontSize: "13px",
+      lineHeight: "1.7",
+      // Shiki paints its theme background inline on its <pre>, and main.css pads
+      // .shiki outside any layer: both need !important to match the line numbers.
+      "& pre": {
+        margin: "0",
+        padding: "12px 14px !important",
+        backgroundColor: "transparent !important",
+        fontFamily: "inherit",
+      },
+      // Inset so the scrolling container does not clip it.
       "& pre:focus-visible, &:focus-visible": {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "-2px",
-        borderRadius: "radius-sm",
+        outline: "none",
+        boxShadow: "inset 0 0 0 2px {colors.color-primary}",
       },
     },
     lineNumbers: {
       display: "flex",
       flexDirection: "column",
-      paddingInline: "4",
-      borderRightWidth: "1px",
-      fontSize: "sm",
-      userSelect: "none",
+      minWidth: "40px",
+      paddingBlock: "12px",
+      paddingLeft: "14px",
+      fontSize: "13px",
+      lineHeight: "1.7",
       textAlign: "right",
-      paddingBlock: "0.5rem",
-      color: "text-primary",
+      color: "text-secondary",
+      opacity: 0.5,
+      userSelect: "none",
     },
     caption: {
-      width: "full",
-      fontSize: "sm",
-      fontWeight: "medium",
-      color: "text-primary",
-      paddingBlock: "2",
-      paddingInline: "4",
-      minHeight: "12",
-      lineHeight: "2",
+      flex: "1",
+      fontSize: "12px",
+      color: "text-secondary",
+      lineHeight: "1.5",
     },
     captionContainer: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
+      gap: "8px",
+      minHeight: "40px",
+      padding: "6px 8px 6px 14px",
+      borderBottom: "1px solid",
+      borderColor: "border-color",
+      userSelect: "none",
     },
     copyButton: {
       display: "flex",
       justifyContent: "flex-end",
-      paddingInline: "4",
-      paddingBlock: "2",
     },
   },
   variants: {
     size: {
       sm: {
-        pre: { fontSize: "xs" },
-        lineNumbers: { fontSize: "xs" },
-        caption: { fontSize: "xs" },
+        pre: { fontSize: "12px" },
+        lineNumbers: { fontSize: "12px" },
+        caption: { fontSize: "11px" },
       },
       md: {
-        pre: { fontSize: "sm" },
-        lineNumbers: { fontSize: "sm" },
-        caption: { fontSize: "sm" },
+        pre: { fontSize: "13px" },
+        lineNumbers: { fontSize: "13px" },
+        caption: { fontSize: "12px" },
       },
       lg: {
-        pre: { fontSize: "md" },
-        lineNumbers: { fontSize: "md" },
-        caption: { fontSize: "md" },
+        pre: { fontSize: "15px" },
+        lineNumbers: { fontSize: "15px" },
+        caption: { fontSize: "13px" },
       },
     },
     theme: {
       light: {
         root: {
-          bg: "background-primary",
+          bg: lightCodeBg,
         },
       },
       dark: {
         root: {
-          bg: "background-tertiary",
+          bg: darkCodeBg,
         },
       },
     },

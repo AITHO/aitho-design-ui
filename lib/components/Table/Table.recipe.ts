@@ -70,60 +70,68 @@ export const tableRecipe = defineSlotRecipe({
     root: {
       display: "block",
       width: "100%",
+      color: "text-primary",
     },
     caption: {
       srOnly: true,
     },
+    tableContainer: {
+      overflowX: "auto",
+      borderRadius: "radius",
+      bg: "background-primary",
+    },
     table: {
       display: "table",
       width: "100%",
+      fontSize: "sm",
     },
     header: {
-      fontWeight: "bold",
-      textAlign: "left",
-      padding: "3",
       position: "relative",
-      _focusWithin: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "2px",
-        borderRadius: "radius-sm",
-        zIndex: "999999",
+      padding: "10px 14px",
+      textAlign: "left",
+      whiteSpace: "nowrap",
+      fontSize: "xs",
+      fontWeight: "semibold",
+      color: "text-secondary",
+      bg: "background-secondary",
+      borderBottom: "1px solid",
+      borderColor: "border-color",
+      transition: "box-shadow 0.15s ease",
+      // The sort button sits inside a scrolling container: an inset ring on the
+      // cell is never clipped, unlike the button's own outer ring.
+      "&:has(:focus-visible)": {
+        boxShadow: "inset 0 0 0 2px {colors.color-primary}",
       },
       "& button:focus-visible": {
         outline: "none",
+        boxShadow: "none",
       },
       "& .header-content": {
         display: "flex",
         alignItems: "center",
-        gap: "0.5rem",
-      },
-      "&:not(:last-child)::after": {
-        content: '""',
-        position: "absolute",
-        top: "25%",
-        bottom: "25%",
-        right: "0",
-        width: "1px",
-        bg: "border-color",
-      },
-      _first: {
-        borderTopLeftRadius: "radius",
-      },
-      _last: {
-        borderTopRightRadius: "radius",
+        gap: "6px",
       },
     },
     sortIcons: {
-      color: "text-on-primary",
+      display: "flex",
+      color: "text-secondary",
+      transition: "color 0.15s ease",
+      "th[aria-sort] &": {
+        color: "color-primary",
+      },
     },
     row: {
       display: "table-row",
     },
     cell: {
       display: "table-cell",
-      padding: "3",
+      padding: "12px 14px",
+      transition: "background-color 0.12s ease",
+      // On the cells so the tint also covers the striped rows, whose
+      // background comes from a compound variant.
+      "tbody tr:hover > &": {
+        bg: "color-primary-softer",
+      },
     },
     pagination: {
       display: "flex",
@@ -135,32 +143,20 @@ export const tableRecipe = defineSlotRecipe({
   variants: {
     variant: {
       primary: {
-        root: {
-          color: "text-primary",
-          borderColor: "color-primary",
-        },
-        header: {
-          color: "text-on-primary",
-          bg: "color-primary",
-        },
         row: {
-          borderColor: "color-primary",
-          bg: "table-base-color",
+          borderColor: "border-color",
         },
       },
       secondary: {
-        root: {
-          color: "text-contrast",
-          borderColor: "dark",
+        tableContainer: {
+          bg: "table-base-color",
         },
         header: {
-          bg: "background-popup",
-          color: "text-on-primary",
+          color: "text-primary",
+          bg: "background-tertiary",
         },
         row: {
-          color: "text-primary",
-          borderColor: "dark",
-          bg: "background-tertiary",
+          borderColor: "border-color",
         },
       },
     },
@@ -180,10 +176,11 @@ export const tableRecipe = defineSlotRecipe({
       true: {
         tableContainer: {
           border: "1px solid",
-          borderBottom: "none",
-          borderColor: "color-primary",
-          borderTopLeftRadius: "0.5rem",
-          borderTopRightRadius: "0.5rem",
+          borderColor: "border-color",
+          // The wrapper border closes the table: the last row needs no separator.
+          "& tbody tr:last-child": {
+            borderBottom: "none",
+          },
         },
       },
       false: {
@@ -197,7 +194,7 @@ export const tableRecipe = defineSlotRecipe({
       true: {
         row: {
           borderBottom: "1px solid",
-          borderColor: "color-primary",
+          borderColor: "border-color",
         },
       },
       false: {
