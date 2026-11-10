@@ -6,8 +6,9 @@ export interface ScrollbarProps {
   targetRef: React.RefObject<HTMLElement | null>;
 }
 
-// Gap between the thumb's travel and the target's top and bottom edges.
-const INSET = 4;
+// Gap between the thumb's travel and the target's top and bottom edges: 1px, the transparent edge
+// of the select options, so the thumb starts and ends level with the first and last row.
+const INSET = 1;
 const MIN_THUMB = 24;
 
 /**

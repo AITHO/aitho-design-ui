@@ -44,13 +44,13 @@ const Box = ({
 describe("Scrollbar", () => {
   it("shows a thumb sized to the visible share while the content overflows", () => {
     const { container, getByTestId } = render(
-      <Box scrollHeight={400} clientHeight={208} />,
+      <Box scrollHeight={400} clientHeight={202} />,
     );
     const thumb = container.querySelector(".scrollbar-thumb") as HTMLElement;
 
     expect(thumb).toBeVisible();
-    // Track 200px (208 minus 4px at each end), half of the content visible: a 104px thumb.
-    expect(thumb.style.height).toBe("104px");
+    // Track 200px (202 minus 1px at each end), about half of the content visible: a 101px thumb.
+    expect(thumb.style.height).toBe("101px");
     expect(getByTestId("box")).toHaveAttribute("data-overflowing");
     expect(getByTestId("box")).toHaveAttribute("data-aitho-scrollbar");
   });
