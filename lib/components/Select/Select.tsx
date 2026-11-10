@@ -3,7 +3,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { select, type SelectVariantProps } from "@styled/recipes";
-import { Input } from "lib/main";
+import { Input, Scrollbar } from "lib/main";
 
 type SelectItemProps = React.ComponentProps<typeof SelectPrimitive.Item> & {
   /** *(optional)*
@@ -70,6 +70,7 @@ export const Select: React.FC<SelectProps> = ({
   const [searchOption, setSearchOption] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   // Auto-focus search input when dropdown opens
   useEffect(() => {
@@ -135,6 +136,7 @@ export const Select: React.FC<SelectProps> = ({
             : {})}
         >
           <SelectPrimitive.Viewport
+            ref={viewportRef}
             className={`${classes.viewport} select-viewport`}
             style={{
               maxHeight,
@@ -179,6 +181,7 @@ export const Select: React.FC<SelectProps> = ({
               })}
             </SelectPrimitive.Group>
           </SelectPrimitive.Viewport>
+          <Scrollbar targetRef={viewportRef} />
         </SelectPrimitive.Content>
       </SelectPrimitive.Portal>
     </SelectPrimitive.Root>

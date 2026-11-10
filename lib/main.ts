@@ -84,6 +84,10 @@ export {
   RangeDatePicker,
   type RangeDatePickerProps,
 } from "./components/RangeDatePicker/RangeDatePicker";
+export {
+  Scrollbar,
+  type ScrollbarProps,
+} from "./components/Scrollbar/Scrollbar";
 export { Select, type SelectProps } from "./components/Select/Select";
 export {
   SelectTags,

@@ -22,6 +22,7 @@ import { paginationRecipe } from "./components/Pagination/Pagination.recipe";
 import { popoverRecipe } from "./components/Popover/Popover.recipe";
 import { progressRecipe } from "./components/Progress/Progress.recipe";
 import { rangeDatePickerRecipe } from "./components/RangeDatePicker/RangeDatePicker.recipe";
+import { scrollbarRecipe } from "./components/Scrollbar/Scrollbar.recipe";
 import { selectRecipe } from "./components/Select/Select.recipe";
 import { selectTagsRecipe } from "./components/SelectTags/SelectTags.recipe";
 import { sidebarRecipe } from "./components/Sidebar/Sidebar.recipe";
@@ -63,6 +64,7 @@ export const preset = definePreset({
       popover: popoverRecipe,
       progress: progressRecipe,
       rangeDatePicker: rangeDatePickerRecipe,
+      scrollbar: scrollbarRecipe,
       select: selectRecipe,
       selectTags: selectTagsRecipe,
       sidebar: sidebarRecipe,
@@ -104,6 +106,7 @@ export const preset = definePreset({
       popover: ["*"],
       progress: ["*"],
       rangeDatePicker: ["*"],
+      scrollbar: ["*"],
       select: ["*"],
       selectTags: ["*"],
       sidebar: ["*"],
