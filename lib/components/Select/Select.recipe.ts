@@ -71,8 +71,9 @@ export const selectRecipe = defineSlotRecipe({
       minWidth: "var(--radix-select-trigger-width)",
       maxWidth:
         "var(--radix-select-content-available-width, calc(100vw - 16px))",
-      // About eight options, then the list scrolls (it used to grow to the whole screen).
-      maxHeight: "min(20rem, var(--radix-select-content-available-height))",
+      // Twelve options (35px each) plus the panel padding and border, with a few pixels of slack:
+      // up to twelve never scroll, a thirteenth does (it used to grow to the whole screen).
+      maxHeight: "min(27.25rem, var(--radix-select-content-available-height))",
       "@media (max-width: 767.98px)": {
         maxHeight: "50dvh",
       },
@@ -102,18 +103,23 @@ export const selectRecipe = defineSlotRecipe({
       // Radix injects an unlayered style that hides this scrollbar (it relies on scroll buttons):
       // bring the custom scrollbar back, next to the edge fade, so a long list is obviously scrollable.
       scrollbarWidth: "auto !important",
-      // Slimmer than the page scrollbar and kept off the options: a gap on the right so the
-      // highlight and the check never touch it, and a shorter track inside the rounded panel.
-      paddingRight: "4px",
+      // A 4px thumb kept off the options by its own transparent left border, so the gap exists
+      // only when the scrollbar does (a padding left a strip on lists that fit). Shorter track
+      // inside the rounded panel.
       "&::-webkit-scrollbar": {
         display: "block !important",
-        width: "8px",
+        width: "10px",
       },
       "&::-webkit-scrollbar-track": {
         margin: "4px 0",
       },
       "&::-webkit-scrollbar-thumb": {
-        borderRadius: "4px",
+        borderLeftWidth: "4px",
+        borderRadius: "5px",
+      },
+      // Firefox has no ::-webkit-scrollbar: "auto" above would give it the wide native bar.
+      "@supports not selector(::-webkit-scrollbar)": {
+        scrollbarWidth: "thin !important",
       },
       // The edge with more options behind it fades out, so a long list reads as scrollable; a list
       // that fits has no active scroll timeline and no fade.
