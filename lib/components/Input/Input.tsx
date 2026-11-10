@@ -7,6 +7,7 @@ import {
 import { input, type InputVariantProps } from "@styled/recipes";
 import React, { useState } from "react";
 import { DatePicker } from "../DatePicker/DatePicker";
+import { TimePicker } from "../TimePicker/TimePicker";
 import { Label } from "../Label/Label";
 import "./Input.css";
 
@@ -63,6 +64,81 @@ export type InputProps = Omit<
      */
     inputSearch?: boolean;
   };
+
+type DateTimeFieldProps = Omit<
+  React.ComponentProps<typeof DatePicker>,
+  "value" | "onValueChange" | "min" | "max"
+> & {
+  value: string;
+  onValueChange: (value: string) => void;
+  min?: string;
+  max?: string;
+};
+
+// datetime-local as a DatePicker and a TimePicker side by side; the value is YYYY-MM-DDTHH:mm,
+// emitted once both parts are there (like the native field) and "" when the day is cleared.
+const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
+  (
+    {
+      value,
+      onValueChange,
+      min,
+      max,
+      disabled,
+      readOnly,
+      iconClassName,
+      fieldClassName,
+      ...props
+    },
+    ref,
+  ) => {
+    const split = (v: string) => {
+      const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/.exec(v);
+      return { date: match?.[1] ?? "", time: match?.[2] ?? "" };
+    };
+    const [parts, setParts] = React.useState(() => split(value));
+    const [prevValue, setPrevValue] = React.useState(value);
+    if (value !== prevValue) {
+      setPrevValue(value);
+      if (value) setParts(split(value));
+    }
+    const change = (next: { date: string; time: string }) => {
+      setParts(next);
+      if (!next.date) onValueChange("");
+      else if (next.time) onValueChange(`${next.date}T${next.time}`);
+    };
+    return (
+      <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+        <div style={{ flex: "1.4 1 0", minWidth: 0 }}>
+          <DatePicker
+            {...props}
+            ref={ref}
+            value={parts.date}
+            min={min?.slice(0, 10)}
+            max={max?.slice(0, 10)}
+            disabled={disabled}
+            readOnly={readOnly}
+            fieldClassName={fieldClassName}
+            iconClassName={iconClassName}
+            onValueChange={(date) => change({ ...parts, date })}
+          />
+        </div>
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
+          <TimePicker
+            value={parts.time}
+            disabled={disabled}
+            readOnly={readOnly}
+            lang={props.lang}
+            fieldClassName={fieldClassName}
+            iconClassName={iconClassName}
+            onValueChange={(time) => change({ ...parts, time })}
+          />
+        </div>
+      </div>
+    );
+  },
+);
+DateTimeField.displayName = "DateTimeField";
 
 /**
  *
@@ -145,7 +221,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         value: iso,
         name: props.name ?? "",
         id: uniqueId,
-        type: "date",
+        type,
       };
       onChange({
         target,
@@ -180,7 +256,45 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
 
           <div className={classes.inputContainer}>
-            {type === "date" ? (
+            {type === "time" ? (
+              <TimePicker
+                {...props}
+                ref={inputRef}
+                id={uniqueId}
+                // A native time step is in seconds; the list step is in minutes.
+                step={
+                  props.step
+                    ? Math.max(1, Math.round(Number(props.step) / 60))
+                    : undefined
+                }
+                data-testid="input"
+                value={String(val ?? "")}
+                min={props.min === undefined ? undefined : String(props.min)}
+                max={props.max === undefined ? undefined : String(props.max)}
+                onValueChange={emitDate}
+                fieldClassName={fieldClassName}
+                iconClassName={classes.iconStyle}
+                aria-invalid={error || undefined}
+                aria-required={required || undefined}
+                aria-describedby={describedBy}
+              />
+            ) : type === "datetime-local" ? (
+              <DateTimeField
+                {...props}
+                ref={inputRef}
+                id={uniqueId}
+                data-testid="input"
+                value={String(val ?? "")}
+                min={props.min === undefined ? undefined : String(props.min)}
+                max={props.max === undefined ? undefined : String(props.max)}
+                onValueChange={emitDate}
+                fieldClassName={fieldClassName}
+                iconClassName={classes.iconStyle}
+                aria-invalid={error || undefined}
+                aria-required={required || undefined}
+                aria-describedby={describedBy}
+              />
+            ) : type === "date" ? (
               <DatePicker
                 {...props}
                 ref={inputRef}

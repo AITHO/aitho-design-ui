@@ -38,6 +38,10 @@ export {
   type CodeBlockProps,
 } from "./components/CodeBlock/CodeBlock";
 export {
+  ColorPicker,
+  type ColorPickerProps,
+} from "./components/ColorPicker/ColorPicker";
+export {
   DatePicker,
   type DatePickerProps,
 } from "./components/DatePicker/DatePicker";
@@ -98,6 +102,10 @@ export {
   type TableSortDirection,
 } from "./components/Table/Table";
 export { TextArea, type TextAreaProps } from "./components/TextArea/TextArea";
+export {
+  TimePicker,
+  type TimePickerProps,
+} from "./components/TimePicker/TimePicker";
 export { Toast, type ToastProps } from "./components/Toast/Toast";
 export {
   ToggleSwitch,
