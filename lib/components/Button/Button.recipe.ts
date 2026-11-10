@@ -61,6 +61,8 @@ export const buttonRecipe = defineSlotRecipe({
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      // Icons passed as children get the same spacing as the icon prop.
+      gap: "var(--button-gap)",
     },
   },
   variants: {
