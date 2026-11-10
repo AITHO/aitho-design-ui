@@ -116,7 +116,9 @@ export const buttonRecipe = defineSlotRecipe({
         root: {
           backgroundColor: "transparent",
           color: "text-primary",
-          borderColor: "border-color",
+          // Stronger than the plain border colour, so it still reads on striped or tinted rows.
+          borderColor:
+            "color-mix(in srgb, var(--border-color) 45%, var(--text-secondary))",
           "&:hover:not(:disabled)": {
             borderColor: "color-primary",
             backgroundColor: "color-primary-softer",
