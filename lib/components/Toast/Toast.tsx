@@ -6,12 +6,13 @@ import { Cross1Icon } from "@radix-ui/react-icons";
 
 export type ToastProps = Omit<
   ToastVariantProps &
-    Omit<ToastPrimitive.ToastProps, "content"> &
+    // "title" is our own prop (rendered in the toast), not the HTML title attribute
+    Omit<ToastPrimitive.ToastProps, "content" | "title"> &
     ToastPrimitive.ToastProviderProps & {
       /** *(optional)*
-       * Title of the toast. Bold text on top.
+       * Title of the toast. Bold text on top. Accepts text or elements (e.g. an icon before the text).
        */
-      title?: string;
+      title?: React.ReactNode;
 
       /** *(optional)*
        * Whether the toast can be closed.

@@ -86,6 +86,19 @@ describe("Toast", () => {
     expect(screen.getByText("Toast Description")).toBeInTheDocument();
   });
 
+  it("should render an element passed as title", () => {
+    renderToast({
+      title: (
+        <span data-testid="rich-title">
+          <svg aria-hidden="true" />
+          Saved
+        </span>
+      ),
+    });
+
+    expect(screen.getByTestId("rich-title")).toHaveTextContent("Saved");
+  });
+
   it("should render a transparent close button and close when it is clicked", () => {
     const handleOpenChange = vi.fn();
 
