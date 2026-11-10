@@ -1,120 +1,177 @@
 import { defineSlotRecipe } from "@pandacss/dev";
-import { pickerPanelStyles } from "../DatePickerMonth/DatePickerMonth.recipe";
 
-const THUMB = {
+const focusRing = {
+  outlineWidth: "2px",
+  outlineStyle: "solid",
+  outlineColor: "color-primary",
+  outlineOffset: "2px",
+} as const;
+
+// White ring plus dark shadow: the thumbs sit on arbitrary colors, so they need both to stay
+// visible on light and dark areas alike. These are not theme colors on purpose.
+const thumbBase = {
   position: "absolute",
-  width: "16px",
-  height: "16px",
-  borderRadius: "50%",
-  border: "2px solid white",
-  boxShadow: "0 0 0 1px rgb(0 0 0 / 0.35), 0 1px 3px rgb(0 0 0 / 0.4)",
-  transform: "translate(-50%, -50%)",
+  borderRadius: "full",
+  border: "2px solid #ffffff",
+  boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4)",
   pointerEvents: "none",
-};
-
-const SLIDER_FOCUS = {
-  _focusVisible: {
-    outline: "none",
-    boxShadow: "focus-ring",
-  },
-};
+  transform: "translate(-50%, -50%)",
+} as const;
 
 export const colorPickerRecipe = defineSlotRecipe({
   className: "color-picker",
   slots: [
     "trigger",
-    "swatch",
-    "popoverContent",
-    "area",
-    "areaThumb",
+    "triggerSwatch",
+    "visuallyHidden",
+    "content",
+    "saturation",
+    "saturationThumb",
+    "controls",
+    "preview",
     "hue",
     "hueThumb",
-    "presets",
-    "preset",
+    "eyeDropper",
+    "hexField",
+    "swatches",
+    "swatch",
   ],
   base: {
-    // Same box as an Input field, with the colour as its content.
     trigger: {
-      display: "inline-grid",
-      placeItems: "center",
-      flex: "none",
-      width: "2.375rem",
-      height: "2.375rem",
-      padding: "4px",
-      border: "1px solid",
-      borderColor: "border-color",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "3rem",
+      height: "2.25rem",
+      padding: "0.25rem",
       borderRadius: "radius",
+      border: "1px solid var(--border-color)",
       backgroundColor: "background-primary",
       cursor: "pointer",
-      transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+      transition: "border-color 150ms ease-in-out",
       _hover: { borderColor: "color-primary" },
-      _focusVisible: { outline: "none", boxShadow: "focus-ring" },
-      "&[data-state='open']": {
-        borderColor: "color-primary",
-        boxShadow: "focus-ring",
-      },
+      _focusVisible: focusRing,
       _disabled: {
         cursor: "not-allowed",
-        opacity: 0.55,
+        opacity: 0.5,
         _hover: { borderColor: "border-color" },
       },
     },
-    swatch: {
+    triggerSwatch: {
+      display: "block",
       width: "100%",
       height: "100%",
       borderRadius: "radius-sm",
-      boxShadow: "inset 0 0 0 1px rgb(0 0 0 / 0.12)",
+      boxShadow: "inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
     },
-    popoverContent: {
-      ...pickerPanelStyles.popoverContent,
-      zIndex: "9999",
-      width: "15rem",
+    visuallyHidden: {
+      srOnly: true,
+    },
+    content: {
+      zIndex: "10",
       display: "flex",
       flexDirection: "column",
-      gap: "12px",
+      gap: "0.75rem",
+      width: "15rem",
+      padding: "0.75rem",
+      borderRadius: "radius",
+      border: "1px solid var(--border-color)",
+      backgroundColor: "background-secondary",
+      color: "text-primary",
+      boxShadow: "0 4px 16px 0 rgba(0, 0, 0, 0.16)",
+      animationDuration: "200ms",
+      animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+      willChange: "transform, opacity",
     },
-    area: {
+    saturation: {
       position: "relative",
-      height: "150px",
+      width: "100%",
+      height: "9.5rem",
       borderRadius: "radius-sm",
+      backgroundImage:
+        "linear-gradient(to top, #000000, transparent), linear-gradient(to right, #ffffff, transparent)",
       cursor: "crosshair",
       touchAction: "none",
-      ...SLIDER_FOCUS,
+      _focusVisible: focusRing,
     },
-    areaThumb: THUMB,
+    saturationThumb: {
+      ...thumbBase,
+      width: "0.875rem",
+      height: "0.875rem",
+    },
+    controls: {
+      display: "flex",
+      alignItems: "center",
+      gap: "0.625rem",
+    },
+    preview: {
+      flexShrink: 0,
+      width: "1.75rem",
+      height: "1.75rem",
+      borderRadius: "full",
+      boxShadow: "inset 0 0 0 1px rgba(0, 0, 0, 0.15)",
+    },
     hue: {
       position: "relative",
-      height: "12px",
-      borderRadius: "6px",
-      background:
-        "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
+      flex: "1",
+      height: "0.625rem",
+      borderRadius: "full",
+      backgroundImage:
+        "linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
       cursor: "pointer",
       touchAction: "none",
-      ...SLIDER_FOCUS,
+      _focusVisible: focusRing,
     },
     hueThumb: {
-      ...THUMB,
+      ...thumbBase,
       top: "50%",
+      width: "1rem",
+      height: "1rem",
     },
-    presets: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "6px",
-    },
-    preset: {
-      width: "22px",
-      height: "22px",
-      padding: "0",
-      border: "none",
+    eyeDropper: {
+      flexShrink: 0,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "1.75rem",
+      height: "1.75rem",
       borderRadius: "radius-sm",
-      boxShadow: "inset 0 0 0 1px rgb(0 0 0 / 0.15)",
+      color: "text-primary",
       cursor: "pointer",
-      transition: "transform 0.15s ease, box-shadow 0.15s ease",
-      _hover: { transform: "scale(1.1)" },
-      _focusVisible: { outline: "none", boxShadow: "focus-ring" },
-      "&[aria-pressed='true']": {
-        boxShadow:
-          "0 0 0 2px {colors.background-primary}, 0 0 0 4px {colors.color-primary}",
+      _hover: { backgroundColor: "background-tertiary" },
+      _focusVisible: focusRing,
+    },
+    // The library Input has a 15.625rem min-width, wider than the panel: let it shrink here.
+    hexField: {
+      "& input": {
+        minWidth: "0",
+        fontFamily: "mono",
+      },
+    },
+    swatches: {
+      // A <fieldset>: reset the browser's default margin, padding, border and min-width.
+      display: "grid",
+      gridTemplateColumns: "repeat(8, 1fr)",
+      gap: "0.375rem",
+      margin: 0,
+      padding: 0,
+      paddingTop: "0.75rem",
+      minWidth: 0,
+      border: "none",
+      borderTop: "1px solid var(--border-color)",
+    },
+    swatch: {
+      width: "100%",
+      aspectRatio: "1 / 1",
+      borderRadius: "radius-sm",
+      boxShadow: "inset 0 0 0 1px rgba(0, 0, 0, 0.15)",
+      cursor: "pointer",
+      _focusVisible: focusRing,
+      _pressed: {
+        outlineWidth: "2px",
+        outlineStyle: "solid",
+        outlineColor: "text-primary",
+        outlineOffset: "2px",
       },
     },
   },

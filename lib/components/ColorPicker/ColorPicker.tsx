@@ -1,143 +1,259 @@
-import * as Popover from "@radix-ui/react-popover";
+import { Crosshair1Icon } from "@radix-ui/react-icons";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { colorPicker } from "@styled/recipes";
-import React from "react";
+import * as React from "react";
+import { Input } from "../Input/Input";
 import {
-  clampHue,
-  clampUnit,
+  clampHsv,
   hexToHsv,
   hsvToHex,
   normalizeHex,
   type Hsv,
 } from "./colorUtils";
 
+/** Browser EyeDropper API (Chromium only), not yet in the TypeScript DOM lib. */
+interface EyeDropperApi {
+  open: () => Promise<{ sRGBHex: string }>;
+}
+type EyeDropperConstructor = new () => EyeDropperApi;
+
+const getEyeDropper = (): EyeDropperConstructor | undefined =>
+  typeof window === "undefined"
+    ? undefined
+    : (window as unknown as { EyeDropper?: EyeDropperConstructor }).EyeDropper;
+
 export interface ColorPickerProps {
-  /** *(optional)* Current colour as `#rrggbb` (`#rgb` is accepted too). */
-  value?: string;
+  /** Current color, as a hex string (`#rrggbb` or `#rgb`). */
+  value: string;
 
-  /** *(optional)* Called with the new colour as `#rrggbb`, while dragging too. */
-  onChange?: (value: string) => void;
+  /** Function called with the new color, always in the lowercase `#rrggbb` form. */
+  onChange: (value: string) => void;
 
-  /** *(optional)* Quick colours shown under the sliders. */
-  presets?: string[];
-
-  /** *(optional)* Disables the picker. */
+  /** *(optional)*
+   * Whether the picker is disabled.
+   * @default false
+   */
   disabled?: boolean;
 
-  /** *(optional)* Id of the trigger button, for a `<label htmlFor>`. */
+  /** *(optional)*
+   * Preset colors shown below the controls, as hex strings.
+   */
+  swatches?: string[];
+
+  /** *(optional)*
+   * Id applied to the trigger button, so that an external `<label htmlFor>` can name it.
+   */
   id?: string;
 
-  /** *(optional)* Accessible name of the trigger. */
-  "aria-label"?: string;
+  /** *(optional)*
+   * Additional class name applied to the trigger button.
+   */
+  className?: string;
 
-  /** *(optional)* Language of the slider labels; defaults to the page language. */
-  lang?: string;
+  /** *(optional)*
+   * The side of the trigger the panel opens on.
+   * @default "bottom"
+   */
+  side?: "top" | "left" | "right" | "bottom";
+
+  /** *(optional)*
+   * The alignment of the panel against the trigger.
+   * @default "start"
+   */
+  align?: "start" | "center" | "end";
+
+  /** *(optional)*
+   * Accessible label for the trigger button, as visually hidden text. An external
+   * `<label htmlFor={id}>` or `aria-labelledby` takes precedence over it. The current color is
+   * always exposed as the button's description.
+   * @default "Choose color"
+   */
+  triggerLabel?: string;
+
+  /** *(optional)*
+   * Id of an element that labels the trigger button.
+   */
+  "aria-labelledby"?: string;
+
+  /** *(optional)*
+   * Accessible label for the saturation and brightness area.
+   * @default "Saturation and brightness"
+   */
+  saturationLabel?: string;
+
+  /** *(optional)*
+   * Accessible label for the hue slider.
+   * @default "Hue"
+   */
+  hueLabel?: string;
+
+  /** *(optional)*
+   * Label of the hex field inside the panel.
+   * @default "Hex"
+   */
+  hexLabel?: string;
+
+  /** *(optional)*
+   * Accessible label for the eye dropper button, shown only where the browser supports it.
+   * @default "Pick a color from the screen"
+   */
+  eyeDropperLabel?: string;
+
+  /** *(optional)*
+   * Accessible label for the group of preset colors.
+   * @default "Preset colors"
+   */
+  swatchesLabel?: string;
 }
 
-const TEXT = {
-  it: { area: "Saturazione e luminosità", hue: "Tonalità", preset: "Colore" },
-  en: { area: "Saturation and brightness", hue: "Hue", preset: "Colour" },
-} as const;
+const KEY_STEP = 1;
+const KEY_STEP_LARGE = 10;
+const FULL_HEX = /^#?[0-9a-f]{6}$/i;
 
-const FALLBACK: Hsv = { h: 0, s: 0, v: 0 };
+/** Position of a pointer inside an element, as fractions (0-1) of its width and height. */
+const relativePosition = (
+  event: React.PointerEvent<HTMLElement>,
+): { x: number; y: number } => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const fraction = (offset: number, size: number) =>
+    size === 0 ? 0 : Math.min(1, Math.max(0, offset / size));
+
+  return {
+    x: fraction(event.clientX - rect.left, rect.width),
+    y: fraction(event.clientY - rect.top, rect.height),
+  };
+};
 
 /**
- * A colour picker: a swatch that opens a panel with a saturation/brightness area, a hue slider and
- * optional quick colours. Everything works with the keyboard (arrows, Shift for bigger steps).
+ * A themed color picker: a swatch button that opens a panel with a saturation/brightness area,
+ * a hue slider, a hex field, optional preset colors and, where the browser supports it, an eye
+ * dropper. Unlike `<input type="color">`, the panel follows the library theme in every browser.
+ *
+ * @param value - Current color, as a hex string.
+ * @param onChange - Function called with the new color in the `#rrggbb` form.
+ * @param disabled - *(optional)* Whether the picker is disabled.
+ * @param swatches - *(optional)* Preset colors shown below the controls.
+ * @param id - *(optional)* Id applied to the trigger button.
+ * @param className - *(optional)* Additional class name applied to the trigger button.
+ * @param side - *(optional)* The side of the trigger the panel opens on.
+ * @param align - *(optional)* The alignment of the panel against the trigger.
+ * @param triggerLabel - *(optional)* Accessible label for the trigger button.
+ * @param saturationLabel - *(optional)* Accessible label for the saturation and brightness area.
+ * @param hueLabel - *(optional)* Accessible label for the hue slider.
+ * @param hexLabel - *(optional)* Label of the hex field inside the panel.
+ * @param eyeDropperLabel - *(optional)* Accessible label for the eye dropper button.
+ * @param swatchesLabel - *(optional)* Accessible label for the group of preset colors.
  */
-export const ColorPicker = ({
+export const ColorPicker: React.FC<ColorPickerProps> = ({
   value,
   onChange,
-  presets,
-  disabled,
+  disabled = false,
+  swatches,
   id,
-  "aria-label": ariaLabel,
-  lang,
-}: ColorPickerProps) => {
+  className,
+  side = "bottom",
+  align = "start",
+  triggerLabel = "Choose color",
+  "aria-labelledby": ariaLabelledBy,
+  saturationLabel = "Saturation and brightness",
+  hueLabel = "Hue",
+  hexLabel = "Hex",
+  eyeDropperLabel = "Pick a color from the screen",
+  swatchesLabel = "Preset colors",
+}) => {
   const classes = colorPicker();
-  const language = (
-    lang ||
-    (typeof document !== "undefined" ? document.documentElement.lang : "")
-  )
-    .toLowerCase()
-    .startsWith("it")
-    ? "it"
-    : "en";
-  const t = TEXT[language];
-  const hex = normalizeHex(value) ?? "#000000";
+  const currentHex = normalizeHex(value) ?? "#000000";
 
-  // The hue is kept apart: a grey has no hue, and dragging through one must not reset it to red.
-  const [hsv, setHsv] = React.useState<Hsv>(() => hexToHsv(hex) ?? FALLBACK);
-  const [prevHex, setPrevHex] = React.useState(hex);
-  if (hex !== prevHex) {
-    setPrevHex(hex);
-    if (hsvToHex(hsv) !== hex) {
-      const next = hexToHsv(hex) ?? FALLBACK;
-      setHsv(next.s === 0 || next.v === 0 ? { ...next, h: hsv.h } : next);
+  // HSV is kept in state, not derived from `value`: hue and saturation are lost in hex for greys
+  // and black, and the thumbs would jump while dragging through them.
+  const [hsv, setHsv] = React.useState<Hsv>(() => hexToHsv(currentHex));
+  const [hexDraft, setHexDraft] = React.useState(currentHex);
+  const [prevHex, setPrevHex] = React.useState(currentHex);
+  const [open, setOpen] = React.useState(false);
+
+  const generatedId = React.useId();
+  const triggerId = id ?? generatedId;
+  const valueId = `${triggerId}-value`;
+
+  // An eye dropper result arrives after an await: it must see the current `disabled`, not the
+  // one captured when the button was clicked.
+  const disabledRef = React.useRef(disabled);
+  React.useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
+
+  // Update state during render when the value changes from outside
+  if (currentHex !== prevHex) {
+    setPrevHex(currentHex);
+    setHexDraft(currentHex);
+    if (hsvToHex(hsv) !== currentHex) {
+      setHsv(hexToHsv(currentHex));
     }
   }
 
-  const update = (next: Hsv) => {
-    const clamped = {
-      h: clampHue(next.h),
-      s: clampUnit(next.s),
-      v: clampUnit(next.v),
-    };
-    setHsv(clamped);
+  // Disabling the picker closes a panel that is already open
+  if (disabled && open) {
+    setOpen(false);
+  }
+
+  const applyHsv = (next: Hsv) => {
+    if (disabledRef.current) return;
+    const clamped = clampHsv(next);
     const nextHex = hsvToHex(clamped);
+    setHsv(clamped);
     setPrevHex(nextHex);
-    if (nextHex !== hex) onChange?.(nextHex);
-  };
-
-  const areaRef = React.useRef<HTMLDivElement>(null);
-  const hueRef = React.useRef<HTMLDivElement>(null);
-
-  const fromPointer = (
-    event: React.PointerEvent<HTMLDivElement>,
-    target: "area" | "hue",
-  ) => {
-    const rect = (
-      target === "area" ? areaRef : hueRef
-    ).current?.getBoundingClientRect();
-    if (!rect || !rect.width) return;
-    const x = clampUnit((event.clientX - rect.left) / rect.width);
-    if (target === "hue") {
-      update({ ...hsv, h: x * 360 });
-    } else {
-      const y = clampUnit((event.clientY - rect.top) / (rect.height || 1));
-      update({ ...hsv, s: x, v: 1 - y });
+    setHexDraft(nextHex);
+    if (nextHex !== currentHex) {
+      onChange(nextHex);
     }
   };
 
-  const dragHandlers = (target: "area" | "hue") => ({
-    onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => {
-      event.currentTarget.setPointerCapture?.(event.pointerId);
-      event.currentTarget.focus();
-      fromPointer(event, target);
-    },
-    onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
-      if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-        fromPointer(event, target);
-      }
-    },
-  });
+  const applyHex = (hex: string) => {
+    const normalized = normalizeHex(hex);
+    // The same color again (e.g. leaving the hex field untouched) must not rebuild HSV from hex:
+    // on greys and black that would reset the hue and saturation the thumbs are showing.
+    if (!normalized || normalized === currentHex) return;
+    applyHsv(hexToHsv(normalized));
+  };
 
-  const handleAreaKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const step = event.shiftKey ? 0.1 : 0.01;
-    const moves: Record<string, Partial<Hsv>> = {
+  // Pointer capture keeps the drag going when the pointer leaves the control; a move without
+  // capture is just a hover and is ignored.
+  const trackPointer =
+    (update: (position: { x: number; y: number }) => Hsv) =>
+    (event: React.PointerEvent<HTMLElement>) => {
+      if (event.type === "pointerdown") {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } else if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+        return;
+      }
+      applyHsv(update(relativePosition(event)));
+    };
+
+  const handleSaturationPointer = trackPointer(({ x, y }) => ({
+    ...hsv,
+    s: x * 100,
+    v: (1 - y) * 100,
+  }));
+
+  const handleHuePointer = trackPointer(({ x }) => ({ ...hsv, h: x * 360 }));
+
+  const handleSaturationKeyDown = (event: React.KeyboardEvent) => {
+    const step = event.shiftKey ? KEY_STEP_LARGE : KEY_STEP;
+    const deltas: Record<string, Partial<Hsv>> = {
       ArrowLeft: { s: hsv.s - step },
       ArrowRight: { s: hsv.s + step },
       ArrowUp: { v: hsv.v + step },
       ArrowDown: { v: hsv.v - step },
     };
-    if (moves[event.key]) {
-      event.preventDefault();
-      update({ ...hsv, ...moves[event.key] });
-    }
+    const delta = deltas[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    applyHsv({ ...hsv, ...delta });
   };
 
-  const handleHueKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const step = event.shiftKey ? 10 : 1;
-    const moves: Record<string, number> = {
+  const handleHueKeyDown = (event: React.KeyboardEvent) => {
+    const step = event.shiftKey ? KEY_STEP_LARGE : KEY_STEP;
+    const hues: Record<string, number> = {
       ArrowLeft: hsv.h - step,
       ArrowDown: hsv.h - step,
       ArrowRight: hsv.h + step,
@@ -145,72 +261,105 @@ export const ColorPicker = ({
       Home: 0,
       End: 360,
     };
-    if (event.key in moves) {
-      event.preventDefault();
-      update({ ...hsv, h: moves[event.key] });
+    const hue = hues[event.key];
+    if (hue === undefined) return;
+    event.preventDefault();
+    applyHsv({ ...hsv, h: hue });
+  };
+
+  const EyeDropper = getEyeDropper();
+  const pickFromScreen = async (dropper: EyeDropperConstructor) => {
+    try {
+      const result = await new dropper().open();
+      applyHex(result.sRGBHex);
+    } catch {
+      // The user dismissed the eye dropper with Esc: nothing to apply.
     }
   };
 
-  const pureHue = hsvToHex({ h: hsv.h, s: 1, v: 1 });
+  const saturationPercent = Math.round(hsv.s);
+  const brightnessPercent = Math.round(hsv.v);
+  const hueDegrees = Math.round(hsv.h);
+  const pureHue = hsvToHex({ h: hsv.h, s: 100, v: 100 });
 
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild disabled={disabled}>
+    <PopoverPrimitive.Root
+      open={open}
+      onOpenChange={(next) => setOpen(next && !disabled)}
+    >
+      <PopoverPrimitive.Trigger asChild disabled={disabled}>
+        {/* The default label is hidden text, not aria-label: a `<label htmlFor>` or
+            `aria-labelledby` from outside then takes precedence in the accessible name. */}
         <button
           type="button"
-          id={id}
-          className={classes.trigger}
-          aria-label={ariaLabel ? `${ariaLabel}: ${hex}` : hex}
+          id={triggerId}
+          className={[classes.trigger, className].filter(Boolean).join(" ")}
+          aria-labelledby={ariaLabelledBy}
+          aria-describedby={valueId}
           disabled={disabled}
         >
-          <span className={classes.swatch} style={{ backgroundColor: hex }} />
+          <span
+            className={classes.triggerSwatch}
+            style={{ backgroundColor: currentHex }}
+            aria-hidden="true"
+          />
+          <span className={classes.visuallyHidden}>{triggerLabel}</span>
         </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          className={classes.popoverContent}
-          side="bottom"
-          align="start"
-          sideOffset={4}
-          collisionPadding={8}
+      </PopoverPrimitive.Trigger>
+      <span id={valueId} className={classes.visuallyHidden}>
+        {currentHex}
+      </span>
+      <PopoverPrimitive.Content
+        aria-labelledby={triggerId}
+        className={classes.content}
+        side={side}
+        align={align}
+        sideOffset={6}
+      >
+        <div
+          role="slider"
+          tabIndex={0}
+          aria-label={saturationLabel}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={saturationPercent}
+          aria-valuetext={`${saturationPercent}%, ${brightnessPercent}%`}
+          className={classes.saturation}
+          style={{ backgroundColor: pureHue }}
+          onPointerDown={handleSaturationPointer}
+          onPointerMove={handleSaturationPointer}
+          onKeyDown={handleSaturationKeyDown}
         >
-          <div
-            ref={areaRef}
-            role="slider"
-            tabIndex={0}
-            aria-label={t.area}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(hsv.s * 100)}
-            aria-valuetext={`${Math.round(hsv.s * 100)}%, ${Math.round(hsv.v * 100)}%`}
-            className={classes.area}
+          <span
+            className={classes.saturationThumb}
             style={{
-              background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, ${pureHue})`,
+              left: `${hsv.s}%`,
+              top: `${100 - hsv.v}%`,
+              backgroundColor: currentHex,
             }}
-            onKeyDown={handleAreaKey}
-            {...dragHandlers("area")}
-          >
-            <span
-              className={classes.areaThumb}
-              style={{
-                left: `${hsv.s * 100}%`,
-                top: `${(1 - hsv.v) * 100}%`,
-                backgroundColor: hex,
-              }}
-            />
-          </div>
+            aria-hidden="true"
+          />
+        </div>
 
+        <div className={classes.controls}>
+          <span
+            className={classes.preview}
+            style={{ backgroundColor: currentHex }}
+            aria-hidden="true"
+          />
           <div
-            ref={hueRef}
             role="slider"
             tabIndex={0}
-            aria-label={t.hue}
+            aria-label={hueLabel}
+            aria-orientation="horizontal"
             aria-valuemin={0}
             aria-valuemax={360}
-            aria-valuenow={Math.round(hsv.h)}
+            aria-valuenow={hueDegrees}
+            aria-valuetext={`${hueDegrees}°`}
             className={classes.hue}
-            onKeyDown={handleHueKey}
-            {...dragHandlers("hue")}
+            onPointerDown={handleHuePointer}
+            onPointerMove={handleHuePointer}
+            onKeyDown={handleHueKeyDown}
           >
             <span
               className={classes.hueThumb}
@@ -218,31 +367,69 @@ export const ColorPicker = ({
                 left: `${(hsv.h / 360) * 100}%`,
                 backgroundColor: pureHue,
               }}
+              aria-hidden="true"
             />
           </div>
-
-          {presets && presets.length > 0 && (
-            <div className={classes.presets}>
-              {presets.map((preset) => {
-                const presetHex = normalizeHex(preset);
-                if (!presetHex) return null;
-                return (
-                  <button
-                    key={presetHex}
-                    type="button"
-                    className={classes.preset}
-                    style={{ backgroundColor: presetHex }}
-                    aria-label={`${t.preset} ${presetHex}`}
-                    aria-pressed={presetHex === hex}
-                    onClick={() => update(hexToHsv(presetHex) ?? FALLBACK)}
-                  />
-                );
-              })}
-            </div>
+          {EyeDropper && (
+            <button
+              type="button"
+              className={classes.eyeDropper}
+              aria-label={eyeDropperLabel}
+              onClick={() => pickFromScreen(EyeDropper)}
+            >
+              <Crosshair1Icon aria-hidden="true" />
+            </button>
           )}
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+        </div>
+
+        <div className={classes.hexField}>
+          <Input
+            label={hexLabel}
+            value={hexDraft}
+            maxLength={7}
+            spellCheck={false}
+            autoComplete="off"
+            aria-invalid={normalizeHex(hexDraft) === null}
+            onChange={(event) => {
+              const typed = event.target.value;
+              setHexDraft(typed);
+              // While typing only a complete `#rrggbb` is applied: `#71a` is a valid short hex and
+              // would recolor everything halfway through `#71ad00`.
+              if (FULL_HEX.test(typed.trim())) {
+                applyHex(typed);
+              }
+            }}
+            onBlur={() => {
+              const normalized = normalizeHex(hexDraft);
+              if (normalized) {
+                applyHex(normalized);
+              }
+              setHexDraft(normalized ?? currentHex);
+            }}
+          />
+        </div>
+
+        {swatches && swatches.length > 0 && (
+          <fieldset aria-label={swatchesLabel} className={classes.swatches}>
+            {swatches.map((swatch) => {
+              const swatchHex = normalizeHex(swatch);
+              if (!swatchHex) return null;
+              return (
+                <button
+                  key={swatchHex}
+                  type="button"
+                  className={classes.swatch}
+                  style={{ backgroundColor: swatchHex }}
+                  aria-label={swatchHex}
+                  aria-pressed={swatchHex === currentHex}
+                  onClick={() => applyHex(swatchHex)}
+                />
+              );
+            })}
+          </fieldset>
+        )}
+      </PopoverPrimitive.Content>
+    </PopoverPrimitive.Root>
   );
 };
 
