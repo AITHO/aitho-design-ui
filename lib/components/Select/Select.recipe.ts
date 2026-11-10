@@ -99,6 +99,12 @@ export const selectRecipe = defineSlotRecipe({
     },
     viewport: {
       overflow: "auto",
+      // Radix injects an unlayered style that hides this scrollbar (it relies on scroll buttons):
+      // bring the custom scrollbar back, next to the edge fade, so a long list is obviously scrollable.
+      scrollbarWidth: "auto !important",
+      "&::-webkit-scrollbar": {
+        display: "block !important",
+      },
       // The edge with more options behind it fades out, so a long list reads as scrollable; a list
       // that fits has no active scroll timeline and no fade.
       "@supports (animation-timeline: scroll())": {
