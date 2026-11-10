@@ -34,6 +34,19 @@
   );
 }
 
+/* Animatable lengths for the scroll-edge fade of long lists (Select). */
+@property --aitho-fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --aitho-fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 /*
   Custom scrollbars: thin, rounded thumb on a transparent track, in the theme colours. In the base
   layer, so any unlayered rule of the consumer app still wins. WebKit/Blink use the pseudo-elements

@@ -6,6 +6,13 @@ export const commonKeyframes: CssKeyframes = {
     from: { opacity: 0 },
     to: { opacity: 1 },
   },
+  // Driven by a scroll timeline: fades the edges of a list that still have content behind them.
+  scrollEdgeFade: {
+    from: { "--aitho-fade-top": "0px", "--aitho-fade-bottom": "28px" },
+    "12%": { "--aitho-fade-top": "28px" },
+    "88%": { "--aitho-fade-bottom": "28px" },
+    to: { "--aitho-fade-top": "28px", "--aitho-fade-bottom": "0px" },
+  },
   fadeOut: {
     from: { opacity: 1 },
     to: { opacity: 0 },

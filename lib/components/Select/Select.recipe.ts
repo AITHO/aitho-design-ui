@@ -99,6 +99,17 @@ export const selectRecipe = defineSlotRecipe({
     },
     viewport: {
       overflow: "auto",
+      // The edge with more options behind it fades out, so a long list reads as scrollable; a list
+      // that fits has no active scroll timeline and no fade.
+      "@supports (animation-timeline: scroll())": {
+        maskImage:
+          "linear-gradient(to bottom, transparent 0, #000 var(--aitho-fade-top), #000 calc(100% - var(--aitho-fade-bottom)), transparent 100%)",
+        animationName: "scrollEdgeFade",
+        animationTimingFunction: "linear",
+        animationFillMode: "both",
+        animationDuration: "auto",
+        animationTimeline: "scroll(self)",
+      },
     },
 
     item: {
