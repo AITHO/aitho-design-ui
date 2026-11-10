@@ -101,7 +101,8 @@ export const sidebarRecipe = defineSlotRecipe({
       justifyContent: "space-between",
       gap: "3",
       padding: "0.5625rem 0.625rem",
-      marginBlock: "1px",
+      // 4px between rows: with 2px the hovered and selected backgrounds touched.
+      marginBlock: "2px",
       borderRadius: "radius-sm",
       color: "text-secondary",
       fontWeight: "medium",
