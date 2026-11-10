@@ -25,6 +25,12 @@ export const dialogRecipe = defineSlotRecipe({
     },
     content: {
       maxHeight: "90%",
+      // On a phone every width preset becomes a near full-screen sheet.
+      "@media (max-width: 767.98px)": {
+        width: "calc(100vw - 24px) !important",
+        maxWidth: "100% !important",
+        maxHeight: "92dvh",
+      },
       display: "flex",
       flexDirection: "column",
       backgroundColor: "background-secondary",

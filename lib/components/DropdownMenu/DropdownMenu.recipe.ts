@@ -29,7 +29,6 @@ export const dropdownMenuRecipe = defineSlotRecipe({
       boxShadow: "overlay",
       userSelect: "none",
       outline: "none",
-      marginTop: "1.25rem",
       transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)",
       _open: { animation: "popIn 0.14s ease-out" },
       _closed: { animation: "popOut 0.1s ease-in" },
@@ -44,7 +43,9 @@ export const dropdownMenuRecipe = defineSlotRecipe({
       position: "relative",
       userSelect: "none",
       outline: "none",
-      padding: "7px 10px",
+      // Same row height as the Select options (35px), so every menu surface reads alike.
+      minHeight: "2.188rem",
+      padding: "0.25rem 0.75rem",
       color: "text-primary",
       transition:
         "background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",

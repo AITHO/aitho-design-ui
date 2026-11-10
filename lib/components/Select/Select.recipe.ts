@@ -66,9 +66,16 @@ export const selectRecipe = defineSlotRecipe({
 
     content: {
       color: "text-primary",
-      width: "var(--radix-select-trigger-width)",
+      // As wide as its longest option: never narrower than the trigger, never off screen.
+      width: "max-content",
+      minWidth: "var(--radix-select-trigger-width)",
+      maxWidth:
+        "var(--radix-select-content-available-width, calc(100vw - 16px))",
       // About eight options, then the list scrolls (it used to grow to the whole screen).
       maxHeight: "min(20rem, var(--radix-select-content-available-height))",
+      "@media (max-width: 767.98px)": {
+        maxHeight: "50dvh",
+      },
       position: "relative",
       transform: "translateY(0)",
       overflowY: "auto",

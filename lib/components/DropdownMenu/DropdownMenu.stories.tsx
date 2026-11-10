@@ -85,7 +85,7 @@ const meta = {
     variant: "primary",
     trigger: <DotsHorizontalIcon />,
     arrow: false,
-    sideOffset: -10,
+    sideOffset: 4,
     zIndex: 200,
     side: "top",
     align: "start",

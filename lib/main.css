@@ -26,6 +26,47 @@
     color-mix(in srgb, var(--color-error) 30%, transparent);
   --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.1);
   --shadow-overlay: 0 2px 4px rgb(0 0 0 / 0.08), 0 12px 32px rgb(0 0 0 / 0.18);
+  --scrollbar-thumb: color-mix(in srgb, var(--text-secondary) 35%, transparent);
+  --scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--text-secondary) 60%,
+    transparent
+  );
+}
+
+/*
+  Custom scrollbars: thin, rounded thumb on a transparent track, in the theme colours. In the base
+  layer, so any unlayered rule of the consumer app still wins. WebKit/Blink use the pseudo-elements
+  (the standard properties would switch them off in Chrome); Firefox gets the standard ones.
+*/
+@layer aitho-base {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    min-height: 32px;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    background: var(--scrollbar-thumb) padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover) padding-box;
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+  }
 }
 
 /* Only the library's own elements: the consumer app keeps control of its motion. */

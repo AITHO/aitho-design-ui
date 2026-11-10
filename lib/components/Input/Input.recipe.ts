@@ -72,7 +72,8 @@ export const inputRecipe = defineSlotRecipe({
       height: "2.375rem",
       padding: "0 0.75rem",
       fontSize: "0.875rem",
-      minWidth: "15.625rem",
+      // Never wider than its column (a narrow form or a phone).
+      minWidth: "min(15.625rem, 100%)",
       width: "100%",
       transition: FIELD_TRANSITION,
       // Room for the search / password icon placed right after the input.
