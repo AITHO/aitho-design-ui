@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { table, type TableVariantProps } from "@styled/recipes";
 import { Button } from "../Button/Button";
 import { Checkbox } from "../Checkbox/Checkbox";
@@ -380,6 +380,46 @@ export const Table: React.FC<TableProps> = ({
     [paginatedData, selectedRowIds],
   );
 
+  // Horizontal scroll state, exposed as data attributes for the sticky first
+  // column, its shadow and the right-edge fade (see the tableContainer recipe).
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({
+    overflow: false,
+    scrolled: false,
+    more: false,
+  });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const overflow = el.scrollWidth > el.clientWidth + 1;
+      const scrolled = overflow && el.scrollLeft > 1;
+      const more =
+        overflow && el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setScrollState((prev) =>
+        prev.overflow === overflow &&
+        prev.scrolled === scrolled &&
+        prev.more === more
+          ? prev
+          : { overflow, scrolled, more },
+      );
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(update);
+    resizeObserver?.observe(el);
+    const tableEl = el.querySelector("table");
+    if (tableEl) resizeObserver?.observe(tableEl);
+    return () => {
+      el.removeEventListener("scroll", update);
+      resizeObserver?.disconnect();
+    };
+    // Re-attach when the table appears after loading.
+  }, [isLoading]);
+
   if (isLoading) {
     return <Spinner data-testid="table-loading" />;
   }
@@ -419,7 +459,13 @@ export const Table: React.FC<TableProps> = ({
         paginationPosition !== undefined &&
         paginationPosition?.startsWith("top") &&
         renderPagination()}
-      <div className={classes.tableContainer}>
+      <div
+        ref={containerRef}
+        className={classes.tableContainer}
+        data-overflow={scrollState.overflow || undefined}
+        data-scrolled={scrollState.scrolled || undefined}
+        data-more={scrollState.more || undefined}
+      >
         <table className={classes.table}>
           {caption && <caption className={classes.caption}>{caption}</caption>}
           <thead>

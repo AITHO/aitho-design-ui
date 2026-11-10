@@ -79,6 +79,34 @@ export const tableRecipe = defineSlotRecipe({
       overflowX: "auto",
       borderRadius: "radius",
       bg: "background-primary",
+      // Only when the table is wider than its box (data attributes set by Table.tsx):
+      // the first column stays put while the rest scrolls under it.
+      "&[data-overflow] tr > :first-child": {
+        position: "sticky",
+        left: 0,
+        zIndex: 1,
+        bg: "background-primary",
+        transition: "box-shadow 0.15s ease",
+      },
+      "&[data-overflow] thead tr > :first-child": {
+        zIndex: 2,
+        bg: "background-secondary",
+      },
+      // The row tint has to sit on an opaque base, or the scrolled cells show through.
+      "&[data-overflow] tbody tr:hover > :first-child": {
+        backgroundImage:
+          "linear-gradient({colors.color-primary-softer}, {colors.color-primary-softer})",
+      },
+      // A border-coloured edge plus a soft shadow: the line still reads on dark themes.
+      "&[data-scrolled] tr > :first-child": {
+        boxShadow:
+          "1px 0 0 {colors.border-color}, 6px 0 10px -6px rgb(0 0 0 / 0.5)",
+      },
+      // More columns to the right: the edge fades out (the last pixel stays, for the frame).
+      "&[data-more]": {
+        maskImage:
+          "linear-gradient(to right, #000 calc(100% - 32px), transparent calc(100% - 1px), #000 calc(100% - 1px))",
+      },
     },
     table: {
       display: "table",
@@ -152,6 +180,12 @@ export const tableRecipe = defineSlotRecipe({
       secondary: {
         tableContainer: {
           bg: "table-base-color",
+          "&[data-overflow] tbody tr > :first-child": {
+            bg: "table-base-color",
+          },
+          "&[data-overflow] thead tr > :first-child": {
+            bg: "background-tertiary",
+          },
         },
         header: {
           color: "text-primary",
@@ -210,12 +244,27 @@ export const tableRecipe = defineSlotRecipe({
     {
       variant: "primary",
       striped: true,
-      css: { root: { "& tr:nth-child(even)": { bg: "table-striped-color" } } },
+      css: {
+        root: {
+          "& tr:nth-child(even)": { bg: "table-striped-color" },
+          // The fixed first cell takes its striped row's colour.
+          "& [data-overflow] tbody tr:nth-child(even) > :first-child": {
+            bg: "table-striped-color",
+          },
+        },
+      },
     },
     {
       variant: "secondary",
       striped: true,
-      css: { root: { "& tr:nth-child(even)": { bg: "background-secondary" } } },
+      css: {
+        root: {
+          "& tr:nth-child(even)": { bg: "background-secondary" },
+          "& [data-overflow] tbody tr:nth-child(even) > :first-child": {
+            bg: "background-secondary",
+          },
+        },
+      },
     },
   ],
 

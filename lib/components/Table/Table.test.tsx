@@ -311,6 +311,57 @@ describe("Table", () => {
     expect(screen.queryByText("4")).toBeNull();
   });
 
+  describe("horizontal scroll", () => {
+    // jsdom has no layout: fake the container's scroll geometry.
+    const setScroll = (
+      el: HTMLElement,
+      { scrollWidth, clientWidth, scrollLeft }: Record<string, number>,
+    ) => {
+      Object.defineProperty(el, "scrollWidth", {
+        configurable: true,
+        value: scrollWidth,
+      });
+      Object.defineProperty(el, "clientWidth", {
+        configurable: true,
+        value: clientWidth,
+      });
+      el.scrollLeft = scrollLeft;
+      fireEvent.scroll(el);
+    };
+
+    it("should mark overflow, scroll position and hidden columns on the container", () => {
+      renderTable();
+      const container = screen.getByRole("table").parentElement as HTMLElement;
+
+      expect(container).not.toHaveAttribute("data-overflow");
+
+      setScroll(container, {
+        scrollWidth: 1000,
+        clientWidth: 400,
+        scrollLeft: 0,
+      });
+      expect(container).toHaveAttribute("data-overflow");
+      expect(container).toHaveAttribute("data-more");
+      expect(container).not.toHaveAttribute("data-scrolled");
+
+      setScroll(container, {
+        scrollWidth: 1000,
+        clientWidth: 400,
+        scrollLeft: 600,
+      });
+      expect(container).toHaveAttribute("data-scrolled");
+      expect(container).not.toHaveAttribute("data-more");
+
+      setScroll(container, {
+        scrollWidth: 400,
+        clientWidth: 400,
+        scrollLeft: 0,
+      });
+      expect(container).not.toHaveAttribute("data-overflow");
+      expect(container).not.toHaveAttribute("data-scrolled");
+    });
+  });
+
   describe("accessibility", () => {
     it("should scope the header cells to their column", () => {
       renderTable({ checkable: true });
