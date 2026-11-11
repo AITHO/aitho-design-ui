@@ -60,6 +60,8 @@ export const tableRecipe = defineSlotRecipe({
     "cell",
     "table",
     "tableContainer",
+    "frame",
+    "edge",
     "header",
     "sortIcons",
     "pagination",
@@ -69,8 +71,6 @@ export const tableRecipe = defineSlotRecipe({
   base: {
     root: {
       display: "block",
-      // Containing block of the sideways scrollbar Table.tsx draws over the table.
-      position: "relative",
       width: "100%",
       color: "text-primary",
     },
@@ -79,7 +79,8 @@ export const tableRecipe = defineSlotRecipe({
     },
     tableContainer: {
       overflowX: "auto",
-      borderRadius: "radius",
+      // A variable, so the edge shadow below follows an app that rounds its tables differently.
+      borderRadius: "var(--aitho-table-radius, {radii.radius})",
       bg: "background-primary",
       // Only when the table is wider than its box (data attributes set by Table.tsx):
       // the first column stays put while the rest scrolls under it.
@@ -105,6 +106,32 @@ export const tableRecipe = defineSlotRecipe({
       "&[data-scrolled] tr > :first-child": {
         boxShadow:
           "1px 0 0 {colors.border-color}, 6px 0 10px -6px rgb(0 0 0 / 0.5)",
+      },
+    },
+    // Holds the table box with the shadow and the scrollbar drawn over it.
+    frame: {
+      position: "relative",
+    },
+    // More columns to the right: a soft shadow on the inner right edge, rounded like the frame.
+    edge: {
+      position: "absolute",
+      top: "1px",
+      right: "1px",
+      bottom: "1px",
+      width: "1.25rem",
+      pointerEvents: "none",
+      borderRadius:
+        "0 calc(var(--aitho-table-radius, {radii.radius}) - 1px) calc(var(--aitho-table-radius, {radii.radius}) - 1px) 0",
+      background: "linear-gradient(to left, rgb(0 0 0 / 0.28), transparent)",
+      // Lighter on a light page, where the same shadow reads as a dark band.
+      "[data-panda-theme=light] &": {
+        background: "linear-gradient(to left, rgb(0 0 0 / 0.12), transparent)",
+      },
+      opacity: 0,
+      transition: "opacity 0.15s ease",
+      zIndex: 2,
+      "[data-more] + &": {
+        opacity: 1,
       },
     },
     table: {

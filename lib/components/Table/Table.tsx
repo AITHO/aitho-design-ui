@@ -382,12 +382,12 @@ export const Table: React.FC<TableProps> = ({
   );
 
   // Horizontal scroll state, exposed as data attributes for the sticky first
-  // column and its shadow (see the tableContainer recipe). More columns to the
-  // right are shown by the drawn scrollbar below the table.
+  // column, its shadow and the right-edge shadow (see the recipe).
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollState, setScrollState] = useState({
     overflow: false,
     scrolled: false,
+    more: false,
   });
   useEffect(() => {
     const el = containerRef.current;
@@ -395,10 +395,14 @@ export const Table: React.FC<TableProps> = ({
     const update = () => {
       const overflow = el.scrollWidth > el.clientWidth + 1;
       const scrolled = overflow && el.scrollLeft > 1;
+      const more =
+        overflow && el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
       setScrollState((prev) =>
-        prev.overflow === overflow && prev.scrolled === scrolled
+        prev.overflow === overflow &&
+        prev.scrolled === scrolled &&
+        prev.more === more
           ? prev
-          : { overflow, scrolled },
+          : { overflow, scrolled, more },
       );
     };
     update();
@@ -456,93 +460,101 @@ export const Table: React.FC<TableProps> = ({
         paginationPosition !== undefined &&
         paginationPosition?.startsWith("top") &&
         renderPagination()}
-      <div
-        ref={containerRef}
-        className={classes.tableContainer}
-        data-overflow={scrollState.overflow || undefined}
-        data-scrolled={scrollState.scrolled || undefined}
-      >
-        <table className={classes.table}>
-          {caption && <caption className={classes.caption}>{caption}</caption>}
-          <thead>
-            <tr className={classes.row}>
-              {checkable && (
-                <th scope="col" className={classes.header}>
-                  <Checkbox
-                    squareIcon
-                    variant="white"
-                    checked={areAllRowsSelected}
-                    onCheckedChange={handleSelectAll}
-                    size="sm"
-                    aria-label={selectAllLabel}
-                    data-testid="select-all-checkbox"
-                  />
-                </th>
-              )}
-              {columns.map((column) => {
-                const direction = sortDirections[column.dataIndex];
-                const isSortable = Boolean(column.onSort);
-
-                return (
-                  <th
-                    key={column.dataIndex}
-                    scope="col"
-                    className={classes.header}
-                    aria-sort={
-                      isSortable && direction ? ARIA_SORT[direction] : undefined
-                    }
-                  >
-                    <div className="header-content">
-                      {column.title}
-                      {isSortable && (
-                        <Button
-                          variant="transparent"
-                          compact
-                          layout="vertical"
-                          onClick={() => handleSort(column)}
-                          aria-label={sortLabel(column.title)}
-                          data-testid="sort-icon"
-                        >
-                          <div className={classes.sortIcons} aria-hidden>
-                            {getSortIcon(column, direction)}
-                          </div>
-                        </Button>
-                      )}
-                    </div>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.map((row, rowIndex) => (
-              <tr key={row.id} className={classes.row}>
+      <div className={classes.frame}>
+        <div
+          ref={containerRef}
+          className={classes.tableContainer}
+          data-overflow={scrollState.overflow || undefined}
+          data-scrolled={scrollState.scrolled || undefined}
+          data-more={scrollState.more || undefined}
+        >
+          <table className={classes.table}>
+            {caption && (
+              <caption className={classes.caption}>{caption}</caption>
+            )}
+            <thead>
+              <tr className={classes.row}>
                 {checkable && (
-                  <td className={classes.cell} style={{ padding: "0.75rem" }}>
+                  <th scope="col" className={classes.header}>
                     <Checkbox
                       squareIcon
                       variant="white"
-                      checked={selectedRowIds.includes(row.id)}
-                      onCheckedChange={() => handleRowSelect(row.id)}
+                      checked={areAllRowsSelected}
+                      onCheckedChange={handleSelectAll}
                       size="sm"
-                      aria-label={selectRowLabel(row, rowIndex)}
-                      data-testid={`select-row-${row.id}`}
+                      aria-label={selectAllLabel}
+                      data-testid="select-all-checkbox"
                     />
-                  </td>
+                  </th>
                 )}
-                {columns.map((column) => (
-                  <td key={column.dataIndex} className={classes.cell}>
-                    {column.render
-                      ? column.render(row[column.dataIndex], row, rowIndex)
-                      : row[column.dataIndex]}
-                  </td>
-                ))}
+                {columns.map((column) => {
+                  const direction = sortDirections[column.dataIndex];
+                  const isSortable = Boolean(column.onSort);
+
+                  return (
+                    <th
+                      key={column.dataIndex}
+                      scope="col"
+                      className={classes.header}
+                      aria-sort={
+                        isSortable && direction
+                          ? ARIA_SORT[direction]
+                          : undefined
+                      }
+                    >
+                      <div className="header-content">
+                        {column.title}
+                        {isSortable && (
+                          <Button
+                            variant="transparent"
+                            compact
+                            layout="vertical"
+                            onClick={() => handleSort(column)}
+                            aria-label={sortLabel(column.title)}
+                            data-testid="sort-icon"
+                          >
+                            <div className={classes.sortIcons} aria-hidden>
+                              {getSortIcon(column, direction)}
+                            </div>
+                          </Button>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedData.map((row, rowIndex) => (
+                <tr key={row.id} className={classes.row}>
+                  {checkable && (
+                    <td className={classes.cell} style={{ padding: "0.75rem" }}>
+                      <Checkbox
+                        squareIcon
+                        variant="white"
+                        checked={selectedRowIds.includes(row.id)}
+                        onCheckedChange={() => handleRowSelect(row.id)}
+                        size="sm"
+                        aria-label={selectRowLabel(row, rowIndex)}
+                        data-testid={`select-row-${row.id}`}
+                      />
+                    </td>
+                  )}
+                  {columns.map((column) => (
+                    <td key={column.dataIndex} className={classes.cell}>
+                      {column.render
+                        ? column.render(row[column.dataIndex], row, rowIndex)
+                        : row[column.dataIndex]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className={classes.edge} aria-hidden="true" />
+        <Scrollbar targetRef={containerRef} orientation="horizontal" />
       </div>
-      <Scrollbar targetRef={containerRef} orientation="horizontal" />
 
       {showPagination &&
         paginationPosition !== undefined &&
