@@ -11,10 +11,14 @@ import {
   type TypedProblem,
 } from "../../utils/nativeField";
 import {
+  finerPrecision,
   formatTime,
   maskTypedTime,
   parseTime,
   parseTypedTime,
+  precisionOfValue,
+  timeLength,
+  type TimePrecision,
 } from "./timeUtils";
 
 export type TimePickerProps = Omit<
@@ -22,22 +26,24 @@ export type TimePickerProps = Omit<
   "value" | "defaultValue" | "onChange" | "type" | "min" | "max" | "step"
 > &
   InputVariantProps & {
-    /** *(optional)* Selected time as `HH:mm` or `HH:mm:ss`; empty string or undefined for none. */
+    /** *(optional)* Selected time as `HH:mm`, `HH:mm:ss` or `HH:mm:ss.sss`; empty for none. */
     value?: string;
 
-    /** *(optional)* Called with the new time (`HH:mm`, or `HH:mm:ss` with seconds), or `""`. */
+    /** *(optional)* Called with the new time in the field's precision, or `""` when cleared. */
     onValueChange?: (value: string) => void;
 
     /** *(optional)* Minutes between the times offered in the list (typing accepts any minute). */
     step?: number;
 
-    /** *(optional)* Typed and emitted times carry seconds; also on when `value` has them. */
-    seconds?: boolean;
+    /** *(optional)* How much of the time is typed and emitted: `minutes` (`HH:mm`), `seconds`
+     * (`HH:mm:ss`) or `milliseconds` (`HH:mm:ss.sss`). A value written more finely keeps its
+     * precision. @default "minutes" */
+    precision?: TimePrecision;
 
-    /** *(optional)* Earliest time, `HH:mm` or `HH:mm:ss`. */
+    /** *(optional)* Earliest time, in any of the value formats. */
     min?: string;
 
-    /** *(optional)* Latest time, `HH:mm` or `HH:mm:ss`. */
+    /** *(optional)* Latest time, in any of the value formats. */
     max?: string;
 
     /** *(optional)* Language of the labels; defaults to the page language. */
@@ -68,17 +74,19 @@ const TEXT = {
   },
 } as const;
 
-const DAY_SECONDS = 24 * 3600;
-const FORMATS = {
-  minutes: { length: 5, placeholder: "hh:mm" },
-  seconds: { length: 8, placeholder: "hh:mm:ss" },
-} as const;
-const hasSeconds = (value?: string) => /^\d{1,2}:\d{2}:\d{2}/.test(value ?? "");
+const DAY = 24 * 3600 * 1000;
+const PLACEHOLDER: Record<TimePrecision, string> = {
+  minutes: "hh:mm",
+  seconds: "hh:mm:ss",
+  milliseconds: "hh:mm:ss.sss",
+};
 
 /**
- * A time picker: a text field that takes hh:mm (hh:mm:ss with `seconds`) and a popover listing
- * the times every `step` minutes. The value is `HH:mm` or `HH:mm:ss`, the same format as a native
- * time input; with a `name`, a hidden field carries it in a form. Text that is not a real time,
+ * A time picker: a text field that takes hh:mm (or hh:mm:ss, hh:mm:ss.sss with `precision`) and a
+ * popover listing the times every `step` minutes. The value has the same format as a native time
+ * input; with a `name`, a hidden field carries it in a form. While typing, a time applies once it
+ * is complete for the precision; leaving the field also accepts a shorter one (`10:30` as
+ * `10:30:00`). Text that is not a real time,
  * or a time outside `min`/`max`, is never applied: the field is invalid (so a form will not
  * submit), the form value is empty meanwhile, and leaving the field puts the last valid time back.
  * Blur reports a target with the field name and the canonical value, like the change does.
@@ -90,7 +98,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
       value,
       onValueChange,
       step = 15,
-      seconds = false,
+      precision = "minutes",
       min,
       max,
       lang,
@@ -115,10 +123,11 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
     const classes = timePicker();
     const fieldClasses = input({ borderRadius, borderColor });
     const t = TEXT[resolveLang(lang)];
-    const withSeconds = seconds || hasSeconds(value);
-    const format = FORMATS[withSeconds ? "seconds" : "minutes"];
+    // Never show a value with less than it has: a value with seconds keeps them.
+    const shown = finerPrecision(precision, precisionOfValue(value));
+    const length = timeLength(shown);
     const show = (time: number | null) =>
-      time === null ? "" : formatTime(time, withSeconds);
+      time === null ? "" : formatTime(time, shown);
 
     const selected = parseTime(value);
     const [text, setText] = React.useState(() => show(selected));
@@ -141,24 +150,24 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
       else if (ref) ref.current = node;
     };
 
-    const minSeconds = parseTime(min) ?? 0;
-    const maxSeconds = parseTime(max) ?? DAY_SECONDS - 1;
+    const minTime = parseTime(min) ?? 0;
+    const maxTime = parseTime(max) ?? DAY - 1;
     const options = React.useMemo(() => {
       const list: number[] = [];
-      for (let s = 0; s < DAY_SECONDS; s += Math.max(1, step) * 60)
-        list.push(s);
+      for (let time = 0; time < DAY; time += Math.max(1, step) * 60_000)
+        list.push(time);
       return list;
     }, [step]);
 
-    const inRange = (time: number) => time >= minSeconds && time <= maxSeconds;
+    const inRange = (time: number) => time >= minTime && time <= maxTime;
 
-    const typedTime = parseTypedTime(text, withSeconds);
+    const typedTime = parseTypedTime(text, shown);
     const problem = typedProblem(text, typedTime, inRange);
     React.useEffect(() => {
       inputRef.current?.setCustomValidity(problem ? t[problem] : "");
       onProblemChange?.(problem);
     }, [problem, t, onProblemChange]);
-    const showInvalid = showsProblem(problem, text, format.length);
+    const showInvalid = showsProblem(problem, text, length);
 
     const commit = (time: number | null) => {
       if (disabled || readOnly || (time !== null && !inRange(time))) return;
@@ -182,7 +191,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
 
     // The option to scroll to and focus: the selected time, or the nearest enabled one after it.
     const anchorOption = () => {
-      const target = selected ?? new Date().getHours() * 3600;
+      const target = selected ?? new Date().getHours() * 3_600_000;
       const enabled = options.filter(inRange);
       return enabled.find((s) => s >= target) ?? enabled[enabled.length - 1];
     };
@@ -226,23 +235,27 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
               data-type="time"
               className={fieldClassName ?? fieldClasses.inputField}
               value={text}
-              placeholder={placeholder ?? format.placeholder}
+              placeholder={placeholder ?? PLACEHOLDER[shown]}
               form={form}
               disabled={disabled}
               readOnly={readOnly}
-              maxLength={format.length}
+              maxLength={length}
               onChange={(event) => {
-                const masked = maskTypedTime(event.target.value, withSeconds);
+                const masked = maskTypedTime(event.target.value, shown);
                 setText(masked);
                 if (masked === "") commit(null);
                 else {
-                  const typed = parseTypedTime(masked, withSeconds);
+                  const typed = parseTypedTime(masked, shown);
                   if (typed !== null) commit(typed);
                 }
               }}
               aria-invalid={showInvalid || props["aria-invalid"]}
               onBlur={(event) => {
-                const kept = problem === null ? typedTime : selected;
+                // Leaving also accepts a shorter time (10:30 as 10:30:00), if it is in range.
+                const typed = typedTime ?? parseTime(text);
+                const kept =
+                  typed !== null && inRange(typed) ? typed : selected;
+                if (kept !== null) commit(kept);
                 setText(show(kept));
                 onBlur?.(
                   withTarget(

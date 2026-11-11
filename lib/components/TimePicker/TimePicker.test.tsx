@@ -9,26 +9,39 @@ import {
   maskTypedTime,
   parseTime,
   parseTypedTime,
+  precisionOfValue,
 } from "./timeUtils";
 
 describe("timeUtils", () => {
   it("masks and parses typed times", () => {
     expect(maskTypedTime("093")).toBe("09:3");
     expect(maskTypedTime("0930")).toBe("09:30");
-    expect(parseTypedTime("09:30")).toBe(34200);
-    expect(parseTypedTime("9:30")).toBe(34200);
-    expect(parseTypedTime("0930")).toBe(34200);
+    expect(parseTypedTime("09:30")).toBe(34_200_000);
+    expect(parseTypedTime("9:30")).toBe(34_200_000);
+    expect(parseTypedTime("0930")).toBe(34_200_000);
     expect(parseTypedTime("25:00")).toBeNull();
   });
 
-  it("keeps seconds when they are on", () => {
-    expect(parseTime("10:30:45")).toBe(37845);
-    expect(formatTime(37845, true)).toBe("10:30:45");
-    expect(formatTime(37845)).toBe("10:30");
-    expect(maskTypedTime("103045", true)).toBe("10:30:45");
-    expect(parseTypedTime("10:30:45", true)).toBe(37845);
-    expect(parseTypedTime("103045", true)).toBe(37845);
+  it("keeps seconds and milliseconds by precision", () => {
+    expect(parseTime("10:30:45")).toBe(37_845_000);
+    expect(parseTime("10:30:45.123")).toBe(37_845_123);
+    expect(formatTime(37_845_123, "milliseconds")).toBe("10:30:45.123");
+    expect(formatTime(37_845_123, "seconds")).toBe("10:30:45");
+    expect(formatTime(37_845_123)).toBe("10:30");
+    expect(maskTypedTime("103045", "seconds")).toBe("10:30:45");
+    expect(maskTypedTime("103045123", "milliseconds")).toBe("10:30:45.123");
+    expect(parseTypedTime("103045", "seconds")).toBe(37_845_000);
+    expect(parseTypedTime("10:30:45.123", "milliseconds")).toBe(37_845_123);
     expect(parseTypedTime("10:30:45")).toBeNull();
+  });
+
+  it("waits for a complete time in the field's precision while typing", () => {
+    expect(parseTypedTime("10:30", "seconds")).toBeNull();
+    expect(parseTypedTime("10:30:4", "seconds")).toBeNull();
+    expect(parseTypedTime("10:30:45", "milliseconds")).toBeNull();
+    expect(precisionOfValue("10:30")).toBe("minutes");
+    expect(precisionOfValue("10:30:45")).toBe("seconds");
+    expect(precisionOfValue("10:30:45.1")).toBe("milliseconds");
   });
 });
 
@@ -327,6 +340,63 @@ describe("Input date, time and datetime-local in forms", () => {
     expect(onChange.mock.calls[0][0].target.value).toBe("10:30:46");
   });
 
+  it("lets the seconds be typed in full before applying the time", () => {
+    const onChange = vi.fn();
+    render(<Input type="time" step={1} value="" onChange={onChange} />);
+    const [field] = document.querySelectorAll<HTMLInputElement>(
+      'input[data-type="time"]',
+    );
+    fireEvent.change(field, { target: { value: "1030" } });
+    expect(field).toHaveValue("10:30");
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.change(field, { target: { value: "103045" } });
+    expect(field).toHaveValue("10:30:45");
+    expect(onChange.mock.calls[0][0].target.value).toBe("10:30:45");
+  });
+
+  it("takes a shorter time on leaving the field", () => {
+    const onChange = vi.fn();
+    render(<Input type="time" step={1} value="" onChange={onChange} />);
+    const [field] = document.querySelectorAll<HTMLInputElement>(
+      'input[data-type="time"]',
+    );
+    fireEvent.change(field, { target: { value: "1030" } });
+    fireEvent.blur(field);
+    expect(onChange.mock.calls[0][0].target.value).toBe("10:30:00");
+    expect(field).toHaveValue("10:30:00");
+  });
+
+  it("keeps milliseconds with a step under a second", () => {
+    const onChange = vi.fn();
+    render(
+      <form data-testid="form">
+        <Input
+          type="time"
+          step={0.001}
+          name="at"
+          value="10:30:45.123"
+          onChange={onChange}
+        />
+        <Input
+          type="datetime-local"
+          step={0.001}
+          name="when"
+          value="2026-03-07T10:30:45.123"
+          onChange={vi.fn()}
+        />
+      </form>,
+    );
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    expect(new FormData(form).get("at")).toBe("10:30:45.123");
+    expect(new FormData(form).get("when")).toBe("2026-03-07T10:30:45.123");
+    const [field] = document.querySelectorAll<HTMLInputElement>(
+      'input[data-type="time"]',
+    );
+    expect(field).toHaveValue("10:30:45.123");
+    fireEvent.change(field, { target: { value: "103045124" } });
+    expect(onChange.mock.calls[0][0].target.value).toBe("10:30:45.124");
+  });
+
   it("hands onChange a real input of the native type", () => {
     const onChange = vi.fn();
     render(<Input type="date" name="day" value="" onChange={onChange} />);
@@ -410,6 +480,27 @@ describe("Input datetime-local", () => {
     expect(new FormData(form).get("when")).toBe("");
     fireEvent.blur(dayField());
     expect(new FormData(form).get("when")).toBe("2026-03-07T10:30");
+  });
+
+  it("compares limits by value, so 10:30:00 is within a 10:30 maximum", () => {
+    const onChange = vi.fn();
+    render(
+      <Input
+        type="datetime-local"
+        step={1}
+        lang="it"
+        value=""
+        max="2026-03-07T10:30"
+        onChange={(event) => onChange(event.target.value)}
+      />,
+    );
+    fireEvent.change(dayField(), { target: { value: "07/03/2026" } });
+    fireEvent.change(timeField(), { target: { value: "103000" } });
+    // Accepted, and written as a native datetime-local writes 10:30:00.
+    expect(onChange).toHaveBeenLastCalledWith("2026-03-07T10:30");
+    fireEvent.change(timeField(), { target: { value: "103001" } });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(timeField()).toHaveAttribute("aria-invalid", "true");
   });
 
   it("names the time part after the field", () => {

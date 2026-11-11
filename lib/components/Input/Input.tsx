@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import { DatePicker } from "../DatePicker/DatePicker";
 import { resolveLang } from "../DatePicker/dateUtils";
 import { TimePicker } from "../TimePicker/TimePicker";
+import { parseTime, type TimePrecision } from "../TimePicker/timeUtils";
 import { Label } from "../Label/Label";
 import {
   nativeFieldTarget,
@@ -81,25 +82,33 @@ type DateTimeFieldProps = Omit<
   max?: string;
   /** The Input label, used to name the time part ("Start, time"). */
   fieldLabel?: string;
-  /** The time part carries seconds (also on when `value` has them). */
-  seconds?: boolean;
+  /** How much of the time part is typed and kept (a value written more finely keeps it). */
+  precision?: TimePrecision;
 };
 
 const TIME_PART = { it: "ora", en: "time" } as const;
 
-// The day and the time, seconds included: `2026-03-07T10:30:45` keeps its `:45`.
+// The day and the time, every digit kept: `2026-03-07T10:30:45.123` keeps its `:45.123`.
 const splitDateTime = (v: string) => {
-  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}(?::\d{2})?))?/.exec(v);
+  const match =
+    /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?))?/.exec(v);
   return { date: match?.[1] ?? "", time: match?.[2] ?? "" };
+};
+
+// A datetime as the day then the time in milliseconds, so limits compare by value and not by
+// how they are written: 10:30:00 equals 10:30.
+const dateTimeKey = (v: string) => {
+  const { date, time } = splitDateTime(v);
+  return `${date}T${String(parseTime(time) ?? 0).padStart(8, "0")}`;
 };
 
 // The time part of a datetime limit, on its first or last allowed day only.
 const timeLimit = (limit: string | undefined, day: string) =>
-  limit && day && day === limit.slice(0, 10) ? limit.slice(11, 19) : undefined;
+  limit && day && day === limit.slice(0, 10) ? limit.slice(11) : undefined;
 
 // datetime-local as a DatePicker and a TimePicker side by side; the value is YYYY-MM-DDTHH:mm
-// (with :ss when seconds are on), emitted once both parts are there (like the native field) and
-// "" as soon as either is cleared. Blur reports the field name and that whole value.
+// (with seconds or milliseconds by precision), emitted once both parts are there (like the native
+// field) and "" as soon as either is cleared. Blur reports the field name and that whole value.
 const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
   (
     {
@@ -112,7 +121,7 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
       iconClassName,
       fieldClassName,
       fieldLabel,
-      seconds,
+      precision,
       name,
       form,
       onBlur,
@@ -138,8 +147,12 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
 
     const minDay = min?.slice(0, 10);
     const maxDay = max?.slice(0, 10);
-    const isOutOfRange = (dateTime: string) =>
-      Boolean((min && dateTime < min) || (max && dateTime > max));
+    const isOutOfRange = (dateTime: string) => {
+      const key = dateTimeKey(dateTime);
+      return Boolean(
+        (min && key < dateTimeKey(min)) || (max && key > dateTimeKey(max)),
+      );
+    };
 
     const change = (next: { date: string; time: string }) => {
       setParts(next);
@@ -187,7 +200,7 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
             // The time limits only bind on the first and the last allowed day.
             min={timeLimit(min, parts.date)}
             max={timeLimit(max, parts.date)}
-            seconds={seconds}
+            precision={precision}
             form={form}
             disabled={disabled}
             readOnly={readOnly}
@@ -229,6 +242,13 @@ const asLimit = (limit: InputProps["min"]) =>
 
 const asValue = (value: InputProps["value"]) => value ?? "";
 
+// A native time step is in seconds: whole minutes show hh:mm, whole seconds hh:mm:ss, a fraction
+// of a second hh:mm:ss.sss (step "any" too).
+const precisionOfStep = (step: InputProps["step"]): TimePrecision => {
+  if (step === undefined || Number(step) % 60 === 0) return "minutes";
+  return Number.isInteger(Number(step)) ? "seconds" : "milliseconds";
+};
+
 type PickerInputProps = DateTimeFieldProps & {
   type: PickerType;
   step?: InputProps["step"];
@@ -237,15 +257,14 @@ type PickerInputProps = DateTimeFieldProps & {
 // The library picker behind each date and time type, all fed the same props by Input.
 const PickerInput = React.forwardRef<HTMLInputElement, PickerInputProps>(
   ({ type, step, fieldLabel, ...props }, ref) => {
-    // A native time step is in seconds: one that is not whole minutes shows and keeps seconds.
-    const seconds = step !== undefined && Number(step) % 60 !== 0;
+    const precision = precisionOfStep(step);
     if (type === "time") {
       // The list step is in minutes.
       const minutes = step
         ? Math.max(1, Math.round(Number(step) / 60))
         : undefined;
       return (
-        <TimePicker {...props} ref={ref} step={minutes} seconds={seconds} />
+        <TimePicker {...props} ref={ref} step={minutes} precision={precision} />
       );
     }
     if (type === "datetime-local") {
@@ -254,7 +273,7 @@ const PickerInput = React.forwardRef<HTMLInputElement, PickerInputProps>(
           {...props}
           ref={ref}
           fieldLabel={fieldLabel}
-          seconds={seconds}
+          precision={precision}
         />
       );
     }
