@@ -147,10 +147,14 @@ export const colorPickerRecipe = defineSlotRecipe({
     // The library Input has a 15.625rem min-width, wider than the panel: let it shrink here.
     // HEX | RGB: a small segmented switch, the pressed option raised on the tinted track.
     format: {
+      // A <fieldset>: no browser margin, border or min-width.
       display: "inline-flex",
       alignSelf: "flex-start",
       gap: "0.125rem",
+      margin: 0,
       padding: "0.125rem",
+      minWidth: 0,
+      border: "none",
       borderRadius: "radius-sm",
       backgroundColor: "background-tertiary",
     },

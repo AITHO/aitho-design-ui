@@ -414,6 +414,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 
             <div
               role="grid"
+              tabIndex={-1}
               aria-label={title}
               className={classes.grid}
               onKeyDown={handleGridKeyDown}

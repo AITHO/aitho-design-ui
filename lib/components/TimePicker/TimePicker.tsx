@@ -2,6 +2,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { ClockIcon } from "@radix-ui/react-icons";
 import { input, timePicker, type InputVariantProps } from "@styled/recipes";
 import React from "react";
+import { resolveLang } from "../DatePicker/dateUtils";
 import {
   formatTime,
   maskTypedTime,
@@ -89,15 +90,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
   ) => {
     const classes = timePicker();
     const fieldClasses = input({ borderRadius, borderColor });
-    const language = (
-      lang ||
-      (typeof document !== "undefined" ? document.documentElement.lang : "")
-    )
-      .toLowerCase()
-      .startsWith("it")
-      ? "it"
-      : "en";
-    const t = TEXT[language];
+    const t = TEXT[resolveLang(lang)];
 
     const selected = parseTime(value);
     const [text, setText] = React.useState(() =>
@@ -224,13 +217,9 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
               }}
               aria-invalid={typedOutOfRange || props["aria-invalid"]}
               onBlur={(event) => {
-                setText(
-                  typedTime !== null && !typedOutOfRange
-                    ? formatTime(typedTime)
-                    : selected === null
-                      ? ""
-                      : formatTime(selected),
-                );
+                const kept =
+                  typedTime !== null && !typedOutOfRange ? typedTime : selected;
+                setText(kept === null ? "" : formatTime(kept));
                 onBlur?.(event);
               }}
               onKeyDown={(event) => {
@@ -296,6 +285,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
           >
             <div
               role="listbox"
+              tabIndex={-1}
               aria-label={t.list}
               className={classes.list}
               onKeyDown={handleListKeyDown}

@@ -432,7 +432,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           )}
         </div>
 
-        <div role="group" aria-label={formatLabel} className={classes.format}>
+        <fieldset aria-label={formatLabel} className={classes.format}>
           {FORMATS.map((option) => (
             <button
               key={option}
@@ -444,7 +444,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               {option.toUpperCase()}
             </button>
           ))}
-        </div>
+        </fieldset>
 
         {format === "hex" ? (
           <div className={classes.hexField}>

@@ -61,7 +61,8 @@ export const Scrollbar: React.FC<ScrollbarProps> = ({
       const size = vertical ? target.scrollHeight : target.scrollWidth;
       const visible = vertical ? target.clientHeight : target.clientWidth;
       const overflow = size - visible;
-      if (vertical) target.toggleAttribute("data-overflowing", overflow > 0);
+      if (vertical && overflow > 0) target.dataset.overflowing = "";
+      else delete target.dataset.overflowing;
       thumb.hidden = overflow <= 0;
       if (overflow <= 0) return;
 
@@ -84,7 +85,7 @@ export const Scrollbar: React.FC<ScrollbarProps> = ({
             window.innerHeight,
             scrollParent?.getBoundingClientRect().bottom ?? Infinity,
           ) -
-          (parseFloat(
+          (Number.parseFloat(
             getComputedStyle(target).getPropertyValue(
               "--aitho-scrollbar-bottom",
             ),
@@ -104,7 +105,7 @@ export const Scrollbar: React.FC<ScrollbarProps> = ({
       }
     };
 
-    target.setAttribute("data-aitho-scrollbar", "");
+    target.dataset.aithoScrollbar = "";
     update();
     target.addEventListener("scroll", update, { passive: true });
     // Size changes of the box and of what it holds (a table getting wider), and options added or
@@ -132,8 +133,8 @@ export const Scrollbar: React.FC<ScrollbarProps> = ({
       window.removeEventListener("resize", update);
       resize?.disconnect();
       mutation.disconnect();
-      target.removeAttribute("data-aitho-scrollbar");
-      target.removeAttribute("data-overflowing");
+      delete target.dataset.aithoScrollbar;
+      delete target.dataset.overflowing;
     };
   }, [targetRef, vertical, inset]);
 
@@ -161,11 +162,11 @@ export const Scrollbar: React.FC<ScrollbarProps> = ({
       thumb.removeEventListener("pointermove", move);
       thumb.removeEventListener("pointerup", stop);
       thumb.removeEventListener("pointercancel", stop);
-      thumb.removeAttribute("data-dragging");
+      delete thumb.dataset.dragging;
     };
 
     thumb.setPointerCapture(event.pointerId);
-    thumb.setAttribute("data-dragging", "");
+    thumb.dataset.dragging = "";
     thumb.addEventListener("pointermove", move);
     thumb.addEventListener("pointerup", stop);
     thumb.addEventListener("pointercancel", stop);

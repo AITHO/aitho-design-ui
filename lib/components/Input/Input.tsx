@@ -184,6 +184,124 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
 );
 DateTimeField.displayName = "DateTimeField";
 
+type PickerType = "date" | "time" | "datetime-local";
+
+const isPickerType = (type: InputProps["type"]): type is PickerType =>
+  type === "date" || type === "time" || type === "datetime-local";
+
+const asLimit = (limit: InputProps["min"]) =>
+  limit === undefined ? undefined : String(limit);
+
+const asValue = (value: InputProps["value"]) => value ?? "";
+
+type PickerInputProps = DateTimeFieldProps & {
+  type: PickerType;
+  step?: InputProps["step"];
+};
+
+// The library picker behind each date and time type, all fed the same props by Input.
+const PickerInput = React.forwardRef<HTMLInputElement, PickerInputProps>(
+  ({ type, step, fieldLabel, ...props }, ref) => {
+    if (type === "time") {
+      // A native time step is in seconds; the list step is in minutes.
+      const minutes = step
+        ? Math.max(1, Math.round(Number(step) / 60))
+        : undefined;
+      return <TimePicker {...props} ref={ref} step={minutes} />;
+    }
+    if (type === "datetime-local") {
+      return <DateTimeField {...props} ref={ref} fieldLabel={fieldLabel} />;
+    }
+    return <DatePicker {...props} ref={ref} />;
+  },
+);
+PickerInput.displayName = "PickerInput";
+
+// A change event whose target is a real input of the native type holding the value
+// (YYYY-MM-DD, HH:mm or YYYY-MM-DDTHH:mm), so it reads like a native date input's event.
+const nativeChangeEvent = (
+  type: PickerType,
+  value: string,
+  name: string,
+  id: string,
+) => {
+  const target = document.createElement("input");
+  target.type = type;
+  target.value = value;
+  target.name = name;
+  target.id = id;
+  return {
+    target,
+    currentTarget: target,
+    type: "change",
+    preventDefault: () => undefined,
+    stopPropagation: () => undefined,
+    persist: () => undefined,
+  } as unknown as React.ChangeEvent<HTMLInputElement>;
+};
+
+const FieldLabel = ({
+  label,
+  required,
+  htmlFor,
+  markClassName,
+}: {
+  label?: string;
+  required?: boolean;
+  htmlFor: string;
+  markClassName: string;
+}) =>
+  label ? (
+    <Label htmlFor={htmlFor}>
+      {required && <span className={markClassName}>*</span>}
+      {label}:
+    </Label>
+  ) : null;
+
+const SearchAdornment = ({
+  empty,
+  onClear,
+  className,
+}: {
+  empty: boolean;
+  onClear: () => void;
+  className: string;
+}) =>
+  empty ? (
+    <MagnifyingGlassIcon
+      className={className}
+      data-testid="magnifying-glass-icon"
+    />
+  ) : (
+    <button
+      type="button"
+      className={className}
+      onClick={onClear}
+      data-testid="cross-icon"
+    >
+      <Cross1Icon />
+    </button>
+  );
+
+const PasswordToggle = ({
+  visible,
+  onToggle,
+  className,
+}: {
+  visible: boolean;
+  onToggle: (visible: boolean) => void;
+  className: string;
+}) => (
+  <button
+    type="button"
+    className={className}
+    onClick={() => onToggle(!visible)}
+    data-testid={visible ? "hide-password-icon" : "show-password-icon"}
+  >
+    {visible ? <EyeNoneIcon /> : <EyeOpenIcon />}
+  </button>
+);
+
 /**
  *
  * Provides an input bar of the chosen type.
@@ -225,135 +343,85 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const uniqueId = id ?? generatedId;
     const errorId = `${uniqueId}-error`;
     const showError = Boolean(error && errorMessage);
-    const describedBy =
-      [ariaDescribedBy, showError ? errorId : undefined]
-        .filter(Boolean)
-        .join(" ") || undefined;
     const classes = input({ borderRadius, borderColor });
     // A caller's class adds to the field style instead of replacing it (it used to drop the
     // whole recipe, native number spinners included).
-    const fieldClassName = className
-      ? `${classes.inputField} ${className}`
-      : classes.inputField;
+    const fieldClassName = [classes.inputField, className]
+      .filter(Boolean)
+      .join(" ");
+    const fieldAria = {
+      "aria-invalid": error || undefined,
+      "aria-required": required || undefined,
+      "aria-describedby":
+        [ariaDescribedBy, showError && errorId].filter(Boolean).join(" ") ||
+        undefined,
+    };
     const internalRef = React.useRef<HTMLInputElement>(null);
     const inputRef = (ref as React.RefObject<HTMLInputElement>) ?? internalRef;
 
-    const [val, setVal] = useState(value ?? "");
+    const [val, setVal] = useState(asValue(value));
     const [prevValue, setPrevValue] = useState(value);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     // Update state during render when prop changes
     if (value !== prevValue) {
       setPrevValue(value);
-      setVal(value ?? "");
+      setVal(asValue(value));
     }
 
     const onValChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setVal(e.target.value);
-
-      if (onChange) {
-        onChange(e);
-      }
+      onChange?.(e);
     };
 
-    // The date field is the library DatePicker, not the browser's: callers still get a change
-    // event whose target is a real input of the native type holding the value (YYYY-MM-DD,
-    // HH:mm or YYYY-MM-DDTHH:mm), so it reads like a native date input's event.
-    const emitDate = (iso: string) => {
-      setVal(iso);
-      if (!onChange) return;
-      const target = document.createElement("input");
-      target.type = type ?? "date";
-      target.value = iso;
-      target.name = props.name ?? "";
-      target.id = uniqueId;
-      onChange({
-        target,
-        currentTarget: target,
-        type: "change",
-        preventDefault: () => undefined,
-        stopPropagation: () => undefined,
-        persist: () => undefined,
-      } as unknown as React.ChangeEvent<HTMLInputElement>);
+    // The date and time fields are the library pickers, not the browser's: callers still get a
+    // change event shaped like a native date input's.
+    const emitDate = (picked: string) => {
+      setVal(picked);
+      onChange?.(
+        nativeChangeEvent(
+          type as PickerType,
+          picked,
+          String(props.name ?? ""),
+          uniqueId,
+        ),
+      );
     };
 
     const deleteValue = () => {
       setVal("");
-
-      if (onChange) {
-        onChange({
-          target: { value: "" },
-        } as React.ChangeEvent<HTMLInputElement>);
-      }
-
+      onChange?.({
+        target: { value: "" },
+      } as React.ChangeEvent<HTMLInputElement>);
       inputRef.current?.focus();
     };
 
     return (
       <>
         <div className={classes.inputWrapper}>
-          {label && (
-            <Label htmlFor={uniqueId}>
-              {required && <span className={classes.requiredMark}>*</span>}
-              {label}:
-            </Label>
-          )}
+          <FieldLabel
+            label={label}
+            required={required}
+            htmlFor={uniqueId}
+            markClassName={classes.requiredMark}
+          />
 
           <div className={classes.inputContainer}>
-            {type === "time" ? (
-              <TimePicker
+            {isPickerType(type) ? (
+              <PickerInput
                 {...props}
-                ref={inputRef}
-                id={uniqueId}
-                // A native time step is in seconds; the list step is in minutes.
-                step={
-                  props.step
-                    ? Math.max(1, Math.round(Number(props.step) / 60))
-                    : undefined
-                }
-                data-testid="input"
-                value={String(val ?? "")}
-                min={props.min === undefined ? undefined : String(props.min)}
-                max={props.max === undefined ? undefined : String(props.max)}
-                onValueChange={emitDate}
-                fieldClassName={fieldClassName}
-                iconClassName={classes.iconStyle}
-                aria-invalid={error || undefined}
-                aria-required={required || undefined}
-                aria-describedby={describedBy}
-              />
-            ) : type === "datetime-local" ? (
-              <DateTimeField
-                {...props}
+                {...fieldAria}
+                type={type}
                 ref={inputRef}
                 id={uniqueId}
                 data-testid="input"
-                value={String(val ?? "")}
-                min={props.min === undefined ? undefined : String(props.min)}
-                max={props.max === undefined ? undefined : String(props.max)}
+                value={String(val)}
+                min={asLimit(props.min)}
+                max={asLimit(props.max)}
                 onValueChange={emitDate}
                 fieldClassName={fieldClassName}
                 iconClassName={classes.iconStyle}
                 fieldLabel={label}
-                aria-invalid={error || undefined}
-                aria-required={required || undefined}
-                aria-describedby={describedBy}
-              />
-            ) : type === "date" ? (
-              <DatePicker
-                {...props}
-                ref={inputRef}
-                id={uniqueId}
-                data-testid="input"
-                value={String(val ?? "")}
-                min={props.min === undefined ? undefined : String(props.min)}
-                max={props.max === undefined ? undefined : String(props.max)}
-                onValueChange={emitDate}
-                fieldClassName={fieldClassName}
-                iconClassName={classes.iconStyle}
-                aria-invalid={error || undefined}
-                aria-required={required || undefined}
-                aria-describedby={describedBy}
               />
             ) : (
               <input
@@ -364,53 +432,23 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 value={val}
                 onChange={onValChange}
                 type={isPasswordVisible ? "text" : type}
-                aria-invalid={error || undefined}
-                aria-required={required || undefined}
-                aria-describedby={describedBy}
+                {...fieldAria}
                 {...props}
               />
             )}
             {inputSearch && type === "search" && (
-              <>
-                {val === "" ? (
-                  <MagnifyingGlassIcon
-                    className={classes.iconStyle}
-                    data-testid="magnifying-glass-icon"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className={classes.iconStyle}
-                    onClick={deleteValue}
-                    data-testid="cross-icon"
-                  >
-                    <Cross1Icon />
-                  </button>
-                )}
-              </>
+              <SearchAdornment
+                empty={val === ""}
+                onClear={deleteValue}
+                className={classes.iconStyle}
+              />
             )}
-            {type === "password" && val.toString().length > 0 && (
-              <>
-                {isPasswordVisible ? (
-                  <button
-                    type="button"
-                    className={classes.iconStyle}
-                    onClick={() => setIsPasswordVisible(false)}
-                    data-testid="hide-password-icon"
-                  >
-                    <EyeNoneIcon />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={classes.iconStyle}
-                    onClick={() => setIsPasswordVisible(true)}
-                    data-testid="show-password-icon"
-                  >
-                    <EyeOpenIcon />
-                  </button>
-                )}
-              </>
+            {type === "password" && String(val).length > 0 && (
+              <PasswordToggle
+                visible={isPasswordVisible}
+                onToggle={setIsPasswordVisible}
+                className={classes.iconStyle}
+              />
             )}
           </div>
         </div>

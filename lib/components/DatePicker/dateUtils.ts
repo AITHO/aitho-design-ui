@@ -59,16 +59,16 @@ export const parseTypedDate = (text: string): Ymd | null => {
   const value = text.trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return parseIsoDate(value);
   const parts = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(value);
-  const digits = /^\d{8}$/.test(value) ? value : null;
-  const ymd = parts
-    ? { d: Number(parts[1]), m: Number(parts[2]) - 1, y: Number(parts[3]) }
-    : digits
-      ? {
-          d: Number(digits.slice(0, 2)),
-          m: Number(digits.slice(2, 4)) - 1,
-          y: Number(digits.slice(4)),
-        }
-      : null;
+  let ymd: Ymd | null = null;
+  if (parts) {
+    ymd = { d: Number(parts[1]), m: Number(parts[2]) - 1, y: Number(parts[3]) };
+  } else if (/^\d{8}$/.test(value)) {
+    ymd = {
+      d: Number(value.slice(0, 2)),
+      m: Number(value.slice(2, 4)) - 1,
+      y: Number(value.slice(4)),
+    };
+  }
   return ymd && isValidYmd(ymd) ? ymd : null;
 };
 
