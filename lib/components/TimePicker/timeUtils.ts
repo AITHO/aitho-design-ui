@@ -86,8 +86,8 @@ export const parseTypedTime = (
   precision: TimePrecision = "minutes",
 ): number | null => {
   const value = text.trim();
-  const digits = DIGITS[precision];
-  if (new RegExp(`^\\d{${digits}}$`).test(value)) {
+  // Only digits, as many as a complete time has: 0930, 093045, 093045123.
+  if (/^\d+$/.test(value) && value.length === DIGITS[precision]) {
     return parseTime(maskTypedTime(value, precision));
   }
   return value.length === timeLength(precision) || /^\d:/.test(value) // a loose 9:30 (one hour digit) in minutes
