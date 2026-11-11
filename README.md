@@ -134,7 +134,7 @@ function ThemeSwitch() {
 ```
 
 To ship your own brand instead of the default palette, pass a `brand` prop to
-`ThemeProvider` — a `light`/`dark` pair of token overrides. Anything you don't
+`ThemeProvider`, a `light`/`dark` pair of token overrides. Anything you don't
 override keeps the library's default value:
 
 ```tsx

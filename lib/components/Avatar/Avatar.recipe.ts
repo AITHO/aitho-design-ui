@@ -11,7 +11,7 @@ const COLORS = [
   "white",
   "black",
   "transparent",
-  // "brand" is not a fixed hue like the others (Panda's base color scale) — it tracks the
+  // "brand" is not a fixed hue like the others (Panda's base color scale): it tracks the
   // theme's own color-primary (soft tint behind, full color for the initials), for callers that
   // want the avatar to read as part of the active brand instead of one of the fixed hues.
   "brand",

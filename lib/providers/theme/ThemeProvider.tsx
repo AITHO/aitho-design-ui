@@ -16,7 +16,7 @@ export interface ThemeProviderProps {
 
 /**
  * ThemeProvider scrive i propri token su document.documentElement, l'unico <html> della pagina:
- * non ha uno scope DOM proprio. È quindi pensato per essere montato una sola volta per pagina —
+ * non ha uno scope DOM proprio. È quindi pensato per essere montato una sola volta per pagina:
  * due istanze contemporanee scriverebbero sulle stesse custom property e si sovrascriverebbero a
  * vicenda, e lo smontaggio dell'una cancellerebbe anche i token applicati dall'altra. Il contatore
  * qui sotto è il modo, a runtime, di rendere esplicito questo vincolo invece di lasciarlo solo
