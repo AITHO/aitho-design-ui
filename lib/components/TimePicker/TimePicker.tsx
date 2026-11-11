@@ -4,6 +4,13 @@ import { input, timePicker, type InputVariantProps } from "@styled/recipes";
 import React from "react";
 import { resolveLang } from "../DatePicker/dateUtils";
 import {
+  nativeFieldTarget,
+  showsProblem,
+  typedProblem,
+  withTarget,
+  type TypedProblem,
+} from "../../utils/nativeField";
+import {
   formatTime,
   maskTypedTime,
   parseTime,
@@ -15,23 +22,29 @@ export type TimePickerProps = Omit<
   "value" | "defaultValue" | "onChange" | "type" | "min" | "max" | "step"
 > &
   InputVariantProps & {
-    /** *(optional)* Selected time as `HH:mm`; empty string or undefined for none. */
+    /** *(optional)* Selected time as `HH:mm` or `HH:mm:ss`; empty string or undefined for none. */
     value?: string;
 
-    /** *(optional)* Called with the new time as `HH:mm`, or `""` when cleared. */
+    /** *(optional)* Called with the new time (`HH:mm`, or `HH:mm:ss` with seconds), or `""`. */
     onValueChange?: (value: string) => void;
 
     /** *(optional)* Minutes between the times offered in the list (typing accepts any minute). */
     step?: number;
 
-    /** *(optional)* Earliest time, `HH:mm`. */
+    /** *(optional)* Typed and emitted times carry seconds; also on when `value` has them. */
+    seconds?: boolean;
+
+    /** *(optional)* Earliest time, `HH:mm` or `HH:mm:ss`. */
     min?: string;
 
-    /** *(optional)* Latest time, `HH:mm`. */
+    /** *(optional)* Latest time, `HH:mm` or `HH:mm:ss`. */
     max?: string;
 
     /** *(optional)* Language of the labels; defaults to the page language. */
     lang?: string;
+
+    /** *(optional)* Called when the typed time turns invalid, out of range or fine again. */
+    onProblemChange?: (problem: TypedProblem) => void;
 
     /** *(optional)* Class for the text field, replacing the Input field style. */
     fieldClassName?: string;
@@ -42,24 +55,33 @@ export type TimePickerProps = Omit<
 
 const TEXT = {
   it: {
-    placeholder: "hh:mm",
     open: "Scegli l'ora",
     list: "Orari",
+    invalid: "Ora non valida",
     outOfRange: "Ora fuori dall'intervallo consentito",
   },
   en: {
-    placeholder: "hh:mm",
     open: "Choose a time",
     list: "Times",
+    invalid: "Invalid time",
     outOfRange: "Time outside the allowed range",
   },
 } as const;
 
+const DAY_SECONDS = 24 * 3600;
+const FORMATS = {
+  minutes: { length: 5, placeholder: "hh:mm" },
+  seconds: { length: 8, placeholder: "hh:mm:ss" },
+} as const;
+const hasSeconds = (value?: string) => /^\d{1,2}:\d{2}:\d{2}/.test(value ?? "");
+
 /**
- * A time picker: a text field that takes hh:mm and a popover listing the times every `step`
- * minutes. The value is `HH:mm`, the same format as a native time input; with a `name`, a hidden
- * field carries it in a form. A typed time outside `min`/`max` is not applied: the field is
- * marked invalid, and leaving it puts the last valid time back.
+ * A time picker: a text field that takes hh:mm (hh:mm:ss with `seconds`) and a popover listing
+ * the times every `step` minutes. The value is `HH:mm` or `HH:mm:ss`, the same format as a native
+ * time input; with a `name`, a hidden field carries it in a form. Text that is not a real time,
+ * or a time outside `min`/`max`, is never applied: the field is invalid (so a form will not
+ * submit), the form value is empty meanwhile, and leaving the field puts the last valid time back.
+ * Blur reports a target with the field name and the canonical value, like the change does.
  * Keyboard: Arrow Down opens the list; Arrow Up / Down, Home / End move; Enter selects.
  */
 export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
@@ -68,6 +90,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
       value,
       onValueChange,
       step = 15,
+      seconds = false,
       min,
       max,
       lang,
@@ -76,6 +99,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
       readOnly,
       fieldClassName,
       iconClassName,
+      onProblemChange,
       borderRadius,
       borderColor,
       onKeyDown,
@@ -91,16 +115,17 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
     const classes = timePicker();
     const fieldClasses = input({ borderRadius, borderColor });
     const t = TEXT[resolveLang(lang)];
+    const withSeconds = seconds || hasSeconds(value);
+    const format = FORMATS[withSeconds ? "seconds" : "minutes"];
+    const show = (time: number | null) =>
+      time === null ? "" : formatTime(time, withSeconds);
 
     const selected = parseTime(value);
-    const [text, setText] = React.useState(() =>
-      selected === null ? "" : formatTime(selected),
-    );
+    const [text, setText] = React.useState(() => show(selected));
     const [prevValue, setPrevValue] = React.useState(value);
     if (value !== prevValue) {
       setPrevValue(value);
-      const next = parseTime(value);
-      setText(next === null ? "" : formatTime(next));
+      setText(show(parseTime(value)));
     }
 
     const [open, setOpen] = React.useState(false);
@@ -116,36 +141,35 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
       else if (ref) ref.current = node;
     };
 
-    const minMinutes = parseTime(min) ?? 0;
-    const maxMinutes = parseTime(max) ?? 24 * 60 - 1;
+    const minSeconds = parseTime(min) ?? 0;
+    const maxSeconds = parseTime(max) ?? DAY_SECONDS - 1;
     const options = React.useMemo(() => {
       const list: number[] = [];
-      for (let m = 0; m < 24 * 60; m += Math.max(1, step)) list.push(m);
+      for (let s = 0; s < DAY_SECONDS; s += Math.max(1, step) * 60)
+        list.push(s);
       return list;
     }, [step]);
 
-    const inRange = (minutes: number) =>
-      minutes >= minMinutes && minutes <= maxMinutes;
+    const inRange = (time: number) => time >= minSeconds && time <= maxSeconds;
 
-    // A complete time typed outside min/max: shown, marked invalid, never applied.
-    const typedTime = parseTypedTime(text);
-    const typedOutOfRange = typedTime !== null && !inRange(typedTime);
+    const typedTime = parseTypedTime(text, withSeconds);
+    const problem = typedProblem(text, typedTime, inRange);
     React.useEffect(() => {
-      inputRef.current?.setCustomValidity(typedOutOfRange ? t.outOfRange : "");
-    }, [typedOutOfRange, t.outOfRange]);
+      inputRef.current?.setCustomValidity(problem ? t[problem] : "");
+      onProblemChange?.(problem);
+    }, [problem, t, onProblemChange]);
+    const showInvalid = showsProblem(problem, text, format.length);
 
-    const commit = (minutes: number | null) => {
-      if (disabled || readOnly || (minutes !== null && !inRange(minutes)))
-        return;
-      const next = minutes === null ? "" : formatTime(minutes);
-      if (next !== (selected === null ? "" : formatTime(selected)))
-        onValueChange?.(next);
+    const commit = (time: number | null) => {
+      if (disabled || readOnly || (time !== null && !inRange(time))) return;
+      const next = show(time);
+      if (next !== show(selected)) onValueChange?.(next);
     };
 
-    const choose = (minutes: number) => {
-      if (disabled || readOnly || !inRange(minutes)) return;
-      setText(formatTime(minutes));
-      commit(minutes);
+    const choose = (time: number) => {
+      if (disabled || readOnly || !inRange(time)) return;
+      setText(show(time));
+      commit(time);
       setOpen(false);
       inputRef.current?.focus();
     };
@@ -158,9 +182,9 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
 
     // The option to scroll to and focus: the selected time, or the nearest enabled one after it.
     const anchorOption = () => {
-      const target = selected ?? new Date().getHours() * 60;
+      const target = selected ?? new Date().getHours() * 3600;
       const enabled = options.filter(inRange);
-      return enabled.find((m) => m >= target) ?? enabled[enabled.length - 1];
+      return enabled.find((s) => s >= target) ?? enabled[enabled.length - 1];
     };
 
     const handleListKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -202,26 +226,30 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
               data-type="time"
               className={fieldClassName ?? fieldClasses.inputField}
               value={text}
-              placeholder={placeholder ?? t.placeholder}
+              placeholder={placeholder ?? format.placeholder}
               form={form}
               disabled={disabled}
               readOnly={readOnly}
-              maxLength={5}
+              maxLength={format.length}
               onChange={(event) => {
-                const masked = maskTypedTime(event.target.value);
+                const masked = maskTypedTime(event.target.value, withSeconds);
                 setText(masked);
                 if (masked === "") commit(null);
                 else {
-                  const typed = parseTypedTime(masked);
+                  const typed = parseTypedTime(masked, withSeconds);
                   if (typed !== null) commit(typed);
                 }
               }}
-              aria-invalid={typedOutOfRange || props["aria-invalid"]}
+              aria-invalid={showInvalid || props["aria-invalid"]}
               onBlur={(event) => {
-                const kept =
-                  typedTime !== null && !typedOutOfRange ? typedTime : selected;
-                setText(kept === null ? "" : formatTime(kept));
-                onBlur?.(event);
+                const kept = problem === null ? typedTime : selected;
+                setText(show(kept));
+                onBlur?.(
+                  withTarget(
+                    event,
+                    nativeFieldTarget("time", show(kept), name, props.id),
+                  ),
+                );
               }}
               onKeyDown={(event) => {
                 onKeyDown?.(event);
@@ -239,14 +267,14 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                 if (!open) openList(false);
               }}
             />
-            {/* The form value: HH:mm, like a native time input. */}
+            {/* The form value: HH:mm(:ss) like a native time input, empty while the text is wrong. */}
             {name && (
               <input
                 type="hidden"
                 name={name}
                 form={form}
                 disabled={disabled}
-                value={selected === null ? "" : formatTime(selected)}
+                value={problem ? "" : show(selected)}
               />
             )}
             <button
@@ -274,7 +302,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
               const anchor = (
                 event.target as HTMLElement
               ).querySelector<HTMLButtonElement>(
-                `[data-minutes="${anchorOption()}"]`,
+                `[data-seconds="${anchorOption()}"]`,
               );
               anchor?.scrollIntoView?.({ block: "center" });
               if (focusList.current) anchor?.focus();
@@ -292,19 +320,19 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
               className={classes.list}
               onKeyDown={handleListKeyDown}
             >
-              {options.map((minutes) => (
+              {options.map((time) => (
                 <button
-                  key={minutes}
+                  key={time}
                   type="button"
                   role="option"
-                  data-minutes={minutes}
-                  aria-selected={minutes === selected}
+                  data-seconds={time}
+                  aria-selected={time === selected}
                   className={classes.option}
                   tabIndex={-1}
-                  disabled={!inRange(minutes)}
-                  onClick={() => choose(minutes)}
+                  disabled={!inRange(time)}
+                  onClick={() => choose(time)}
                 >
-                  {formatTime(minutes)}
+                  {formatTime(time)}
                 </button>
               ))}
             </div>

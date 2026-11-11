@@ -20,6 +20,13 @@ import {
   toIsoDate,
   type Ymd,
 } from "./dateUtils";
+import {
+  nativeFieldTarget,
+  showsProblem,
+  typedProblem,
+  withTarget,
+  type TypedProblem,
+} from "../../utils/nativeField";
 
 const TEXT = {
   it: {
@@ -32,6 +39,7 @@ const TEXT = {
     nextYear: "Anno successivo",
     today: "Oggi",
     clear: "Cancella",
+    invalid: "Data non valida",
     outOfRange: "Data fuori dall'intervallo consentito",
   },
   en: {
@@ -44,6 +52,7 @@ const TEXT = {
     nextYear: "Next year",
     today: "Today",
     clear: "Clear",
+    invalid: "Invalid date",
     outOfRange: "Date outside the allowed range",
   },
 } as const;
@@ -67,6 +76,9 @@ export type DatePickerProps = Omit<
 
     /** *(optional)* Language of the calendar labels; defaults to the page language. */
     lang?: string;
+
+    /** *(optional)* Called when the typed day turns invalid, out of range or fine again. */
+    onProblemChange?: (problem: TypedProblem) => void;
 
     /** *(optional)* Class for the text field, replacing the Input field style. */
     fieldClassName?: string;
@@ -99,6 +111,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
       readOnly,
       fieldClassName,
       iconClassName,
+      onProblemChange,
       borderRadius,
       borderColor,
       onKeyDown,
@@ -158,13 +171,19 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
       return day;
     };
 
-    // A complete day typed outside min/max: shown, marked invalid, never applied.
+    // Text that is not a real day, or a day outside min/max: shown, never applied, and the field
+    // is invalid so a form will not submit it.
     const typedDay = parseTypedDate(text);
-    const typedOutOfRange =
-      typedDay !== null && isOutOfRange(toIsoDate(typedDay));
+    const problem = typedProblem(
+      text,
+      typedDay,
+      (day) => !isOutOfRange(toIsoDate(day)),
+    );
     React.useEffect(() => {
-      inputRef.current?.setCustomValidity(typedOutOfRange ? t.outOfRange : "");
-    }, [typedOutOfRange, t.outOfRange]);
+      inputRef.current?.setCustomValidity(problem ? t[problem] : "");
+      onProblemChange?.(problem);
+    }, [problem, t, onProblemChange]);
+    const showInvalid = showsProblem(problem, text, 10);
 
     const commit = (iso: string) => {
       if (disabled || readOnly || (iso && isOutOfRange(iso))) return;
@@ -221,12 +240,20 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 
     const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
       // A partial, invalid or out-of-range entry goes back to the last valid day.
-      setText(
-        typedDay && !typedOutOfRange
-          ? toDisplay(typedDay)
-          : toDisplay(selected),
+      const kept = problem === null ? typedDay : selected;
+      setText(toDisplay(kept));
+      // Like the change, the blur reports the field name and the YYYY-MM-DD value.
+      onBlur?.(
+        withTarget(
+          event,
+          nativeFieldTarget(
+            "date",
+            kept ? toIsoDate(kept) : "",
+            name,
+            props.id,
+          ),
+        ),
       );
-      onBlur?.(event);
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -310,7 +337,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
               disabled={disabled}
               readOnly={readOnly}
               maxLength={10}
-              aria-invalid={typedOutOfRange || props["aria-invalid"]}
+              aria-invalid={showInvalid || props["aria-invalid"]}
               onChange={handleTextChange}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
@@ -319,14 +346,15 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                 if (!open) openCalendar(false);
               }}
             />
-            {/* The form value: YYYY-MM-DD, like a native date input, not the dd/mm/yyyy text. */}
+            {/* The form value: YYYY-MM-DD like a native date input (not the dd/mm/yyyy text), empty
+                while the text is wrong. */}
             {name && (
               <input
                 type="hidden"
                 name={name}
                 form={form}
                 disabled={disabled}
-                value={selected ? toIsoDate(selected) : ""}
+                value={!problem && selected ? toIsoDate(selected) : ""}
               />
             )}
             <button

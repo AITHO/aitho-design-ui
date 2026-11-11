@@ -10,6 +10,11 @@ import { DatePicker } from "../DatePicker/DatePicker";
 import { resolveLang } from "../DatePicker/dateUtils";
 import { TimePicker } from "../TimePicker/TimePicker";
 import { Label } from "../Label/Label";
+import {
+  nativeFieldTarget,
+  withTarget,
+  type TypedProblem,
+} from "../../utils/nativeField";
 import "./Input.css";
 
 export type InputProps = Omit<
@@ -76,17 +81,25 @@ type DateTimeFieldProps = Omit<
   max?: string;
   /** The Input label, used to name the time part ("Start, time"). */
   fieldLabel?: string;
+  /** The time part carries seconds (also on when `value` has them). */
+  seconds?: boolean;
 };
 
 const TIME_PART = { it: "ora", en: "time" } as const;
 
+// The day and the time, seconds included: `2026-03-07T10:30:45` keeps its `:45`.
 const splitDateTime = (v: string) => {
-  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/.exec(v);
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}(?::\d{2})?))?/.exec(v);
   return { date: match?.[1] ?? "", time: match?.[2] ?? "" };
 };
 
-// datetime-local as a DatePicker and a TimePicker side by side; the value is YYYY-MM-DDTHH:mm,
-// emitted once both parts are there (like the native field) and "" as soon as either is cleared.
+// The time part of a datetime limit, on its first or last allowed day only.
+const timeLimit = (limit: string | undefined, day: string) =>
+  limit && day && day === limit.slice(0, 10) ? limit.slice(11, 19) : undefined;
+
+// datetime-local as a DatePicker and a TimePicker side by side; the value is YYYY-MM-DDTHH:mm
+// (with :ss when seconds are on), emitted once both parts are there (like the native field) and
+// "" as soon as either is cleared. Blur reports the field name and that whole value.
 const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
   (
     {
@@ -99,8 +112,10 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
       iconClassName,
       fieldClassName,
       fieldLabel,
+      seconds,
       name,
       form,
+      onBlur,
       ...props
     },
     ref,
@@ -110,6 +125,9 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
     // our own echo, and the parts typed so far stay (clearing the time keeps the day). Anything
     // else came from outside, a reset to "" included, and replaces both parts.
     const [emitted, setEmitted] = React.useState<string | null>(null);
+    // A part with wrong text empties the form value, as an incomplete native field does.
+    const [dayProblem, setDayProblem] = React.useState<TypedProblem>(null);
+    const [timeProblem, setTimeProblem] = React.useState<TypedProblem>(null);
     const [prevValue, setPrevValue] = React.useState(value);
     if (value !== prevValue) {
       setPrevValue(value);
@@ -135,6 +153,14 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
       }
     };
 
+    const handleBlur = (event: React.FocusEvent<HTMLInputElement>) =>
+      onBlur?.(
+        withTarget(
+          event,
+          nativeFieldTarget("datetime-local", value, name, props.id),
+        ),
+      );
+
     const timeWord = TIME_PART[resolveLang(props.lang)];
     return (
       <div style={{ display: "flex", gap: "8px", width: "100%" }}>
@@ -150,6 +176,8 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
             readOnly={readOnly}
             fieldClassName={fieldClassName}
             iconClassName={iconClassName}
+            onBlur={handleBlur}
+            onProblemChange={setDayProblem}
             onValueChange={(date) => change({ ...parts, date })}
           />
         </div>
@@ -157,16 +185,9 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
           <TimePicker
             value={parts.time}
             // The time limits only bind on the first and the last allowed day.
-            min={
-              parts.date && parts.date === minDay
-                ? min?.slice(11, 16)
-                : undefined
-            }
-            max={
-              parts.date && parts.date === maxDay
-                ? max?.slice(11, 16)
-                : undefined
-            }
+            min={timeLimit(min, parts.date)}
+            max={timeLimit(max, parts.date)}
+            seconds={seconds}
             form={form}
             disabled={disabled}
             readOnly={readOnly}
@@ -177,17 +198,19 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
             aria-describedby={props["aria-describedby"]}
             aria-invalid={props["aria-invalid"]}
             aria-required={props["aria-required"]}
+            onBlur={handleBlur}
+            onProblemChange={setTimeProblem}
             onValueChange={(time) => change({ ...parts, time })}
           />
         </div>
-        {/* One form value for both parts, YYYY-MM-DDTHH:mm, like a native datetime-local. */}
+        {/* One form value for both parts, YYYY-MM-DDTHH:mm(:ss), like a native datetime-local. */}
         {name && (
           <input
             type="hidden"
             name={name}
             form={form}
             disabled={disabled}
-            value={value}
+            value={dayProblem || timeProblem ? "" : value}
           />
         )}
       </div>
@@ -214,15 +237,26 @@ type PickerInputProps = DateTimeFieldProps & {
 // The library picker behind each date and time type, all fed the same props by Input.
 const PickerInput = React.forwardRef<HTMLInputElement, PickerInputProps>(
   ({ type, step, fieldLabel, ...props }, ref) => {
+    // A native time step is in seconds: one that is not whole minutes shows and keeps seconds.
+    const seconds = step !== undefined && Number(step) % 60 !== 0;
     if (type === "time") {
-      // A native time step is in seconds; the list step is in minutes.
+      // The list step is in minutes.
       const minutes = step
         ? Math.max(1, Math.round(Number(step) / 60))
         : undefined;
-      return <TimePicker {...props} ref={ref} step={minutes} />;
+      return (
+        <TimePicker {...props} ref={ref} step={minutes} seconds={seconds} />
+      );
     }
     if (type === "datetime-local") {
-      return <DateTimeField {...props} ref={ref} fieldLabel={fieldLabel} />;
+      return (
+        <DateTimeField
+          {...props}
+          ref={ref}
+          fieldLabel={fieldLabel}
+          seconds={seconds}
+        />
+      );
     }
     return <DatePicker {...props} ref={ref} />;
   },
@@ -237,11 +271,7 @@ const nativeChangeEvent = (
   name: string,
   id: string,
 ) => {
-  const target = document.createElement("input");
-  target.type = type;
-  target.value = value;
-  target.name = name;
-  target.id = id;
+  const target = nativeFieldTarget(type, value, name, id);
   return {
     target,
     currentTarget: target,

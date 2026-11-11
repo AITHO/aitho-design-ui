@@ -183,6 +183,55 @@ describe("DatePicker in forms and limits", () => {
     expect(field().validity.valid).toBe(true);
   });
 
+  it("marks an impossible or half typed day invalid and keeps it out of the form", () => {
+    const InForm = () => {
+      const [value, setValue] = useState("2026-03-07");
+      return (
+        <form data-testid="form">
+          <DatePicker
+            aria-label="Data"
+            lang="it"
+            name="start"
+            value={value}
+            onValueChange={setValue}
+          />
+        </form>
+      );
+    };
+    render(<InForm />);
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    fireEvent.change(field(), { target: { value: "31/02/2026" } });
+    expect(field()).toHaveAttribute("aria-invalid", "true");
+    expect(field().validity.valid).toBe(false);
+    expect(new FormData(form).get("start")).toBe("");
+    // Half typed: the form cannot submit it, but the field is not shown as wrong yet.
+    fireEvent.change(field(), { target: { value: "12/0" } });
+    expect(field().validity.valid).toBe(false);
+    expect(field()).not.toHaveAttribute("aria-invalid", "true");
+    fireEvent.blur(field());
+    expect(field()).toHaveValue("07/03/2026");
+    expect(field().validity.valid).toBe(true);
+    expect(new FormData(form).get("start")).toBe("2026-03-07");
+  });
+
+  it("reports blur with the field name and the ISO day", () => {
+    const onBlur = vi.fn();
+    render(
+      <DatePicker
+        aria-label="Data"
+        lang="it"
+        name="start"
+        value="2026-03-07"
+        onBlur={onBlur}
+      />,
+    );
+    fireEvent.blur(field());
+    expect(onBlur.mock.calls[0][0].target).toMatchObject({
+      name: "start",
+      value: "2026-03-07",
+    });
+  });
+
   it("keeps keyboard focus on enabled days at the edge of the range", () => {
     render(<Controlled initial="2026-03-05" min="2026-03-05" />);
     fireEvent.keyDown(field(), { key: "ArrowDown" });

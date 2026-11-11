@@ -4,16 +4,31 @@ import { describe, expect, it, vi } from "vitest";
 import { DatePicker } from "../DatePicker/DatePicker";
 import { Input } from "../Input/Input";
 import { TimePicker } from "./TimePicker";
-import { maskTypedTime, parseTypedTime } from "./timeUtils";
+import {
+  formatTime,
+  maskTypedTime,
+  parseTime,
+  parseTypedTime,
+} from "./timeUtils";
 
 describe("timeUtils", () => {
   it("masks and parses typed times", () => {
     expect(maskTypedTime("093")).toBe("09:3");
     expect(maskTypedTime("0930")).toBe("09:30");
-    expect(parseTypedTime("09:30")).toBe(570);
-    expect(parseTypedTime("9:30")).toBe(570);
-    expect(parseTypedTime("0930")).toBe(570);
+    expect(parseTypedTime("09:30")).toBe(34200);
+    expect(parseTypedTime("9:30")).toBe(34200);
+    expect(parseTypedTime("0930")).toBe(34200);
     expect(parseTypedTime("25:00")).toBeNull();
+  });
+
+  it("keeps seconds when they are on", () => {
+    expect(parseTime("10:30:45")).toBe(37845);
+    expect(formatTime(37845, true)).toBe("10:30:45");
+    expect(formatTime(37845)).toBe("10:30");
+    expect(maskTypedTime("103045", true)).toBe("10:30:45");
+    expect(parseTypedTime("10:30:45", true)).toBe(37845);
+    expect(parseTypedTime("103045", true)).toBe(37845);
+    expect(parseTypedTime("10:30:45")).toBeNull();
   });
 });
 
@@ -94,6 +109,47 @@ describe("TimePicker in forms and limits", () => {
     expect(field.validity.valid).toBe(false);
     fireEvent.blur(field);
     expect(field).toHaveValue("10:00");
+  });
+
+  it("marks an impossible time invalid and keeps it out of the form", () => {
+    render(
+      <form data-testid="form">
+        <TimePicker aria-label="Ora" lang="it" name="at" value="10:00" />
+      </form>,
+    );
+    const field = screen.getByLabelText("Ora") as HTMLInputElement;
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    fireEvent.change(field, { target: { value: "2500" } });
+    expect(field).toHaveValue("25:00");
+    expect(field).toHaveAttribute("aria-invalid", "true");
+    expect(field.validity.valid).toBe(false);
+    expect(new FormData(form).get("at")).toBe("");
+    fireEvent.blur(field);
+    expect(field).toHaveValue("10:00");
+    expect(new FormData(form).get("at")).toBe("10:00");
+  });
+
+  it("keeps the seconds of a value that has them", () => {
+    render(
+      <form data-testid="form">
+        <TimePicker aria-label="Ora" name="at" value="10:30:45" />
+      </form>,
+    );
+    expect(screen.getByLabelText("Ora")).toHaveValue("10:30:45");
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    expect(new FormData(form).get("at")).toBe("10:30:45");
+  });
+
+  it("reports blur with the field name and the time", () => {
+    const onBlur = vi.fn();
+    render(
+      <TimePicker aria-label="Ora" name="at" value="10:30" onBlur={onBlur} />,
+    );
+    fireEvent.blur(screen.getByLabelText("Ora"));
+    expect(onBlur.mock.calls[0][0].target).toMatchObject({
+      name: "at",
+      value: "10:30",
+    });
   });
 
   it("closes an open list when it becomes read-only", () => {
@@ -240,6 +296,37 @@ describe("Input date, time and datetime-local in forms", () => {
     expect(booking.checkValidity()).toBe(false);
   });
 
+  it("keeps seconds with a step under a minute, also in datetime-local", () => {
+    const onChange = vi.fn();
+    render(
+      <form data-testid="form">
+        <Input
+          type="time"
+          step={1}
+          name="at"
+          value="10:30:45"
+          onChange={onChange}
+        />
+        <Input
+          type="datetime-local"
+          step={1}
+          name="when"
+          value="2026-03-07T10:30:45"
+          onChange={vi.fn()}
+        />
+      </form>,
+    );
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    const data = new FormData(form);
+    expect(data.get("at")).toBe("10:30:45");
+    expect(data.get("when")).toBe("2026-03-07T10:30:45");
+    const [time] = document.querySelectorAll<HTMLInputElement>(
+      'input[data-type="time"]',
+    );
+    fireEvent.change(time, { target: { value: "103046" } });
+    expect(onChange.mock.calls[0][0].target.value).toBe("10:30:46");
+  });
+
   it("hands onChange a real input of the native type", () => {
     const onChange = vi.fn();
     render(<Input type="date" name="day" value="" onChange={onChange} />);
@@ -285,6 +372,44 @@ describe("Input datetime-local", () => {
     expect(timeField()).toHaveValue("11:00");
     const form = screen.getByTestId("form") as HTMLFormElement;
     expect(new FormData(form).getAll("when")).toEqual(["2026-03-07T11:00"]);
+  });
+
+  it("reports blur with the field name and the whole value", () => {
+    const onBlur = vi.fn();
+    render(
+      <Input
+        type="datetime-local"
+        name="when"
+        lang="it"
+        value="2026-03-07T10:30"
+        onChange={vi.fn()}
+        onBlur={onBlur}
+      />,
+    );
+    fireEvent.blur(timeField());
+    expect(onBlur.mock.calls[0][0].target).toMatchObject({
+      name: "when",
+      value: "2026-03-07T10:30",
+    });
+  });
+
+  it("submits an empty value while a part holds wrong text", () => {
+    render(
+      <form data-testid="form">
+        <Input
+          type="datetime-local"
+          name="when"
+          lang="it"
+          value="2026-03-07T10:30"
+          onChange={vi.fn()}
+        />
+      </form>,
+    );
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    fireEvent.change(dayField(), { target: { value: "31/02/2026" } });
+    expect(new FormData(form).get("when")).toBe("");
+    fireEvent.blur(dayField());
+    expect(new FormData(form).get("when")).toBe("2026-03-07T10:30");
   });
 
   it("names the time part after the field", () => {
