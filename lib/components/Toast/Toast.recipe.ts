@@ -6,37 +6,19 @@ const VARIANTS = ["base", "primary", "secondary", "warning", "alert"] as const;
 const BORDERS = ["flat", "rounded", "pills"] as const;
 
 const SIZE_MAPS = {
-  sm: { padding: "2", fontSize: "sm" },
-  md: { padding: "3", fontSize: "base" },
-  lg: { padding: "4", fontSize: "lg" },
+  sm: { padding: "8px 8px 8px 10px", gap: "8px", fontSize: "0.8125rem" },
+  md: { padding: "12px 12px 12px 14px", gap: "10px", fontSize: "sm" },
+  lg: { padding: "16px 16px 16px 18px", gap: "12px", fontSize: "md" },
 } as const;
 
-const VARIANT_MAPS = {
-  base: {
-    bg: "white",
-    color: "dark",
-    closeAreaColor: "dark",
-  },
-  primary: {
-    bg: "color-primary",
-    color: "text-on-primary",
-    closeAreaColor: "text-on-primary",
-  },
-  secondary: {
-    bg: "color-attention",
-    color: "text-primary",
-    closeAreaColor: "text-primary",
-  },
-  warning: {
-    bg: "color-warning",
-    color: "dark",
-    closeAreaColor: "dark",
-  },
-  alert: {
-    bg: "color-error",
-    color: "text-on-primary",
-    closeAreaColor: "text-on-primary",
-  },
+// Left border tone. Only warning and alert carry meaning; the others stay neutral, because apps
+// usually put their own status icon in the title (a blue edge on a success toast reads wrong).
+const VARIANT_TONES = {
+  base: "border-color",
+  primary: "border-color",
+  secondary: "border-color",
+  warning: "color-warning",
+  alert: "color-error",
 } as const;
 
 const BORDERS_MAPS = {
@@ -51,6 +33,40 @@ const BORDERS_MAPS = {
   },
 };
 
+// Restyles the Button inside. Kept in a variant, not in base: base styles sit in
+// a lower cascade layer than Button's own variant styles and would lose.
+const CLOSE_AREA = {
+  "& button": {
+    width: "24px",
+    height: "24px",
+    minWidth: "24px",
+    minHeight: "24px",
+    padding: 0,
+    borderRadius: "radius-sm",
+    color: "text-secondary",
+    transition: "background-color 0.15s ease, color 0.15s ease",
+    _hover: {
+      backgroundColor: "color-primary-soft",
+      color: "text-primary",
+    },
+    "& svg": {
+      color: "inherit",
+    },
+  },
+};
+
+// Enter from the edge the toast stacks against, leave towards its side.
+const POSITION_ANIMATIONS = {
+  "top-left": ["Top", "Left"],
+  left: ["Left", "Left"],
+  "bottom-left": ["Bottom", "Left"],
+  "top-right": ["Top", "Right"],
+  right: ["Right", "Right"],
+  "bottom-right": ["Bottom", "Right"],
+  top: ["Top", "Top"],
+  bottom: ["Bottom", "Bottom"],
+} as const;
+
 export const toastRecipe = defineSlotRecipe({
   className: "toast",
   slots: ["root", "content", "viewport", "closeArea", "clickable"],
@@ -58,20 +74,36 @@ export const toastRecipe = defineSlotRecipe({
     root: {
       display: "flex",
       flexDirection: "row",
-      maxWidth: "18.75rem",
-      boxShadow: "0 1px 10px 0 rgba(0,0,0,.1),0 2px 15px 0 rgba(0,0,0,.05)",
-      "&[data-state='open']": {
-        animation: "toastSwipeIn 0.15s",
-      },
-      "&[data-state='closed']": {
-        animation: "toastSwipeOutRight 0.3s",
-      },
+      alignItems: "flex-start",
+      // Room for a sentence-long message without wrapping every few words.
+      maxWidth: "24rem",
+      backgroundColor: "background-secondary",
+      color: "text-primary",
+      borderWidth: "1px 1px 1px 3px",
+      borderStyle: "solid",
+      borderColor: "border-color",
+      boxShadow: "overlay",
     },
     content: {
       display: "flex",
       flexDirection: "column",
+      // At least as tall as the close button and centred: a one-line toast reads balanced.
+      justifyContent: "center",
+      minHeight: "24px",
+      gap: "2px",
+      flex: 1,
+      minWidth: 0,
+      lineHeight: "1.45",
+      // Description under a title.
+      "& > * + *": {
+        color: "text-secondary",
+        fontSize: "0.93em",
+      },
     },
-    closeArea: {},
+    closeArea: {
+      flexShrink: 0,
+      marginLeft: "auto",
+    },
     clickable: {
       cursor: "pointer",
     },
@@ -90,18 +122,9 @@ export const toastRecipe = defineSlotRecipe({
         variant,
         {
           root: {
-            bg: VARIANT_MAPS[variant].bg,
-            color: VARIANT_MAPS[variant].color,
+            borderLeftColor: VARIANT_TONES[variant],
           },
-          closeArea: {
-            color: VARIANT_MAPS[variant].closeAreaColor,
-            "& button": {
-              color: "inherit",
-              "& svg": {
-                color: "inherit",
-              },
-            },
-          },
+          closeArea: CLOSE_AREA,
         },
       ]),
     ),
@@ -113,88 +136,21 @@ export const toastRecipe = defineSlotRecipe({
         },
       ]),
     ),
-    position: {
-      "top-left": {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInLeft 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutLeft 0.3s",
-          },
-        },
-      },
-      left: {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInLeft 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutLeft 0.3s",
+    position: Object.fromEntries(
+      Object.entries(POSITION_ANIMATIONS).map(([position, [enter, exit]]) => [
+        position,
+        {
+          root: {
+            "&[data-state='open']": {
+              animation: `toastSwipeIn${enter} 0.2s ease-out`,
+            },
+            "&[data-state='closed']": {
+              animation: `toastSwipeOut${exit} 0.2s ease-in forwards`,
+            },
           },
         },
-      },
-      "bottom-left": {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInLeft 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutLeft 0.3s",
-          },
-        },
-      },
-      "top-right": {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInRight 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutRight 0.3s",
-          },
-        },
-      },
-      right: {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInRight 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutRight 0.3s",
-          },
-        },
-      },
-      "bottom-right": {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInRight 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutRight 0.3s",
-          },
-        },
-      },
-      top: {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInTop 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutTop 0.3s",
-          },
-        },
-      },
-      bottom: {
-        root: {
-          "&[data-state='open']": {
-            animation: "toastSwipeInBottom 0.15s",
-          },
-          "&[data-state='closed']": {
-            animation: "toastSwipeOutBottom 0.3s",
-          },
-        },
-      },
-    },
+      ]),
+    ),
   },
   defaultVariants: {
     size: "md",

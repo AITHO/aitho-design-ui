@@ -180,7 +180,9 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   trigger,
   menuContent,
   arrow = false,
-  sideOffset = -10,
+  // The panel sits this close to the trigger (it used to be pushed off by a 20px margin and pulled
+  // back with -10).
+  sideOffset = 4,
   side = "top",
   align = "start",
   zIndex = 200,

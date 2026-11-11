@@ -127,7 +127,7 @@ export const BrandColor: Story = {
     docs: {
       description: {
         story:
-          "Unlike the fixed hues above, `brand` tracks the active theme's `color-primary`/`text-on-primary` — pass a `brand` prop to `ThemeProvider` and this avatar re-tints with it.",
+          "Unlike the fixed hues above, `brand` tracks the active theme's `color-primary`/`text-on-primary`: pass a `brand` prop to `ThemeProvider` and this avatar re-tints with it.",
       },
     },
   },

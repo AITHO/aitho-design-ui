@@ -6,6 +6,8 @@ import { bottomSheetRecipe } from "./components/BottomSheet/BottomSheet.recipe";
 import { buttonRecipe } from "./components/Button/Button.recipe";
 import { checkboxRecipe } from "./components/Checkbox/Checkbox.recipe";
 import { codeBlockRecipe } from "./components/CodeBlock/CodeBlock.recipe";
+import { colorPickerRecipe } from "./components/ColorPicker/ColorPicker.recipe";
+import { datePickerRecipe } from "./components/DatePicker/DatePicker.recipe";
 import { datePickerMonthRecipe } from "./components/DatePickerMonth/DatePickerMonth.recipe";
 import { datePickerYearRecipe } from "./components/DatePickerYear/DatePickerYear.recipe";
 import { dialogRecipe } from "./components/Dialog/Dialog.recipe";
@@ -20,6 +22,7 @@ import { paginationRecipe } from "./components/Pagination/Pagination.recipe";
 import { popoverRecipe } from "./components/Popover/Popover.recipe";
 import { progressRecipe } from "./components/Progress/Progress.recipe";
 import { rangeDatePickerRecipe } from "./components/RangeDatePicker/RangeDatePicker.recipe";
+import { scrollbarRecipe } from "./components/Scrollbar/Scrollbar.recipe";
 import { selectRecipe } from "./components/Select/Select.recipe";
 import { selectTagsRecipe } from "./components/SelectTags/SelectTags.recipe";
 import { sidebarRecipe } from "./components/Sidebar/Sidebar.recipe";
@@ -31,6 +34,7 @@ import { textAreaRecipe } from "./components/TextArea/TextArea.recipe";
 import { toastRecipe } from "./components/Toast/Toast.recipe";
 import { toggleSwitchRecipe } from "./components/ToggleSwitch/ToggleSwitch.recipe";
 import { tooltipRecipe } from "./components/Tooltip/Tooltip.recipe";
+import { timePickerRecipe } from "./components/TimePicker/TimePicker.recipe";
 import { fileUploadRecipe } from "./components/FileUpload/FileUpload.recipe";
 
 export const preset = definePreset({
@@ -44,6 +48,8 @@ export const preset = definePreset({
       button: buttonRecipe,
       checkbox: checkboxRecipe,
       codeBlock: codeBlockRecipe,
+      colorPicker: colorPickerRecipe,
+      datePicker: datePickerRecipe,
       datePickerMonth: datePickerMonthRecipe,
       datePickerYear: datePickerYearRecipe,
       dialog: dialogRecipe,
@@ -58,6 +64,7 @@ export const preset = definePreset({
       popover: popoverRecipe,
       progress: progressRecipe,
       rangeDatePicker: rangeDatePickerRecipe,
+      scrollbar: scrollbarRecipe,
       select: selectRecipe,
       selectTags: selectTagsRecipe,
       sidebar: sidebarRecipe,
@@ -68,6 +75,7 @@ export const preset = definePreset({
       textArea: textAreaRecipe,
       toast: toastRecipe,
       toggleSwitch: toggleSwitchRecipe,
+      timePicker: timePickerRecipe,
       tooltip: tooltipRecipe,
       fileUpload: fileUploadRecipe,
     },
@@ -81,6 +89,9 @@ export const preset = definePreset({
       button: ["*"],
       checkbox: ["*"],
       codeBlock: ["*"],
+      colorPicker: ["*"],
+      datePicker: ["*"],
+      timePicker: ["*"],
       datePickerMonth: ["*"],
       datePickerYear: ["*"],
       dialog: ["*"],
@@ -95,6 +106,7 @@ export const preset = definePreset({
       popover: ["*"],
       progress: ["*"],
       rangeDatePicker: ["*"],
+      scrollbar: ["*"],
       select: ["*"],
       selectTags: ["*"],
       sidebar: ["*"],

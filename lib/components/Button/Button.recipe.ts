@@ -1,107 +1,78 @@
 import { defineSlotRecipe } from "@pandacss/dev";
 
+// Sizes only set these custom properties; the base consumes them, so the
+// pill radius and the icon-only square follow the height without compound variants.
+const size = (
+  height: number,
+  paddingX: number,
+  gap: number,
+  fontSize: string,
+  iconSize: number,
+) => ({
+  root: {
+    "--button-height": `${height}px`,
+    "--button-px": `${paddingX}px`,
+    "--button-gap": `${gap}px`,
+    fontSize,
+  },
+  icon: { width: `${iconSize}px`, height: `${iconSize}px` },
+});
+
 export const buttonRecipe = defineSlotRecipe({
   className: "button",
   slots: ["root", "icon", "content"],
   base: {
     root: {
-      padding: "0.5rem 1rem",
-      fontSize: "1rem",
-      fontWeight: "700",
-      cursor: "pointer",
-      transition: "background-color 300ms",
+      display: "inline-flex",
       alignItems: "center",
+      justifyContent: "center",
+      gap: "var(--button-gap)",
+      minHeight: "var(--button-height)",
+      paddingBlock: "0",
+      paddingInline: "var(--button-px)",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: "transparent",
+      fontWeight: "600",
+      lineHeight: "1.2",
+      whiteSpace: "nowrap",
+      userSelect: "none",
+      cursor: "pointer",
+      transition:
+        "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease",
       _focusVisible: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "2px",
-        borderRadius: "radius-sm",
+        outline: "none",
+        boxShadow: "focus-ring",
       },
-      "&[data-full-start='true']": {
-        display: "grid",
-        gridTemplateColumns: "0.2fr 1fr",
+      "&:active:not(:disabled)": {
+        transform: "translateY(1px)",
       },
-      "&[data-full-end='true']": {
-        display: "grid",
-        gridTemplateColumns: "1fr 0.2fr",
+      "&:has(> svg:only-child)": {
+        width: "var(--button-height)",
+        paddingInline: "0",
       },
     },
     icon: {
       display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "end",
-      padding: "0 0.5rem 0 0.5rem",
+      flexShrink: "0",
     },
     content: {
       whiteSpace: "nowrap",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      // Icons passed as children get the same spacing as the icon prop.
+      gap: "var(--button-gap)",
     },
   },
   variants: {
     size: {
-      xxs: {
-        root: {
-          fontSize: "2xs",
-          padding: "0",
-        },
-        icon: {
-          width: "1.5rem",
-          height: "1.5rem",
-        },
-      },
-      xs: {
-        root: {
-          fontSize: "sm",
-          padding: "0",
-        },
-        icon: {
-          width: "1.75rem",
-          height: "1.75rem",
-        },
-      },
-      sm: {
-        root: {
-          fontSize: "sm",
-          padding: "0.25rem 0.5rem",
-        },
-        icon: {
-          width: "2rem",
-          height: "2rem",
-        },
-      },
-      md: {
-        root: {
-          fontSize: "base",
-          padding: "0.5rem 1rem",
-        },
-        icon: {
-          width: "2.25rem",
-          height: "2.25rem",
-        },
-      },
-      lg: {
-        root: {
-          fontSize: "lg",
-          padding: "0.75rem 1.5rem",
-        },
-        icon: {
-          width: "2.625rem",
-          height: "2.625rem",
-        },
-      },
-      xl: {
-        root: {
-          fontSize: "xl",
-          padding: "1rem 2rem",
-        },
-        icon: {
-          width: "3rem",
-          height: "3rem",
-        },
-      },
+      xxs: size(22, 6, 4, "0.6875rem", 12),
+      xs: size(26, 8, 6, "0.75rem", 14),
+      sm: size(30, 10, 6, "0.8125rem", 14),
+      md: size(36, 14, 8, "0.875rem", 16),
+      lg: size(44, 20, 8, "0.9375rem", 18),
+      xl: size(52, 24, 10, "1.0625rem", 20),
     },
     borderRadius: {
       flat: {
@@ -111,7 +82,7 @@ export const buttonRecipe = defineSlotRecipe({
         root: { borderRadius: "radius" },
       },
       pills: {
-        root: { borderRadius: "full" },
+        root: { borderRadius: "calc(var(--button-height) / 2)" },
       },
     },
     variant: {
@@ -119,12 +90,12 @@ export const buttonRecipe = defineSlotRecipe({
         root: {
           backgroundColor: "color-primary",
           color: "text-on-primary",
-          borderColor: "border-color",
-          _hover: {
+          boxShadow: "raised",
+          "&:hover:not(:disabled)": {
             backgroundColor: "color-primary-hover",
           },
-          _active: {
-            backgroundColor: "color-primary-opacity-50",
+          _focusVisible: {
+            boxShadow: "focus-ring",
           },
         },
         icon: {
@@ -135,11 +106,8 @@ export const buttonRecipe = defineSlotRecipe({
         root: {
           backgroundColor: "transparent",
           color: "text-primary",
-          _hover: {
-            backgroundColor: "rgba(0, 0, 0, 0.05)",
-          },
-          _active: {
-            backgroundColor: "rgba(0, 0, 0, 0.2)",
+          "&:hover:not(:disabled)": {
+            backgroundColor: "color-primary-soft",
           },
         },
         icon: {
@@ -150,28 +118,25 @@ export const buttonRecipe = defineSlotRecipe({
         root: {
           backgroundColor: "transparent",
           color: "text-primary",
-          borderColor: "color-primary",
-          borderWidth: "1px",
-          _hover: {
-            backgroundColor: "rgba(0, 0, 0, 0.1)",
-          },
-          _active: {
-            backgroundColor: "color-primary-opacity-20",
+          // Stronger than the plain border colour, so it still reads on striped or tinted rows.
+          borderColor:
+            "color-mix(in srgb, var(--border-color) 45%, var(--text-secondary))",
+          "&:hover:not(:disabled)": {
+            borderColor: "color-primary",
+            backgroundColor: "color-primary-softer",
           },
         },
         icon: {
-          color: "color-primary",
+          color: "text-primary",
         },
       },
       neutral: {
         root: {
           backgroundColor: "background-tertiary",
           color: "text-primary",
-          _hover: {
-            backgroundColor: "rgba(0, 0, 0, 0.3)",
-          },
-          _active: {
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          "&:hover:not(:disabled)": {
+            backgroundColor:
+              "color-mix(in srgb, {colors.background-tertiary} 80%, {colors.text-primary})",
           },
         },
         icon: {
@@ -182,13 +147,9 @@ export const buttonRecipe = defineSlotRecipe({
         root: {
           backgroundColor: "transparent",
           color: "color-error",
-          borderColor: "color-error",
-          borderWidth: "1px",
-          _hover: {
-            backgroundColor: "rgba(255, 0, 0, 0.05)",
-          },
-          _active: {
-            backgroundColor: "rgba(255, 0, 0, 0.2)",
+          borderColor: "color-error/55",
+          "&:hover:not(:disabled)": {
+            backgroundColor: "color-error-soft",
           },
         },
         icon: {
@@ -199,13 +160,8 @@ export const buttonRecipe = defineSlotRecipe({
         root: {
           backgroundColor: "color-error",
           color: "text-on-primary",
-          borderColor: "color-error",
-          borderWidth: "1px",
-          _hover: {
+          "&:hover:not(:disabled)": {
             backgroundColor: "color-error-hover",
-          },
-          _active: {
-            backgroundColor: "color-error-opacity-80",
           },
         },
         icon: {
@@ -215,20 +171,21 @@ export const buttonRecipe = defineSlotRecipe({
     },
     layout: {
       horizontal: {
-        root: { flexDirection: "row", padding: "0.5rem 1rem" },
-        content: { padding: "0.25rem 1rem" },
+        root: { flexDirection: "row" },
       },
       vertical: {
-        root: { flexDirection: "column", padding: "0.75rem 0.75rem" },
-        content: { padding: "0.25rem 0.25rem" },
+        root: {
+          flexDirection: "column",
+          paddingBlock: "0.5rem",
+          gap: "0.25rem",
+        },
       },
     },
     disabled: {
       true: {
         root: {
-          backgroundColor: "color-primary-disabled",
           cursor: "not-allowed",
-          opacity: "0.5",
+          opacity: "0.45",
         },
       },
       false: {},
@@ -238,22 +195,20 @@ export const buttonRecipe = defineSlotRecipe({
         root: {
           width: "auto",
           height: "auto",
+          minHeight: "0",
           padding: "0",
+          // icon-only stays a square, so it keeps a usable hit area
+          "&:has(> svg:only-child)": {
+            width: "var(--button-height)",
+            height: "var(--button-height)",
+          },
         },
+        content: { padding: "0.25rem 0.5rem" },
       },
       false: {},
     },
   },
   compoundVariants: [
-    {
-      variant: "primary",
-      disabled: true,
-      css: {
-        root: {
-          backgroundColor: "color-primary-disabled",
-        },
-      },
-    },
     {
       variant: "transparent",
       disabled: true,

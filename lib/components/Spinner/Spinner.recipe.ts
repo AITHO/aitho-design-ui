@@ -21,81 +21,85 @@ export const TYPES = [
 
 export type TypeVariant = (typeof TYPES)[number];
 
+const bouncingDot = (delay: string) => ({
+  width: "8px",
+  height: "8px",
+  borderRadius: "50%",
+  backgroundColor: "color-primary",
+  animation: `spinnerBounce 1s ${delay} infinite ease-in-out`,
+});
+
+const secondaryTone = "var(--color-primary-opacity-50)";
+
 const TYPE_MAPS = {
+  // Three bouncing dots: the root's ::before and ::after flank the element.
+  linearFlashingDots: {
+    root: {
+      gap: "5px",
+      "&::before": { content: "''", ...bouncingDot("0s") },
+      "&::after": { content: "''", ...bouncingDot("0.3s") },
+    },
+    element: bouncingDot("0.15s"),
+  },
+  // Ring: soft track with a primary arc.
   spinningSlashes: {
-    transform: "rotateZ(45deg)",
-    perspective: "62.5rem",
-    borderRadius: "50%",
-    width: "100%",
-    height: "100%",
-    color: "color-primary",
-    "&:before, &:after": {
-      content: "''",
-      display: "block",
-      position: "absolute",
-      top: "0",
-      left: "0",
-      width: "inherit",
-      height: "inherit",
+    element: {
+      width: "24px",
+      height: "24px",
       borderRadius: "50%",
-      animation: "spinnerSpinningSlashes 1s linear infinite",
-    },
-    "&:before": {
-      transform: "rotateX(70deg)",
-    },
-    "&:after": {
-      color: "accent",
-      transform: "rotateY(70deg)",
-      animationDelay: ".4s",
+      borderWidth: "2.5px",
+      borderStyle: "solid",
+      borderColor:
+        "{colors.color-primary} {colors.color-primary-soft} {colors.color-primary-soft} {colors.color-primary-soft}",
+      animation: "spin 0.7s linear infinite",
     },
   },
   circularFlashingDots: {
-    color: "color-primary",
-    width: "1rem",
-    height: "1rem",
-    borderRadius: "50%",
-    position: "relative",
-    animation: "spinnerCircularFlashingDots 1.3s infinite linear",
-    transform: "translateZ(0)",
-  },
-  linearFlashingDots: {
-    width: "1rem",
-    height: "1rem",
-    borderRadius: "50%",
-    backgroundColor: "background-primary",
-    position: "relative",
-    animation: "spinnerLinearFlashingDots 1s ease-out infinite alternate",
+    element: {
+      color: "color-primary",
+      // The keyframes draw the dots in em: this sets an 8px dot.
+      fontSize: "8px",
+      width: "1em",
+      height: "1em",
+      borderRadius: "50%",
+      position: "relative",
+      animation: "spinnerCircularFlashingDots 1.3s infinite linear",
+      transform: "translateZ(0)",
+    },
   },
   rotatingSquares: {
-    position: "relative",
-    backgroundImage:
-      "linear-gradient(var(--accent) 1rem, transparent 0), linear-gradient(var(--color-primary) 1rem, transparent 0), linear-gradient(var(--color-primary) 1rem, transparent 0), linear-gradient(var(--accent) 1rem, transparent 0)",
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "1rem 1rem",
-    backgroundPosition: "left top , left bottom , right top , right bottom",
-    animation: "spinnerRotatingSquares 1s linear infinite",
+    element: {
+      position: "relative",
+      backgroundImage: `linear-gradient(${secondaryTone} 1rem, transparent 0), linear-gradient(var(--color-primary) 1rem, transparent 0), linear-gradient(var(--color-primary) 1rem, transparent 0), linear-gradient(${secondaryTone} 1rem, transparent 0)`,
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "1rem 1rem",
+      backgroundPosition: "left top , left bottom , right top , right bottom",
+      animation: "spinnerRotatingSquares 1s linear infinite",
+    },
   },
   rotatingDots: {
-    animation: "spinnerRotatingDots 1.3s infinite",
-    height: "50px",
-    width: "50px",
-    "&:before, &:after": {
-      borderRadius: "50%",
-      content: "''",
-      display: "block",
-      height: "1.25rem",
-      width: "1.25rem",
-    },
-    "&:before": {
-      animation: "spinnerRotatingDots1 1.3s infinite",
-      backgroundColor: "accent",
-      boxShadow: "30px 0 0 var(--accent)",
-      marginBottom: "0.625rem",
-    },
-    "&:after": {
-      animation: "spinnerRotatingDots2 1.3s infinite",
-      backgroundColor: "color-primary",
-      boxShadow: "30px 0 0 var(--color-primary)",
+    element: {
+      animation: "spinnerRotatingDots 1.3s infinite",
+      height: "50px",
+      width: "50px",
+      "&:before, &:after": {
+        borderRadius: "50%",
+        content: "''",
+        display: "block",
+        height: "1.25rem",
+        width: "1.25rem",
+      },
+      "&:before": {
+        animation: "spinnerRotatingDots1 1.3s infinite",
+        backgroundColor: secondaryTone,
+        boxShadow: `30px 0 0 ${secondaryTone}`,
+        marginBottom: "0.625rem",
+      },
+      "&:after": {
+        animation: "spinnerRotatingDots2 1.3s infinite",
+        backgroundColor: "color-primary",
+        boxShadow: "30px 0 0 var(--color-primary)",
+      },
     },
   },
 } as const;
@@ -121,14 +125,7 @@ export const spinnerRecipe = defineSlotRecipe({
         },
       ]),
     ),
-    type: Object.fromEntries(
-      TYPES.map((type) => [
-        type,
-        {
-          element: TYPE_MAPS[type],
-        },
-      ]),
-    ),
+    type: Object.fromEntries(TYPES.map((type) => [type, TYPE_MAPS[type]])),
   },
   defaultVariants: {
     size: "md",

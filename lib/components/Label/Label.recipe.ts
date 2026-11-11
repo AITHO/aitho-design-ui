@@ -1,5 +1,11 @@
 import { defineSlotRecipe } from "@pandacss/dev";
 
+const requiredMark = {
+  content: '"*"',
+  marginLeft: "2px",
+  color: "color-error",
+};
+
 export const labelRecipe = defineSlotRecipe({
   className: "label",
   slots: ["root"],
@@ -7,42 +13,40 @@ export const labelRecipe = defineSlotRecipe({
     root: {
       display: "flex",
       alignItems: "center",
-      justifyContent: "center",
+      // Text starts at the left edge: a full-width label (form column) was centred over its field.
+      justifyContent: "flex-start",
       position: "relative",
+      fontWeight: "600",
+      _disabled: {
+        opacity: "0.5",
+        cursor: "not-allowed",
+      },
     },
   },
   variants: {
     size: {
       sm: {
-        root: { fontSize: "sm" },
+        root: { fontSize: "0.75rem" },
       },
       md: {
-        root: { fontSize: "base" },
+        root: { fontSize: "0.8125rem" },
       },
       lg: {
-        root: { fontSize: "lg" },
+        root: { fontSize: "0.9375rem" },
       },
       xl: {
-        root: { fontSize: "xl" },
+        root: { fontSize: "1.0625rem" },
       },
     },
     variant: {
       text: {
         root: {
           color: "text-primary",
-          _disabled: {
-            color: "grey-light",
-            cursor: "not-allowed",
-          },
         },
       },
       primary: {
         root: {
           color: "color-primary",
-          _disabled: {
-            color: "grey-light",
-            cursor: "not-allowed",
-          },
         },
       },
     },
@@ -52,31 +56,20 @@ export const labelRecipe = defineSlotRecipe({
       primary: {
         root: {
           alignItems: "start",
-          _before: {
-            content: '" *"',
-            color: "color-error",
-          },
+          _after: requiredMark,
         },
       },
       bold: {
         root: {
           alignItems: "start",
-          _before: {
-            content: '" *"',
-            fontSize: "1.125rem",
-            color: "color-error",
-            fontWeight: "bold",
-          },
+          _after: { ...requiredMark, fontSize: "1.125em", fontWeight: "bold" },
         },
       },
       text: {
         root: {
           alignItems: "start",
           justifyContent: "flex-start",
-          _before: {
-            content: '" *"',
-            color: "color-error",
-          },
+          _after: requiredMark,
           color: "color-error",
         },
       },
@@ -84,11 +77,7 @@ export const labelRecipe = defineSlotRecipe({
         root: {
           alignItems: "start",
           justifyContent: "flex-start",
-          _before: {
-            content: '" *"',
-            color: "color-error",
-            fontWeight: "bold",
-          },
+          _after: { ...requiredMark, fontWeight: "bold" },
           color: "color-error",
           fontWeight: "bold",
         },

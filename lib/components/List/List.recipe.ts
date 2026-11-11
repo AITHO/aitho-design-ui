@@ -32,30 +32,37 @@ export const listRecipe = defineSlotRecipe({
       display: "flex",
       flexDirection: "column",
       width: "100%",
+      padding: "0.25rem",
+      border: "1px solid",
+      borderColor: "border-color",
+      borderRadius: "radius",
+      bg: "background-primary",
     },
     container: {
       _focusVisible: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "1px",
+        outline: "none",
+        boxShadow: "focus-ring",
         borderRadius: "radius-sm",
         zIndex: "999999",
       },
     },
     content: {
-      lineHeight: 1,
       display: "flex",
       flexDirection: "row",
+      alignItems: "center",
       minHeight: "1.875rem",
-      userSelect: "none",
+      padding: "0.625rem",
+      borderRadius: "radius-sm",
       outline: "none",
-      padding: "0.167rem",
+      transition: "background-color 0.15s ease",
+      _hover: {
+        bg: "color-primary-softer",
+      },
     },
     item: {
       display: "flex",
       flexDirection: "row",
-      gap: "0.938rem",
+      gap: "0.75rem",
       alignItems: "center",
     },
     rightSlot: {
@@ -65,10 +72,13 @@ export const listRecipe = defineSlotRecipe({
       flexDirection: "row",
       gap: "0.625rem",
     },
+    // Items are told apart by their hover background: the separator is just a 2px gap.
     separator: {
-      backgroundColor: "border-color",
-      height: "1px",
+      height: "2px",
       width: "100%",
+      ".aitho-list__container:last-child > &": {
+        display: "none",
+      },
     },
   },
   variants: {

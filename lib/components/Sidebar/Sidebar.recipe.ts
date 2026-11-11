@@ -6,9 +6,14 @@ const commonTransitions = {
   transitionTimingFunction: "ease-in-out",
 };
 
+const itemTransitions = {
+  transition:
+    "background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
+};
+
 const commonItemStates = {
   _hover: {
-    backgroundColor: "background-tertiary",
+    backgroundColor: "color-primary-softer",
     color: "text-primary",
   },
   _disabled: {
@@ -81,7 +86,10 @@ export const sidebarRecipe = defineSlotRecipe({
       overflowX: "hidden",
     },
     footer: {
-      padding: "3",
+      marginInline: "2",
+      padding: "0.75rem 0.5rem",
+      borderTop: "1px solid",
+      borderColor: "border-color",
       color: "text-secondary",
     },
     item: {
@@ -92,16 +100,41 @@ export const sidebarRecipe = defineSlotRecipe({
       alignItems: "center",
       justifyContent: "space-between",
       gap: "3",
-      padding: "3",
-      borderRadius: "radius",
+      padding: "0.5625rem 0.625rem",
+      // 4px between rows: with 2px the hovered and selected backgrounds touched.
+      marginBlock: "2px",
+      borderRadius: "radius-sm",
       color: "text-secondary",
+      fontWeight: "medium",
+      userSelect: "none",
       cursor: "pointer",
-      ...commonTransitions,
+      ...itemTransitions,
       ...commonItemStates,
       '&[data-selected="true"]': {
-        backgroundColor: "color-primary-dark",
+        backgroundColor: "color-primary-soft",
         color: "color-primary",
-        fontWeight: "semibold",
+        fontWeight: "bold",
+        _hover: {
+          backgroundColor: "color-primary-soft",
+          color: "color-primary",
+        },
+      },
+      // Bar on the current page only (not on the parents of a selected sub-item),
+      // in the nav padding.
+      "&:has(> [aria-current='page'])::before": {
+        content: '""',
+        position: "absolute",
+        left: "-0.5rem",
+        top: "2",
+        bottom: "2",
+        width: "3px",
+        borderRadius: "0 3px 3px 0",
+        backgroundColor: "color-primary",
+        animation: "growY 0.2s ease-out",
+      },
+      // The focusable element is the row's inner button: the ring goes on the row.
+      "&:has(> .aitho-sidebar__itemAction:focus-visible)": {
+        boxShadow: "focus-ring",
       },
       "&[data-disabled='true']": {
         ...commonItemStates._disabled,
@@ -113,12 +146,12 @@ export const sidebarRecipe = defineSlotRecipe({
       alignItems: "center",
       justifyContent: "space-between",
       gap: "3",
-      padding: "3",
-      borderRadius: "radius",
+      padding: "0.5625rem 0.625rem",
+      borderRadius: "radius-sm",
       fontWeight: "semibold",
       color: "text-secondary",
       '&[data-selected="true"]': {
-        backgroundColor: "color-primary-dark",
+        backgroundColor: "color-primary-soft",
         color: "color-primary",
         fontWeight: "semibold",
       },
@@ -145,10 +178,7 @@ export const sidebarRecipe = defineSlotRecipe({
       cursor: "inherit",
       borderRadius: "radius-sm",
       _focusVisible: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "2px",
+        outline: "none",
       },
       // Stretched hit area: covers the whole row (padding included) so the
       // row is clickable without a mouse-only handler on the row itself.
@@ -171,7 +201,7 @@ export const sidebarRecipe = defineSlotRecipe({
       },
     },
     itemText: {
-      fontSize: "lg",
+      fontSize: "sm",
       "&[data-state='open']": {
         wordBreak: "break-word",
       },
@@ -187,13 +217,17 @@ export const sidebarRecipe = defineSlotRecipe({
       width: "5",
       height: "5",
       padding: "1",
-      borderRadius: "border-radius",
+      borderRadius: "radius-sm",
       color: "text-secondary",
       cursor: "pointer",
-      ...commonTransitions,
+      ...itemTransitions,
       _hover: {
-        backgroundColor: "background-tertiary",
+        backgroundColor: "color-primary-soft",
         color: "text-primary",
+      },
+      _focusVisible: {
+        outline: "none",
+        boxShadow: "focus-ring",
       },
     },
     subItems: {
@@ -221,11 +255,11 @@ export const sidebarRecipe = defineSlotRecipe({
       width: "5",
       height: "5",
       padding: "1",
-      borderRadius: "border-radius",
+      borderRadius: "radius-sm",
       color: "text-secondary",
       cursor: "pointer",
       backgroundColor: "background-primary",
-      ...commonTransitions,
+      ...itemTransitions,
       _hover: {
         backgroundColor: "background-secondary",
         color: "text-primary",
@@ -237,15 +271,15 @@ export const sidebarRecipe = defineSlotRecipe({
       padding: "1",
       backgroundColor: "background-primary",
       color: "text-primary",
-      borderRadius: "radius",
+      borderRadius: "radius-sm",
       border: "1px solid",
       borderColor: "border-color",
       fontSize: "sm",
-      ...commonTransitions,
+      ...itemTransitions,
       _focus: {
         outline: "none",
         borderColor: "color-primary",
-        backgroundColor: "background-secondary",
+        boxShadow: "focus-ring",
       },
     },
   },

@@ -38,6 +38,14 @@ export {
   type CodeBlockProps,
 } from "./components/CodeBlock/CodeBlock";
 export {
+  ColorPicker,
+  type ColorPickerProps,
+} from "./components/ColorPicker/ColorPicker";
+export {
+  DatePicker,
+  type DatePickerProps,
+} from "./components/DatePicker/DatePicker";
+export {
   DatePickerMonth,
   type DatePickerMonthProps,
 } from "./components/DatePickerMonth/DatePickerMonth";
@@ -76,6 +84,10 @@ export {
   RangeDatePicker,
   type RangeDatePickerProps,
 } from "./components/RangeDatePicker/RangeDatePicker";
+export {
+  Scrollbar,
+  type ScrollbarProps,
+} from "./components/Scrollbar/Scrollbar";
 export { Select, type SelectProps } from "./components/Select/Select";
 export {
   SelectTags,
@@ -94,6 +106,10 @@ export {
   type TableSortDirection,
 } from "./components/Table/Table";
 export { TextArea, type TextAreaProps } from "./components/TextArea/TextArea";
+export {
+  TimePicker,
+  type TimePickerProps,
+} from "./components/TimePicker/TimePicker";
 export { Toast, type ToastProps } from "./components/Toast/Toast";
 export {
   ToggleSwitch,

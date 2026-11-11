@@ -83,7 +83,7 @@ export type CodeBlockProps = CodeBlockVariantProps & {
 /**
  * A code block with syntax highlighting.
  *
- * Syntax highlighting is provided via the required `highlighter` prop — a
+ * Syntax highlighting is provided via the required `highlighter` prop, a
  * simple async function `(code, lang, theme) => Promise<string>` that returns
  * an HTML string. This keeps shiki (or any other highlighter) out of the
  * library bundle; install it separately and wire it up:

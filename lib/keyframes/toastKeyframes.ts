@@ -1,68 +1,37 @@
 import { CssKeyframes } from "@pandacss/dev";
 
+// Toast.tsx and ToastProvider detect the exit by the "toastSwipe" name prefix.
 export const toastKeyframes: CssKeyframes = {
   toastSwipeInRight: {
-    from: {
-      transform: "translateX(100%)",
-    },
-    to: {
-      transform: "translateX(0)",
-    },
+    from: { opacity: 0, transform: "translateX(12px)" },
+    to: { opacity: 1, transform: "translateX(0)" },
   },
   toastSwipeInLeft: {
-    from: {
-      transform: "translateX(-100%)",
-    },
-    to: {
-      transform: "translateX(0)",
-    },
+    from: { opacity: 0, transform: "translateX(-12px)" },
+    to: { opacity: 1, transform: "translateX(0)" },
   },
   toastSwipeInTop: {
-    from: {
-      transform: "translateY(-100%)",
-    },
-    to: {
-      transform: "translateY(0)",
-    },
+    from: { opacity: 0, transform: "translateY(-8px)" },
+    to: { opacity: 1, transform: "translateY(0)" },
   },
   toastSwipeInBottom: {
-    from: {
-      transform: "translateY(100%)",
-    },
-    to: {
-      transform: "translateY(0)",
-    },
+    from: { opacity: 0, transform: "translateY(8px)" },
+    to: { opacity: 1, transform: "translateY(0)" },
   },
   toastSwipeOutRight: {
-    from: {
-      transform: "translateX(0)",
-    },
-    to: {
-      transform: "translateX(100%)",
-    },
+    from: { opacity: 1, transform: "translateX(0)" },
+    to: { opacity: 0, transform: "translateX(12px)" },
   },
   toastSwipeOutLeft: {
-    from: {
-      transform: "translateX(0)",
-    },
-    to: {
-      transform: "translateX(-100%)",
-    },
+    from: { opacity: 1, transform: "translateX(0)" },
+    to: { opacity: 0, transform: "translateX(-12px)" },
   },
   toastSwipeOutTop: {
-    from: {
-      transform: "translateY(0)",
-    },
-    to: {
-      transform: "translateY(-100%)",
-    },
+    from: { opacity: 1, transform: "translateY(0)" },
+    to: { opacity: 0, transform: "translateY(-8px)" },
   },
   toastSwipeOutBottom: {
-    from: {
-      transform: "translateY(0)",
-    },
-    to: {
-      transform: "translateY(100%)",
-    },
+    from: { opacity: 1, transform: "translateY(0)" },
+    to: { opacity: 0, transform: "translateY(8px)" },
   },
 };

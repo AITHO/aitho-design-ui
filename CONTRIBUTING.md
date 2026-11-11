@@ -331,8 +331,8 @@ Follow these steps to create components manually:
 
 Commits are validated by [commitlint](https://commitlint.js.org/) against the
 [Conventional Commits](https://www.conventionalcommits.org/) specification, and
-a Husky hook runs Prettier on staged files. Use the usual prefixes — `feat:`,
-`fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `build:`, `ci:` — and mark
+a Husky hook runs Prettier on staged files. Use the usual prefixes (`feat:`,
+`fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `build:`, `ci:`) and mark
 breaking changes with a `!` or a `BREAKING CHANGE:` footer.
 
 ## Licensing of Contributions
@@ -345,5 +345,5 @@ other projects unless its license is compatible, and identify it in the pull
 request.
 
 Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
-Security problems must be reported privately — see [SECURITY.md](SECURITY.md),
+Security problems must be reported privately: see [SECURITY.md](SECURITY.md),
 not a public issue.

@@ -1,5 +1,44 @@
 import { defineSlotRecipe } from "@pandacss/dev";
 
+const CONTROL_TRANSITION =
+  "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease";
+
+// Hover of the trigger: never while disabled, and the focus border keeps precedence.
+const INPUT_HOVER = "&:hover:not([data-disabled='true'], :focus-within)";
+
+const NAVIGATION_BUTTON = {
+  display: "grid",
+  placeItems: "center",
+  width: "30px",
+  height: "30px",
+  padding: "0",
+  borderRadius: "radius-sm",
+  color: "text-primary",
+  cursor: "pointer",
+  userSelect: "none",
+  transition: CONTROL_TRANSITION,
+  _hover: {
+    backgroundColor: "color-primary-soft",
+    color: "color-primary",
+  },
+  _active: {
+    transform: "scale(0.92)",
+  },
+  _disabled: {
+    opacity: 0.35,
+    cursor: "not-allowed",
+    transform: "none",
+    _hover: {
+      backgroundColor: "transparent",
+      color: "text-primary",
+    },
+  },
+  _focusVisible: {
+    outline: "none",
+    boxShadow: "focus-ring",
+  },
+};
+
 const BASE_STYLES = {
   root: {
     position: "relative",
@@ -17,31 +56,32 @@ const BASE_STYLES = {
     border: "1px solid",
     borderColor: "border-color",
     borderRadius: "radius",
-    transition: "all 0.2s ease-in-out",
+    transition:
+      "border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease",
     backgroundColor: "background-primary",
     color: "text-primary",
-    _hover: {
+    _focusWithin: {
       borderColor: "color-primary",
-      backgroundColor: "background-secondary",
+      boxShadow: "focus-ring",
     },
     "&[data-disabled='true']": {
       cursor: "not-allowed",
-      opacity: 0.6,
-      backgroundColor: "background-tertiary",
+      opacity: 0.55,
+      backgroundColor: "background-secondary",
     },
   },
   inputButton: {
+    flex: "1",
+    alignSelf: "stretch",
+    minWidth: 0,
     cursor: "pointer",
+    userSelect: "none",
     _disabled: {
       cursor: "not-allowed",
-      opacity: 0.6,
     },
+    // The whole field shows the focus ring (see input).
     _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "color-primary",
-      outlineOffset: "2px",
-      borderRadius: "radius-sm",
+      outline: "none",
     },
   },
   inputContent: {
@@ -54,6 +94,8 @@ const BASE_STYLES = {
   inputIcon: {
     width: "4",
     height: "4",
+    flexShrink: 0,
+    color: "text-secondary",
   },
   inputText: {
     flex: "1",
@@ -61,45 +103,53 @@ const BASE_STYLES = {
     whiteSpace: "nowrap",
   },
   clearButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    padding: "3px",
+    borderRadius: "radius-sm",
     textAlign: "right",
     cursor: "pointer",
-    color: "background-popup",
+    color: "text-secondary",
     opacity: "0.5",
+    transition: CONTROL_TRANSITION,
     _hover: {
       opacity: "1",
+      color: "text-primary",
+      backgroundColor: "color-primary-soft",
     },
     _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "color-primary",
-      outlineOffset: "2px",
-      borderRadius: "radius-sm",
+      outline: "none",
+      boxShadow: "focus-ring",
     },
     '&[data-clear-button="true"]': {
       opacity: "1",
-      color: "text-primary",
     },
     "&[data-disabled='true']": {
       cursor: "not-allowed",
       opacity: "0.3",
       _hover: {
         opacity: "0.3",
+        color: "text-secondary",
+        backgroundColor: "transparent",
       },
     },
   },
   calendar: {
     position: "absolute",
-    marginTop: "2",
+    marginTop: "1.5",
     backgroundColor: "background-primary",
     border: "1px solid",
     borderColor: "border-color",
-    borderRadius: "radius",
-    boxShadow: "lg",
-    padding: "4",
+    borderRadius: "radius-lg",
+    boxShadow: "overlay",
+    padding: "3",
     zIndex: "10",
     display: "flex",
-    gap: "8",
+    gap: "6",
     width: "fit-content",
+    animation: "popIn 0.14s ease-out",
   },
   monthContainer: {
     display: "flex",
@@ -110,12 +160,12 @@ const BASE_STYLES = {
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: "2",
-    padding: "0 2",
+    userSelect: "none",
   },
   buttonContainer: {
     display: "flex",
     alignItems: "center",
-    gap: "1",
+    gap: "2px",
   },
   navigationIcon: {
     width: "4",
@@ -123,145 +173,106 @@ const BASE_STYLES = {
   },
   monthTitle: {
     fontSize: "sm",
-    fontWeight: "medium",
+    fontWeight: "bold",
     color: "text-primary",
     flex: "1",
     textAlign: "center",
   },
-  navigationButton: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "8",
-    height: "8",
-    padding: "0",
-    borderRadius: "full",
-    color: "text-secondary",
-    _hover: {
-      backgroundColor: "background-secondary",
-      color: "color-primary",
-    },
-    _disabled: {
-      opacity: 0.3,
-      cursor: "not-allowed",
-      _hover: {
-        backgroundColor: "transparent",
-        color: "text-secondary",
-      },
-    },
-    _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "color-primary",
-      outlineOffset: "0px",
-    },
-  },
-  superNavigationButton: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "8",
-    height: "8",
-    padding: "0",
-    borderRadius: "full",
-    color: "text-secondary",
-    _hover: {
-      backgroundColor: "background-secondary",
-      color: "color-primary",
-    },
-    _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "color-primary",
-      outlineOffset: "0px",
-    },
-  },
+  navigationButton: NAVIGATION_BUTTON,
+  superNavigationButton: NAVIGATION_BUTTON,
   daysGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(7, 1fr)",
-    gap: "1",
+    // No column gap, so a selected range reads as one continuous band.
+    gap: "2px 0",
   },
   dayHeader: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     color: "text-secondary",
-    fontSize: "sm",
-    fontWeight: "medium",
-    height: "8",
+    fontSize: "11px",
+    fontWeight: "600",
+    height: "6",
+    userSelect: "none",
   },
   day: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    padding: "0",
     borderRadius: "radius-sm",
     cursor: "pointer",
     position: "relative",
     color: "text-primary",
+    fontVariantNumeric: "tabular-nums",
+    userSelect: "none",
+    transition: CONTROL_TRANSITION,
     _hover: {
-      backgroundColor: "background-secondary",
+      backgroundColor: "color-primary-soft",
+    },
+    _active: {
+      transform: "scale(0.92)",
+    },
+    _focusVisible: {
+      outline: "none",
+      boxShadow: "focus-ring",
+    },
+    '&[data-today="true"]': {
+      boxShadow: "inset 0 0 0 1px {colors.color-primary}",
+      _focusVisible: {
+        boxShadow:
+          "inset 0 0 0 1px {colors.color-primary}, {shadows.focus-ring}",
+      },
+    },
+    '&[data-in-range="true"]': {
+      backgroundColor: "color-primary-soft",
+      color: "text-primary",
+      borderRadius: "0",
     },
     '&[data-selected="true"]': {
       backgroundColor: "color-primary",
       color: "text-on-primary",
+      fontWeight: "bold",
+      animation: "scaleIn 0.18s ease-out",
       _hover: {
-        backgroundColor: "color-primary-hover",
-      },
-    },
-    '&[data-in-range="true"]': {
-      backgroundColor: "background-tertiary",
-      color: "text-primary",
-      borderRadius: "none",
-      _before: {
-        content: '""',
-        position: "absolute",
-        top: "0",
-        left: "0",
-        right: "0",
-        bottom: "0",
         backgroundColor: "color-primary",
-        opacity: "0.1",
-        zIndex: "-1",
       },
     },
-    '&[data-range-start="true"]': {
-      borderTopLeftRadius: "radius-sm",
-      borderBottomLeftRadius: "radius-sm",
+    // Square the inner corners only where the range continues beside the cell.
+    '&[data-range-start="true"]:has(+ [data-in-range="true"], + [data-range-end="true"])':
+      {
+        borderTopRightRadius: "0",
+        borderBottomRightRadius: "0",
+      },
+    'button[data-in-range="true"] + &[data-range-end="true"]': {
+      borderTopLeftRadius: "0",
+      borderBottomLeftRadius: "0",
     },
-    '&[data-range-end="true"]': {
-      borderTopRightRadius: "radius-sm",
-      borderBottomRightRadius: "radius-sm",
+    'button[data-range-start="true"] + &[data-range-end="true"]': {
+      borderTopLeftRadius: "0",
+      borderBottomLeftRadius: "0",
     },
     '&[data-disabled="true"]': {
       color: "text-secondary",
       cursor: "not-allowed",
       backgroundColor: "transparent",
-      opacity: 0.5,
+      opacity: 0.45,
+      transform: "none",
       _hover: {
         backgroundColor: "transparent",
       },
     },
-    '&[data-today="true"]': {
-      fontWeight: "bold",
-      _before: {
-        content: '""',
-        position: "absolute",
-        width: "1",
-        height: "1",
-        borderRadius: "full",
-        backgroundColor: "color-primary",
-        bottom: "1",
-      },
-    },
     '&[data-out-of-month="true"]': {
       color: "text-secondary",
-      opacity: 0.5,
-    },
-    _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "color-primary",
-      outlineOffset: "0px",
+      opacity: 0.45,
+      cursor: "default",
+      _hover: {
+        backgroundColor: "transparent",
+      },
+      _active: {
+        transform: "none",
+      },
     },
   },
 };
@@ -269,29 +280,29 @@ const BASE_STYLES = {
 const SIZE_VARIANTS = {
   sm: {
     input: {
-      padding: "2",
-      fontSize: "sm",
+      padding: "0 10px",
+      fontSize: "13px",
       height: "8",
     },
     day: {
-      height: "6",
-      width: "6",
+      height: "7",
+      width: "7",
       fontSize: "xs",
     },
     monthTitle: {
-      fontSize: "xs",
+      fontSize: "13px",
     },
   },
   md: {
     input: {
-      padding: "3",
-      fontSize: "base",
-      height: "10",
+      padding: "0 12px",
+      fontSize: "sm",
+      height: "38px",
     },
     day: {
-      height: "8",
-      width: "8",
-      fontSize: "sm",
+      height: "34px",
+      width: "34px",
+      fontSize: "13px",
     },
     monthTitle: {
       fontSize: "sm",
@@ -299,14 +310,14 @@ const SIZE_VARIANTS = {
   },
   lg: {
     input: {
-      padding: "4",
-      fontSize: "lg",
-      height: "12",
+      padding: "0 14px",
+      fontSize: "15px",
+      height: "11",
     },
     day: {
       height: "10",
       width: "10",
-      fontSize: "base",
+      fontSize: "sm",
     },
     monthTitle: {
       fontSize: "base",
@@ -319,13 +330,9 @@ const VARIANT_STYLES = {
     input: {
       backgroundColor: "background-primary",
       borderColor: "border-color",
-      _hover: {
-        borderColor: "color-primary",
-        backgroundColor: "background-secondary",
-      },
-      _focus: {
-        borderColor: "color-primary",
-        boxShadow: "0 0 0 2px var(--focus-ring)",
+      [INPUT_HOVER]: {
+        borderColor:
+          "color-mix(in srgb, {colors.border-color} 55%, {colors.text-secondary})",
       },
     },
   },
@@ -333,12 +340,8 @@ const VARIANT_STYLES = {
     input: {
       backgroundColor: "background-secondary",
       borderColor: "transparent",
-      _hover: {
-        backgroundColor: "background-tertiary",
-      },
-      _focus: {
-        borderColor: "color-primary",
-        boxShadow: "0 0 0 2px var(--focus-ring)",
+      [INPUT_HOVER]: {
+        borderColor: "border-color",
       },
     },
   },
@@ -346,12 +349,8 @@ const VARIANT_STYLES = {
     input: {
       backgroundColor: "transparent",
       borderColor: "transparent",
-      _hover: {
+      [INPUT_HOVER]: {
         backgroundColor: "background-secondary",
-      },
-      _focus: {
-        borderColor: "color-primary",
-        boxShadow: "0 0 0 2px var(--focus-ring)",
       },
     },
   },

@@ -60,6 +60,8 @@ export const tableRecipe = defineSlotRecipe({
     "cell",
     "table",
     "tableContainer",
+    "frame",
+    "edge",
     "header",
     "sortIcons",
     "pagination",
@@ -70,60 +72,122 @@ export const tableRecipe = defineSlotRecipe({
     root: {
       display: "block",
       width: "100%",
+      color: "text-primary",
     },
     caption: {
       srOnly: true,
     },
+    tableContainer: {
+      overflowX: "auto",
+      // A variable, so the edge shadow below follows an app that rounds its tables differently.
+      borderRadius: "var(--aitho-table-radius, {radii.radius})",
+      bg: "background-primary",
+      // Only when the table is wider than its box (data attributes set by Table.tsx):
+      // the first column stays put while the rest scrolls under it.
+      // Colour only (bgColor, never the bg shorthand) on the fixed cell: the shorthand would also
+      // reset the background-image the row hover tint is drawn with.
+      "&[data-overflow] tr > :first-child": {
+        position: "sticky",
+        left: 0,
+        zIndex: 1,
+        bgColor: "background-primary",
+        transition: "box-shadow 0.15s ease",
+      },
+      "&[data-overflow] thead tr > :first-child": {
+        zIndex: 2,
+        bgColor: "background-secondary",
+      },
+      // The row tint has to sit on an opaque base, or the scrolled cells show through.
+      "&[data-overflow] tbody tr:hover > :first-child": {
+        backgroundImage:
+          "linear-gradient({colors.color-primary-softer}, {colors.color-primary-softer})",
+      },
+      // A border-coloured edge plus a soft shadow: the line still reads on dark themes.
+      "&[data-scrolled] tr > :first-child": {
+        boxShadow:
+          "1px 0 0 {colors.border-color}, 6px 0 10px -6px rgb(0 0 0 / 0.5)",
+      },
+    },
+    // Holds the table box with the shadow and the scrollbar drawn over it.
+    frame: {
+      position: "relative",
+    },
+    // More columns to the right: a soft shadow on the inner right edge, rounded like the frame.
+    edge: {
+      position: "absolute",
+      top: "1px",
+      right: "1px",
+      bottom: "1px",
+      width: "1.25rem",
+      pointerEvents: "none",
+      borderRadius:
+        "0 calc(var(--aitho-table-radius, {radii.radius}) - 1px) calc(var(--aitho-table-radius, {radii.radius}) - 1px) 0",
+      background: "linear-gradient(to left, rgb(0 0 0 / 0.28), transparent)",
+      // Lighter on a light page, where the same shadow reads as a dark band.
+      "[data-panda-theme=light] &": {
+        background: "linear-gradient(to left, rgb(0 0 0 / 0.12), transparent)",
+      },
+      opacity: 0,
+      transition: "opacity 0.15s ease",
+      zIndex: 2,
+      "[data-more] + &": {
+        opacity: 1,
+      },
+    },
     table: {
       display: "table",
       width: "100%",
+      fontSize: "sm",
     },
     header: {
-      fontWeight: "bold",
-      textAlign: "left",
-      padding: "3",
       position: "relative",
-      _focusWithin: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "2px",
-        borderRadius: "radius-sm",
-        zIndex: "999999",
+      padding: "10px 14px",
+      textAlign: "left",
+      // Labels wrap instead of running into the next column when columns are narrow.
+      whiteSpace: "normal",
+      overflowWrap: "break-word",
+      fontSize: "xs",
+      fontWeight: "semibold",
+      color: "text-secondary",
+      bg: "background-secondary",
+      borderBottom: "1px solid",
+      borderColor: "border-color",
+      transition: "box-shadow 0.15s ease",
+      // The sort button sits inside a scrolling container: an inset ring on the
+      // cell is never clipped, unlike the button's own outer ring.
+      "&:has(:focus-visible)": {
+        boxShadow: "inset 0 0 0 2px {colors.color-primary}",
       },
       "& button:focus-visible": {
         outline: "none",
+        boxShadow: "none",
       },
       "& .header-content": {
         display: "flex",
         alignItems: "center",
-        gap: "0.5rem",
-      },
-      "&:not(:last-child)::after": {
-        content: '""',
-        position: "absolute",
-        top: "25%",
-        bottom: "25%",
-        right: "0",
-        width: "1px",
-        bg: "border-color",
-      },
-      _first: {
-        borderTopLeftRadius: "radius",
-      },
-      _last: {
-        borderTopRightRadius: "radius",
+        gap: "6px",
       },
     },
     sortIcons: {
-      color: "text-on-primary",
+      display: "flex",
+      color: "text-secondary",
+      transition: "color 0.15s ease",
+      "th[aria-sort] &": {
+        color: "color-primary",
+      },
     },
     row: {
       display: "table-row",
     },
     cell: {
       display: "table-cell",
-      padding: "3",
+      padding: "12px 14px",
+      transition: "background-color 0.12s ease",
+      // On the cells so the tint also covers the striped rows, whose
+      // background comes from a compound variant.
+      "tbody tr:hover > &": {
+        bg: "color-primary-softer",
+      },
     },
     pagination: {
       display: "flex",
@@ -135,32 +199,26 @@ export const tableRecipe = defineSlotRecipe({
   variants: {
     variant: {
       primary: {
-        root: {
-          color: "text-primary",
-          borderColor: "color-primary",
-        },
-        header: {
-          color: "text-on-primary",
-          bg: "color-primary",
-        },
         row: {
-          borderColor: "color-primary",
-          bg: "table-base-color",
+          borderColor: "border-color",
         },
       },
       secondary: {
-        root: {
-          color: "text-contrast",
-          borderColor: "dark",
+        tableContainer: {
+          bg: "table-base-color",
+          "&[data-overflow] tbody tr > :first-child": {
+            bgColor: "table-base-color",
+          },
+          "&[data-overflow] thead tr > :first-child": {
+            bgColor: "background-tertiary",
+          },
         },
         header: {
-          bg: "background-popup",
-          color: "text-on-primary",
+          color: "text-primary",
+          bg: "background-tertiary",
         },
         row: {
-          color: "text-primary",
-          borderColor: "dark",
-          bg: "background-tertiary",
+          borderColor: "border-color",
         },
       },
     },
@@ -180,10 +238,11 @@ export const tableRecipe = defineSlotRecipe({
       true: {
         tableContainer: {
           border: "1px solid",
-          borderBottom: "none",
-          borderColor: "color-primary",
-          borderTopLeftRadius: "0.5rem",
-          borderTopRightRadius: "0.5rem",
+          borderColor: "border-color",
+          // The wrapper border closes the table: the last row needs no separator.
+          "& tbody tr:last-child": {
+            borderBottom: "none",
+          },
         },
       },
       false: {
@@ -197,7 +256,7 @@ export const tableRecipe = defineSlotRecipe({
       true: {
         row: {
           borderBottom: "1px solid",
-          borderColor: "color-primary",
+          borderColor: "border-color",
         },
       },
       false: {
@@ -211,19 +270,35 @@ export const tableRecipe = defineSlotRecipe({
     {
       variant: "primary",
       striped: true,
-      css: { root: { "& tr:nth-child(even)": { bg: "table-striped-color" } } },
+      css: {
+        root: {
+          "& tr:nth-child(even)": { bg: "table-striped-color" },
+          // The fixed first cell takes its striped row's colour.
+          "& [data-overflow] tbody tr:nth-child(even) > :first-child": {
+            bgColor: "table-striped-color",
+          },
+        },
+      },
     },
     {
       variant: "secondary",
       striped: true,
-      css: { root: { "& tr:nth-child(even)": { bg: "background-secondary" } } },
+      css: {
+        root: {
+          "& tr:nth-child(even)": { bg: "background-secondary" },
+          "& [data-overflow] tbody tr:nth-child(even) > :first-child": {
+            bgColor: "background-secondary",
+          },
+        },
+      },
     },
   ],
 
   defaultVariants: {
     paginationPosition: "bottom",
     variant: "primary",
-    sideBorders: false,
+    // Framed by default: a table without its own border blends into the card around it.
+    sideBorders: true,
     bottomBorders: true,
   },
 });

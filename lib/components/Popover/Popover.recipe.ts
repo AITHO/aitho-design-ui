@@ -5,25 +5,41 @@ export const popoverRecipe = defineSlotRecipe({
   slots: ["trigger", "content", "close", "arrow"],
   base: {
     content: {
+      // Above fixed app chrome (a sidebar, a sticky header), like Select and Tooltip.
+      zIndex: "9999",
       display: "flex",
       flexDirection: "column",
       gap: "1rem",
-      borderRadius: "md",
       width: "max-content",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: "border-color",
+      boxShadow: "overlay",
+      outline: "none",
+      transformOrigin: "var(--radix-popover-content-transform-origin)",
+      _open: { animation: "popIn 0.14s ease-out" },
+      _closed: { animation: "popOut 0.1s ease-in" },
     },
 
+    // Always rendered: the content's right padding keeps text clear of it.
     close: {
       position: "absolute",
-      right: "0.625rem",
-      top: "0.625rem",
+      right: "8px",
+      top: "8px",
+      display: "grid",
+      placeItems: "center",
+      width: "24px",
+      height: "24px",
+      borderRadius: "radius-sm",
       cursor: "pointer",
-      _focusVisible: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "2px",
-        borderRadius: "radius-sm",
+      userSelect: "none",
+      transition:
+        "background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
+      _hover: {
+        backgroundColor: "color-primary-soft",
+        color: "text-primary",
       },
+      _focusVisible: { outline: "none", boxShadow: "focus-ring" },
     },
     arrow: {
       fill: "border-color",
@@ -33,19 +49,17 @@ export const popoverRecipe = defineSlotRecipe({
     variant: {
       primary: {
         content: {
-          backgroundColor: "background-primary",
+          backgroundColor: "background-secondary",
           color: "text-primary",
-          border: "1px solid var(--border-color)",
         },
         close: {
-          color: "text-primary",
+          color: "text-secondary",
         },
       },
       secondary: {
         content: {
           backgroundColor: "background-secondary",
           color: "text-secondary",
-          border: "1px solid var(--border-color)",
         },
         close: {
           color: "text-secondary",
@@ -54,16 +68,24 @@ export const popoverRecipe = defineSlotRecipe({
     },
     size: {
       sm: {
-        content: { padding: "6", maxWidth: "12.5rem", fontSize: "sm" },
+        content: {
+          padding: "10px 36px 10px 12px",
+          maxWidth: "12.5rem",
+          fontSize: "sm",
+        },
         arrow: { width: "0.5rem", height: "0.25rem" },
       },
       md: {
-        content: { padding: "8", maxWidth: "18.75rem", fontSize: "md" },
+        content: {
+          padding: "14px 40px 14px 14px",
+          maxWidth: "18.75rem",
+          fontSize: "md",
+        },
         arrow: { width: "0.75rem", height: "0.5rem" },
       },
       lg: {
         content: {
-          padding: "8",
+          padding: "16px 42px 16px 16px",
           maxWidth: "25rem",
           fontSize: "lg",
         },
@@ -71,7 +93,7 @@ export const popoverRecipe = defineSlotRecipe({
       },
       xl: {
         content: {
-          padding: "10",
+          padding: "20px 46px 20px 20px",
           maxWidth: "31.25rem",
           fontSize: "xl",
         },

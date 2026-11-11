@@ -203,4 +203,11 @@ describe("Input", () => {
       "true",
     );
   });
+
+  it("adds a caller's className to the field style instead of replacing it", () => {
+    render(<Input className="extra" />);
+    const field = screen.getByTestId("input");
+    expect(field).toHaveClass("extra");
+    expect(field.className).toMatch(/aitho-input__inputField/);
+  });
 });

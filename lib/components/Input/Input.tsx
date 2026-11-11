@@ -6,7 +6,16 @@ import {
 } from "@radix-ui/react-icons";
 import { input, type InputVariantProps } from "@styled/recipes";
 import React, { useState } from "react";
+import { DatePicker } from "../DatePicker/DatePicker";
+import { resolveLang } from "../DatePicker/dateUtils";
+import { TimePicker } from "../TimePicker/TimePicker";
+import { parseTime, type TimePrecision } from "../TimePicker/timeUtils";
 import { Label } from "../Label/Label";
+import {
+  nativeFieldTarget,
+  withTarget,
+  type TypedProblem,
+} from "../../utils/nativeField";
 import "./Input.css";
 
 export type InputProps = Omit<
@@ -63,6 +72,305 @@ export type InputProps = Omit<
     inputSearch?: boolean;
   };
 
+type DateTimeFieldProps = Omit<
+  React.ComponentProps<typeof DatePicker>,
+  "value" | "onValueChange" | "min" | "max"
+> & {
+  value: string;
+  onValueChange: (value: string) => void;
+  min?: string;
+  max?: string;
+  /** The Input label, used to name the time part ("Start, time"). */
+  fieldLabel?: string;
+  /** How much of the time part is typed and kept (a value written more finely keeps it). */
+  precision?: TimePrecision;
+};
+
+const TIME_PART = { it: "ora", en: "time" } as const;
+
+// The day and the time, every digit kept: `2026-03-07T10:30:45.123` keeps its `:45.123`.
+const splitDateTime = (v: string) => {
+  const match =
+    /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?))?/.exec(v);
+  return { date: match?.[1] ?? "", time: match?.[2] ?? "" };
+};
+
+// A datetime as the day then the time in milliseconds, so limits compare by value and not by
+// how they are written: 10:30:00 equals 10:30.
+const dateTimeKey = (v: string) => {
+  const { date, time } = splitDateTime(v);
+  return `${date}T${String(parseTime(time) ?? 0).padStart(8, "0")}`;
+};
+
+// The time part of a datetime limit, on its first or last allowed day only.
+const timeLimit = (limit: string | undefined, day: string) =>
+  limit && day && day === limit.slice(0, 10) ? limit.slice(11) : undefined;
+
+// datetime-local as a DatePicker and a TimePicker side by side; the value is YYYY-MM-DDTHH:mm
+// (with seconds or milliseconds by precision), emitted once both parts are there (like the native
+// field) and "" as soon as either is cleared. Blur reports the field name and that whole value.
+const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
+  (
+    {
+      value,
+      onValueChange,
+      min,
+      max,
+      disabled,
+      readOnly,
+      iconClassName,
+      fieldClassName,
+      fieldLabel,
+      precision,
+      name,
+      form,
+      onBlur,
+      ...props
+    },
+    ref,
+  ) => {
+    const [parts, setParts] = React.useState(() => splitDateTime(value));
+    // The value this field emitted and is waiting to see back: when it returns as the prop it is
+    // our own echo, and the parts typed so far stay (clearing the time keeps the day). Anything
+    // else came from outside, a reset to "" included, and replaces both parts.
+    const [emitted, setEmitted] = React.useState<string | null>(null);
+    // A part with wrong text empties the form value, as an incomplete native field does.
+    const [dayProblem, setDayProblem] = React.useState<TypedProblem>(null);
+    const [timeProblem, setTimeProblem] = React.useState<TypedProblem>(null);
+    const [prevValue, setPrevValue] = React.useState(value);
+    if (value !== prevValue) {
+      setPrevValue(value);
+      // An echo is recognised once, then forgotten: a later update to the same value is external.
+      if (value === emitted) setEmitted(null);
+      else setParts(splitDateTime(value));
+    }
+
+    const minDay = min?.slice(0, 10);
+    const maxDay = max?.slice(0, 10);
+    const isOutOfRange = (dateTime: string) => {
+      const key = dateTimeKey(dateTime);
+      return Boolean(
+        (min && key < dateTimeKey(min)) || (max && key > dateTimeKey(max)),
+      );
+    };
+
+    // The value the field holds right now: a part applied while leaving it (10:30 taken as
+    // 10:30:00 on blur) changes it before the caller has re-rendered with the new prop.
+    const current = React.useRef(value);
+    React.useEffect(() => {
+      current.current = value;
+    }, [value]);
+
+    const change = (next: { date: string; time: string }) => {
+      setParts(next);
+      const combined =
+        next.date && next.time ? `${next.date}T${next.time}` : "";
+      // A full date and time outside min/max is never emitted, like each part on its own.
+      if (combined && isOutOfRange(combined)) return;
+      if (combined !== current.current) {
+        current.current = combined;
+        setEmitted(combined);
+        onValueChange(combined);
+      }
+    };
+
+    const handleBlur = (event: React.FocusEvent<HTMLInputElement>) =>
+      onBlur?.(
+        withTarget(
+          event,
+          nativeFieldTarget("datetime-local", current.current, name, props.id),
+        ),
+      );
+
+    const timeWord = TIME_PART[resolveLang(props.lang)];
+    return (
+      <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+        <div style={{ flex: "1.4 1 0", minWidth: 0 }}>
+          <DatePicker
+            {...props}
+            ref={ref}
+            value={parts.date}
+            min={minDay}
+            max={maxDay}
+            form={form}
+            disabled={disabled}
+            readOnly={readOnly}
+            fieldClassName={fieldClassName}
+            iconClassName={iconClassName}
+            onBlur={handleBlur}
+            onProblemChange={setDayProblem}
+            onValueChange={(date) => change({ ...parts, date })}
+          />
+        </div>
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
+          <TimePicker
+            value={parts.time}
+            // The time limits only bind on the first and the last allowed day.
+            min={timeLimit(min, parts.date)}
+            max={timeLimit(max, parts.date)}
+            precision={precision}
+            form={form}
+            disabled={disabled}
+            readOnly={readOnly}
+            lang={props.lang}
+            fieldClassName={fieldClassName}
+            iconClassName={iconClassName}
+            aria-label={fieldLabel ? `${fieldLabel}, ${timeWord}` : timeWord}
+            aria-describedby={props["aria-describedby"]}
+            aria-invalid={props["aria-invalid"]}
+            aria-required={props["aria-required"]}
+            onBlur={handleBlur}
+            onProblemChange={setTimeProblem}
+            onValueChange={(time) => change({ ...parts, time })}
+          />
+        </div>
+        {/* One form value for both parts, YYYY-MM-DDTHH:mm(:ss), like a native datetime-local. */}
+        {name && (
+          <input
+            type="hidden"
+            name={name}
+            form={form}
+            disabled={disabled}
+            value={dayProblem || timeProblem ? "" : value}
+          />
+        )}
+      </div>
+    );
+  },
+);
+DateTimeField.displayName = "DateTimeField";
+
+type PickerType = "date" | "time" | "datetime-local";
+
+const isPickerType = (type: InputProps["type"]): type is PickerType =>
+  type === "date" || type === "time" || type === "datetime-local";
+
+const asLimit = (limit: InputProps["min"]) =>
+  limit === undefined ? undefined : String(limit);
+
+const asValue = (value: InputProps["value"]) => value ?? "";
+
+// A native time step is in seconds: whole minutes show hh:mm, whole seconds hh:mm:ss, a fraction
+// of a second hh:mm:ss.sss (step "any" too).
+const precisionOfStep = (step: InputProps["step"]): TimePrecision => {
+  if (step === undefined || Number(step) % 60 === 0) return "minutes";
+  return Number.isInteger(Number(step)) ? "seconds" : "milliseconds";
+};
+
+type PickerInputProps = DateTimeFieldProps & {
+  type: PickerType;
+  step?: InputProps["step"];
+};
+
+// The library picker behind each date and time type, all fed the same props by Input.
+const PickerInput = React.forwardRef<HTMLInputElement, PickerInputProps>(
+  ({ type, step, fieldLabel, ...props }, ref) => {
+    const precision = precisionOfStep(step);
+    if (type === "time") {
+      // The list step is in minutes.
+      const minutes = step
+        ? Math.max(1, Math.round(Number(step) / 60))
+        : undefined;
+      return (
+        <TimePicker {...props} ref={ref} step={minutes} precision={precision} />
+      );
+    }
+    if (type === "datetime-local") {
+      return (
+        <DateTimeField
+          {...props}
+          ref={ref}
+          fieldLabel={fieldLabel}
+          precision={precision}
+        />
+      );
+    }
+    return <DatePicker {...props} ref={ref} />;
+  },
+);
+PickerInput.displayName = "PickerInput";
+
+// A change event whose target is a real input of the native type holding the value
+// (YYYY-MM-DD, HH:mm or YYYY-MM-DDTHH:mm), so it reads like a native date input's event.
+const nativeChangeEvent = (
+  type: PickerType,
+  value: string,
+  name: string,
+  id: string,
+) => {
+  const target = nativeFieldTarget(type, value, name, id);
+  return {
+    target,
+    currentTarget: target,
+    type: "change",
+    preventDefault: () => undefined,
+    stopPropagation: () => undefined,
+    persist: () => undefined,
+  } as unknown as React.ChangeEvent<HTMLInputElement>;
+};
+
+const FieldLabel = ({
+  label,
+  required,
+  htmlFor,
+  markClassName,
+}: {
+  label?: string;
+  required?: boolean;
+  htmlFor: string;
+  markClassName: string;
+}) =>
+  label ? (
+    <Label htmlFor={htmlFor}>
+      {required && <span className={markClassName}>*</span>}
+      {label}:
+    </Label>
+  ) : null;
+
+const SearchAdornment = ({
+  empty,
+  onClear,
+  className,
+}: {
+  empty: boolean;
+  onClear: () => void;
+  className: string;
+}) =>
+  empty ? (
+    <MagnifyingGlassIcon
+      className={className}
+      data-testid="magnifying-glass-icon"
+    />
+  ) : (
+    <button
+      type="button"
+      className={className}
+      onClick={onClear}
+      data-testid="cross-icon"
+    >
+      <Cross1Icon />
+    </button>
+  );
+
+const PasswordToggle = ({
+  visible,
+  onToggle,
+  className,
+}: {
+  visible: boolean;
+  onToggle: (visible: boolean) => void;
+  className: string;
+}) => (
+  <button
+    type="button"
+    className={className}
+    onClick={() => onToggle(!visible)}
+    data-testid={visible ? "hide-password-icon" : "show-password-icon"}
+  >
+    {visible ? <EyeNoneIcon /> : <EyeOpenIcon />}
+  </button>
+);
+
 /**
  *
  * Provides an input bar of the chosen type.
@@ -94,6 +402,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       type,
       value,
       id,
+      className,
       "aria-describedby": ariaDescribedBy,
       ...props
     },
@@ -103,109 +412,112 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const uniqueId = id ?? generatedId;
     const errorId = `${uniqueId}-error`;
     const showError = Boolean(error && errorMessage);
-    const describedBy =
-      [ariaDescribedBy, showError ? errorId : undefined]
-        .filter(Boolean)
-        .join(" ") || undefined;
     const classes = input({ borderRadius, borderColor });
+    // A caller's class adds to the field style instead of replacing it (it used to drop the
+    // whole recipe, native number spinners included).
+    const fieldClassName = [classes.inputField, className]
+      .filter(Boolean)
+      .join(" ");
+    const fieldAria = {
+      "aria-invalid": error || undefined,
+      "aria-required": required || undefined,
+      "aria-describedby":
+        [ariaDescribedBy, showError && errorId].filter(Boolean).join(" ") ||
+        undefined,
+    };
     const internalRef = React.useRef<HTMLInputElement>(null);
     const inputRef = (ref as React.RefObject<HTMLInputElement>) ?? internalRef;
 
-    const [val, setVal] = useState(value ?? "");
+    const [val, setVal] = useState(asValue(value));
     const [prevValue, setPrevValue] = useState(value);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     // Update state during render when prop changes
     if (value !== prevValue) {
       setPrevValue(value);
-      setVal(value ?? "");
+      setVal(asValue(value));
     }
 
     const onValChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setVal(e.target.value);
+      onChange?.(e);
+    };
 
-      if (onChange) {
-        onChange(e);
-      }
+    // The date and time fields are the library pickers, not the browser's: callers still get a
+    // change event shaped like a native date input's.
+    const emitDate = (picked: string) => {
+      setVal(picked);
+      onChange?.(
+        nativeChangeEvent(
+          type as PickerType,
+          picked,
+          String(props.name ?? ""),
+          uniqueId,
+        ),
+      );
     };
 
     const deleteValue = () => {
       setVal("");
-
-      if (onChange) {
-        onChange({
-          target: { value: "" },
-        } as React.ChangeEvent<HTMLInputElement>);
-      }
-
+      onChange?.({
+        target: { value: "" },
+      } as React.ChangeEvent<HTMLInputElement>);
       inputRef.current?.focus();
     };
 
     return (
       <>
         <div className={classes.inputWrapper}>
-          {label && (
-            <Label htmlFor={uniqueId}>
-              {required && <span className={classes.requiredMark}>*</span>}
-              {label}:
-            </Label>
-          )}
+          <FieldLabel
+            label={label}
+            required={required}
+            htmlFor={uniqueId}
+            markClassName={classes.requiredMark}
+          />
 
           <div className={classes.inputContainer}>
-            <input
-              id={uniqueId}
-              ref={inputRef}
-              data-testid="input"
-              className={classes.inputField}
-              value={val}
-              onChange={onValChange}
-              type={isPasswordVisible ? "text" : type}
-              aria-invalid={error || undefined}
-              aria-required={required || undefined}
-              aria-describedby={describedBy}
-              {...props}
-            />
-            {inputSearch && type === "search" && (
-              <>
-                {val === "" ? (
-                  <MagnifyingGlassIcon
-                    className={classes.iconStyle}
-                    data-testid="magnifying-glass-icon"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className={classes.iconStyle}
-                    onClick={deleteValue}
-                    data-testid="cross-icon"
-                  >
-                    <Cross1Icon />
-                  </button>
-                )}
-              </>
+            {isPickerType(type) ? (
+              <PickerInput
+                {...props}
+                {...fieldAria}
+                type={type}
+                ref={inputRef}
+                id={uniqueId}
+                data-testid="input"
+                value={String(val)}
+                min={asLimit(props.min)}
+                max={asLimit(props.max)}
+                onValueChange={emitDate}
+                fieldClassName={fieldClassName}
+                iconClassName={classes.iconStyle}
+                fieldLabel={label}
+              />
+            ) : (
+              <input
+                id={uniqueId}
+                ref={inputRef}
+                data-testid="input"
+                className={fieldClassName}
+                value={val}
+                onChange={onValChange}
+                type={isPasswordVisible ? "text" : type}
+                {...fieldAria}
+                {...props}
+              />
             )}
-            {type === "password" && val.toString().length > 0 && (
-              <>
-                {isPasswordVisible ? (
-                  <button
-                    type="button"
-                    className={classes.iconStyle}
-                    onClick={() => setIsPasswordVisible(false)}
-                    data-testid="hide-password-icon"
-                  >
-                    <EyeNoneIcon />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={classes.iconStyle}
-                    onClick={() => setIsPasswordVisible(true)}
-                    data-testid="show-password-icon"
-                  >
-                    <EyeOpenIcon />
-                  </button>
-                )}
-              </>
+            {inputSearch && type === "search" && (
+              <SearchAdornment
+                empty={val === ""}
+                onClear={deleteValue}
+                className={classes.iconStyle}
+              />
+            )}
+            {type === "password" && String(val).length > 0 && (
+              <PasswordToggle
+                visible={isPasswordVisible}
+                onToggle={setIsPasswordVisible}
+                className={classes.iconStyle}
+              />
             )}
           </div>
         </div>

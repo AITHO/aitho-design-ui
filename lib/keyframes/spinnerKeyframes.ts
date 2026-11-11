@@ -1,20 +1,17 @@
 import { CssKeyframes } from "@pandacss/dev";
 
-const linearFlashingDotsColor1 = "var(--color-primary)";
-const linearFlashingDotsColor2 = "var(--accent)";
 const rotatingDotsColor1 = "var(--color-primary)";
-const rotatingDotsColor2 = "var(--accent)";
+const rotatingDotsColor2 = "var(--color-primary-opacity-50)";
 
 export const spinnerKeyframes: CssKeyframes = {
-  spinnerSpinningSlashes: {
-    "0%, 100%": { boxShadow: ".2em 0px 0 0px" },
-    "12%": { boxShadow: ".2em .2em 0 0" },
-    "25%": { boxShadow: "0 .2em 0 0px" },
-    "37%": { boxShadow: "-.2em .2em 0 0" },
-    "50%": { boxShadow: "-.2em 0 0 0" },
-    "62%": { boxShadow: "-.2em -.2em 0 0" },
-    "75%": { boxShadow: "0px -.2em 0 0" },
-    "87%": { boxShadow: ".2em -.2em 0 0" },
+  spinnerBounce: {
+    "0%, 80%, 100%": { transform: "scale(0.6)", opacity: 0.5 },
+    "40%": { transform: "scale(1)", opacity: 1 },
+  },
+  // Progress indicator grow-in: `scale` composes with its inline translateX.
+  progressGrowX: {
+    from: { scale: "0 1" },
+    to: { scale: "1 1" },
   },
   spinnerCircularFlashingDots: {
     "0%": {
@@ -52,20 +49,6 @@ export const spinnerKeyframes: CssKeyframes = {
     "87.5%": {
       boxShadow:
         "0em -1.5em 0 0, 1em -1em 0 -0.5em, 1.5em 0em 0 -0.5em, 1em 1em 0 -0.5em, 0em 1.5em 0 -0.5em, -1em 1em 0 -0.5em, -1.5em 0em 0 0, -1em -1em 0 0.1em",
-    },
-  },
-  spinnerLinearFlashingDots: {
-    "0%": {
-      backgroundColor: linearFlashingDotsColor2,
-      boxShadow: `32px 0 ${linearFlashingDotsColor2}, -32px 0 ${linearFlashingDotsColor1}`,
-    },
-    "50%": {
-      backgroundColor: linearFlashingDotsColor1,
-      boxShadow: `32px 0 ${linearFlashingDotsColor2}, -32px 0 ${linearFlashingDotsColor2}`,
-    },
-    "100%": {
-      backgroundColor: linearFlashingDotsColor2,
-      boxShadow: `32px 0 ${linearFlashingDotsColor1}, -32px 0 ${linearFlashingDotsColor2}`,
     },
   },
   spinnerRotatingSquares: {

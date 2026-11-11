@@ -1,5 +1,7 @@
 import { defineSlotRecipe } from "@pandacss/dev";
 
+const checkedState = "&:is([data-state=checked], [data-state=indeterminate])";
+
 export const checkboxRecipe = defineSlotRecipe({
   className: "checkbox",
   slots: ["root", "indicator", "icon", "squareIcon"],
@@ -10,26 +12,33 @@ export const checkboxRecipe = defineSlotRecipe({
       justifyContent: "center",
       flexShrink: "0",
       overflow: "hidden",
-      borderRadius: "md",
+      borderRadius: "radius-sm",
       position: "relative",
       cursor: "pointer",
+      userSelect: "none",
+      transition:
+        "background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
       _disabled: {
         cursor: "not-allowed",
-        opacity: "0.5",
-        backgroundColor: "color-primary-disabled",
-        borderColor: "color-primary-disabled",
-      },
-      _checked: {
-        animation: "check 300ms ease-in-out",
-      },
-      _unchecked: {
-        animation: "uncheck 300ms ease-in-out",
+        opacity: "0.45",
       },
       _focusVisible: {
-        outlineWidth: "2px",
-        outlineStyle: "solid",
-        outlineColor: "color-primary",
-        outlineOffset: "2px",
+        outline: "none",
+        boxShadow: "focus-ring",
+      },
+    },
+    indicator: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%",
+      // Radix keeps the indicator mounted until the exit animation ends
+      _checked: {
+        animation: "check 0.15s cubic-bezier(0.3, 1.6, 0.6, 1)",
+      },
+      _unchecked: {
+        animation: "uncheck 0.15s ease-in",
       },
     },
     icon: {
@@ -37,60 +46,45 @@ export const checkboxRecipe = defineSlotRecipe({
       alignItems: "center",
       justifyContent: "center",
       flexShrink: "0",
-      overflow: "hidden",
       position: "relative",
-      width: "100%",
-      height: "100%",
-      _disabled: {
-        color: "grey-light",
-      },
+      // thickens the filled Radix check glyph to the prototype's bolder stroke
+      stroke: "currentColor",
+      strokeWidth: "1.2",
+      strokeLinejoin: "round",
     },
     squareIcon: {
       width: "60%",
       height: "60%",
-      backgroundColor: "checkbox-square-color",
-      borderRadius: "sm",
-      _disabled: {
-        backgroundColor: "grey-light",
-      },
-    },
-    indicator: {
-      position: "relative",
-      _disabled: {
-        backgroundColor: "color-primary-disabled",
-        borderColor: "color-primary-disabled",
-      },
+      borderRadius: "xs",
     },
   },
   variants: {
     size: {
       sm: {
-        root: { h: "5", w: "5", fontSize: "sm" },
-        icon: { h: "5", w: "5", fontSize: "sm" },
+        root: { h: "18px", w: "18px" },
+        icon: { h: "12px", w: "12px" },
       },
       md: {
-        root: { h: "9", w: "9", fontSize: "base" },
-        icon: { h: "9", w: "9", fontSize: "base" },
+        root: { h: "22px", w: "22px" },
+        icon: { h: "15px", w: "15px" },
       },
       lg: {
-        root: { h: "11", w: "11", fontSize: "lg" },
-        icon: { h: "11", w: "11", fontSize: "lg" },
+        root: { h: "26px", w: "26px", borderRadius: "radius" },
+        icon: { h: "18px", w: "18px" },
       },
       xl: {
-        root: { h: "12", w: "12", fontSize: "xl" },
-        icon: { h: "12", w: "12", fontSize: "xl" },
+        root: { h: "30px", w: "30px", borderRadius: "radius" },
+        icon: { h: "21px", w: "21px" },
       },
     },
     variant: {
       primary: {
         root: {
           bg: "background-primary",
-          borderColor: "color-primary",
-          borderWidth: "1px",
-        },
-        indicator: {
-          bg: "color-primary",
-          borderColor: "primary",
+          borderColor: "grey-light",
+          borderWidth: "1.5px",
+          "&:hover:not(:disabled)": { borderColor: "color-primary" },
+          [checkedState]: { bg: "color-primary", borderColor: "color-primary" },
         },
         icon: {
           color: "text-on-primary",
@@ -102,12 +96,13 @@ export const checkboxRecipe = defineSlotRecipe({
       secondary: {
         root: {
           bg: "background-primary",
-          borderColor: "color-attention",
-          borderWidth: "1px",
-        },
-        indicator: {
-          bg: "color-attention",
-          borderColor: "color-attention",
+          borderColor: "grey-light",
+          borderWidth: "1.5px",
+          "&:hover:not(:disabled)": { borderColor: "color-attention" },
+          [checkedState]: {
+            bg: "color-attention",
+            borderColor: "color-attention",
+          },
         },
         icon: {
           color: "text-on-primary",
@@ -120,14 +115,13 @@ export const checkboxRecipe = defineSlotRecipe({
         root: {
           bg: "white",
           borderColor: "checkbox-square-color",
-          borderWidth: "1px",
-        },
-        indicator: {
-          bg: "white",
-          borderColor: "primary",
+          borderWidth: "1.5px",
         },
         icon: {
           color: "checkbox-square-color",
+        },
+        squareIcon: {
+          bg: "checkbox-square-color",
         },
       },
     },
@@ -144,8 +138,8 @@ export const checkboxRecipe = defineSlotRecipe({
       },
       none: {
         root: {
-          border: "none",
-          backgroundColor: "color-primary-disabled",
+          borderStyle: "none",
+          backgroundColor: "color-primary-soft",
         },
       },
     },
@@ -154,10 +148,7 @@ export const checkboxRecipe = defineSlotRecipe({
       primary: {
         root: {
           borderColor: "color-error",
-        },
-        indicator: {
-          bg: "color-error",
-          borderColor: "color-error",
+          [checkedState]: { bg: "color-error", borderColor: "color-error" },
         },
         icon: {
           color: "text-on-primary",

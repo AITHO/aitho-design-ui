@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@pandacss/dev";
+import { FIELD_HOVER_BORDER, INVALID_STATE } from "../Input/Input.recipe";
 
 const BASE_STYLES = {
   root: {
@@ -8,74 +9,69 @@ const BASE_STYLES = {
     position: "relative",
     height: "auto",
     alignItems: "stretch",
-    transition: "opacity 0.2s ease",
+    transition: "opacity 0.15s ease",
   },
   label: {
-    color: "text-secondary",
-    fontSize: "sm",
-    fontWeight: "medium",
+    color: "text-primary",
+    fontSize: "0.8125rem",
+    fontWeight: "semibold",
     lineHeight: "tight",
-    marginBottom: "1",
-    transition: "color 0.2s ease",
+    marginBottom: "0.375rem",
     _disabled: {
       color: "text-secondary",
     },
   },
   textarea: {
     width: "full",
-    minHeight: "4.375rem",
+    minHeight: "6rem",
     maxHeight: "13.125rem",
-    resize: "none",
+    resize: "vertical",
     borderRadius: "radius",
     backgroundColor: "background-primary",
     color: "text-primary",
     border: "1px solid",
-    fontSize: "1rem",
-    padding: "1rem",
-    paddingRight: "3rem",
+    fontSize: "0.875rem",
+    lineHeight: "1.5",
+    padding: "0.625rem 0.75rem",
     boxSizing: "border-box",
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+    transition:
+      "border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease",
+    // Room for the send button placed right after the textarea.
+    "&:has(+ button)": {
+      paddingRight: "3rem",
+    },
     _placeholder: {
       color: "text-secondary",
-      opacity: 0.6,
-    },
-    _hover: {
-      backgroundColor: "background-secondary",
-      borderColor: "color-primary",
-      transform: "translateY(-1px)",
+      opacity: 0.75,
     },
     _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "color-primary",
-      outlineOffset: "2px",
-      borderRadius: "radius-sm",
+      outline: "none",
+      boxShadow: "focus-ring",
     },
     _disabled: {
       cursor: "not-allowed",
-      opacity: 0.6,
-      backgroundColor: "background-tertiary",
-      _hover: {
-        transform: "none",
-        boxShadow: "none",
-      },
+      opacity: 0.55,
+      backgroundColor: "background-secondary",
     },
   },
   footer: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "0.125rem 0.25rem",
-    transition: "opacity 0.2s ease",
+    gap: "0.75rem",
+    marginTop: "0.375rem",
+    _empty: {
+      display: "none",
+    },
   },
   counter: {
-    fontSize: "sm",
+    fontSize: "0.75rem",
     color: "text-secondary",
     marginLeft: "auto",
-    transition: "color 0.2s ease",
+    transition: "color 0.15s ease",
     "&[data-state='char-length-exceeded']": {
       color: "color-error",
-      fontWeight: "medium",
+      fontWeight: "semibold",
     },
   },
   indicator: {
@@ -83,9 +79,8 @@ const BASE_STYLES = {
     alignItems: "center",
     gap: "1",
     color: "text-secondary",
-    fontSize: "sm",
+    fontSize: "0.75rem",
     flex: "1",
-    transition: "color 0.2s ease",
   },
   button: {
     position: "absolute",
@@ -101,22 +96,25 @@ const BASE_STYLES = {
     border: "0",
     cursor: "pointer",
     color: "color-primary",
-    borderRadius: "border-radius",
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+    borderRadius: "radius-sm",
+    userSelect: "none",
+    transition:
+      "background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
     _hover: {
       color: "color-primary-hover",
-      backgroundColor: "background-overlay",
-      transform: "translateY(-50%) scale(1.05)",
+      backgroundColor: "color-primary-soft",
     },
     _active: {
-      color: "color-primary-active",
-      transform: "translateY(-50%) scale(0.95)",
+      transform: "translateY(-50%) scale(0.92)",
+    },
+    _focusVisible: {
+      outline: "none",
+      boxShadow: "focus-ring",
     },
     _disabled: {
       opacity: 0.5,
       cursor: "not-allowed",
       _hover: {
-        transform: "translateY(-50%)",
         backgroundColor: "transparent",
       },
     },
@@ -129,7 +127,7 @@ const BASE_STYLES = {
   },
   sendButton: {
     position: "absolute",
-    right: "0.75rem",
+    right: "0.5rem",
     top: "50%",
     transform: "translateY(-50%)",
     display: "inline-flex",
@@ -140,32 +138,33 @@ const BASE_STYLES = {
     padding: "0",
     backgroundColor: "transparent",
     border: "none",
-    borderRadius: "calc(var(--radius) * 0.8)",
+    borderRadius: "radius-sm",
     color: "color-primary",
     cursor: "pointer",
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-    outline: "none",
+    userSelect: "none",
+    transition:
+      "background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
     _hover: {
-      color: "color-primary-hover",
-      backgroundColor: "background-overlay",
-      transform: "translateY(-50%) scale(1.05)",
+      color: "color-primary",
+      backgroundColor: "color-primary-soft",
     },
     _active: {
-      color: "color-primary-active",
-      transform: "translateY(-50%) scale(0.95)",
+      transform: "translateY(-50%) scale(0.92)",
+    },
+    _focusVisible: {
+      outline: "none",
+      boxShadow: "focus-ring",
     },
     _disabled: {
       opacity: 0.5,
       cursor: "not-allowed",
       color: "text-secondary",
       _hover: {
-        transform: "translateY(-50%)",
         backgroundColor: "transparent",
       },
-    },
-    _focus: {
-      boxShadow: "0 0 0 2px var(--color-primary)",
-      backgroundColor: "background-overlay",
+      _active: {
+        transform: "translateY(-50%)",
+      },
     },
   },
 } as const;
@@ -173,18 +172,17 @@ const BASE_STYLES = {
 const SIZE_VARIANTS = {
   sm: {
     textarea: {
-      padding: "0.75rem",
-      paddingRight: "2.75rem",
-      fontSize: "sm",
-      minHeight: "3.75rem",
-      borderRadius: "calc(border-radius * 0.8)",
+      padding: "0.5rem 0.625rem",
+      fontSize: "0.8125rem",
+      minHeight: "4.5rem",
+      "&:has(+ button)": { paddingRight: "2.5rem" },
     },
-    label: { fontSize: "xs" },
+    label: { fontSize: "0.75rem" },
     button: { width: "1.75rem", height: "1.75rem" },
     sendButton: {
       width: "1.75rem",
       height: "1.75rem",
-      right: "8px",
+      right: "0.375rem",
       "& svg": {
         width: "1rem",
         height: "1rem",
@@ -193,18 +191,17 @@ const SIZE_VARIANTS = {
   },
   md: {
     textarea: {
-      padding: "1rem",
-      paddingRight: "3rem",
-      fontSize: "base",
-      minHeight: "5rem",
-      borderRadius: "border-radius",
+      padding: "0.625rem 0.75rem",
+      fontSize: "0.875rem",
+      minHeight: "6rem",
+      "&:has(+ button)": { paddingRight: "3rem" },
     },
-    label: { fontSize: "sm" },
+    label: { fontSize: "0.8125rem" },
     button: { width: "2rem", height: "2rem" },
     sendButton: {
       width: "2rem",
       height: "2rem",
-      right: "0.75rem",
+      right: "0.5rem",
       "& svg": {
         width: "1.125rem",
         height: "1.125rem",
@@ -213,18 +210,18 @@ const SIZE_VARIANTS = {
   },
   lg: {
     textarea: {
-      padding: "1.25rem",
-      paddingRight: "3.25rem",
-      fontSize: "lg",
-      minHeight: "6.25rem",
-      borderRadius: "calc(border-radius * 1.2)",
+      padding: "0.75rem 0.875rem",
+      fontSize: "1rem",
+      minHeight: "7.5rem",
+      borderRadius: "radius-lg",
+      "&:has(+ button)": { paddingRight: "3.5rem" },
     },
-    label: { fontSize: "base" },
+    label: { fontSize: "0.9375rem" },
     button: { width: "2.25rem", height: "2.25rem" },
     sendButton: {
       width: "2.25rem",
       height: "2.25rem",
-      right: "1rem",
+      right: "0.625rem",
       "& svg": {
         width: "1.25rem",
         height: "1.25rem",
@@ -233,149 +230,68 @@ const SIZE_VARIANTS = {
   },
 } as const;
 
+// Border colors (resting, hover, focus) belong to the borderColor variant;
+// types only set the surface so the two never fight over the same property.
 const TYPE_VARIANT = {
   outline: {
     textarea: {
       backgroundColor: "background-primary",
-      borderColor: "color-primary",
-      _hover: {
-        backgroundColor: "background-secondary",
-        borderColor: "color-primary",
-      },
-    },
-    label: { color: "text-primary" },
-    sendButton: {
-      color: "text-secondary",
-      _hover: {
-        color: "color-primary",
-      },
     },
   },
   filled: {
     textarea: {
       backgroundColor: "background-secondary",
       borderColor: "transparent",
-      _hover: {
+      "&:hover:not(:disabled)": {
         backgroundColor: "background-tertiary",
-        borderColor: "transparent",
       },
-    },
-    label: { color: "text-primary" },
-    sendButton: {
-      color: "text-secondary",
-      _hover: {
-        color: "color-primary",
+      _focusVisible: {
+        backgroundColor: "background-primary",
       },
     },
   },
   inputForm: {
     textarea: {
       backgroundColor: "background-primary",
-      borderColor: "border-color",
-      _hover: {
-        backgroundColor: "background-secondary",
-        borderColor: "border-color !important",
-        transform: "translateY(0px) !important",
-      },
-      _active: {
-        backgroundColor: "background-tertiary",
-      },
-    },
-    label: { color: "text-primary" },
-    sendButton: {
-      color: "text-secondary",
-      _hover: {
-        color: "color-primary",
-      },
     },
   },
   ghost: {
     textarea: {
       backgroundColor: "transparent",
       borderColor: "transparent",
-      _hover: {
+      "&:hover:not(:disabled)": {
         backgroundColor: "background-secondary",
-        borderColor: "transparent",
       },
     },
     label: { color: "text-secondary" },
-    sendButton: {
-      color: "text-secondary",
-      _hover: {
-        color: "color-primary",
-      },
-    },
   },
   glass: {
     textarea: {
-      backgroundColor: "rgba(var(--background-primary), 0.08)",
+      backgroundColor: "background-primary/10",
       backdropFilter: "blur(8px)",
-      border: "none",
-      boxShadow:
-        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(var(--border-color), 0.08)",
-      color: "text-primary",
-      _hover: {
-        backgroundColor: "rgba(var(--background-secondary), 0.12)",
-        border: "1px solid",
-        borderColor: "color-primary",
-        boxShadow:
-          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(var(--border-color), 0.12)",
-        transform: "translateY(-2px)",
+      boxShadow: "raised",
+      "&:hover:not(:disabled)": {
+        backgroundColor: "background-primary/20",
+      },
+      _focusVisible: {
+        boxShadow: "focus-ring",
       },
       _disabled: {
-        backgroundColor: "rgba(var(--background-tertiary), 0.03)",
-        color: "text-secondary",
+        backgroundColor: "background-tertiary/10",
         boxShadow: "none",
-        backdropFilter: "blur(4px)",
-        opacity: 0.6,
-        _hover: {
-          transform: "none",
-          boxShadow: "none",
-        },
-      },
-      _placeholder: {
-        color: "text-secondary",
-        opacity: 0.8,
       },
     },
     label: {
-      color: "text-primary",
-      textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+      textShadow: "0 1px 2px rgb(0 0 0 / 0.1)",
     },
     counter: {
-      color: "text-secondary",
-      textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-      "&[data-state='char-length-exceeded']": {
-        color: "color-error",
-        fontWeight: "medium",
-      },
+      textShadow: "0 1px 2px rgb(0 0 0 / 0.1)",
     },
     indicator: {
-      color: "text-secondary",
-      textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+      textShadow: "0 1px 2px rgb(0 0 0 / 0.1)",
     },
     sendButton: {
-      color: "text-primary",
       backdropFilter: "blur(8px)",
-      backgroundColor: "rgba(var(--background-primary), 0.08)",
-      _hover: {
-        color: "color-primary",
-        backgroundColor: "rgba(var(--background-secondary), 0.15)",
-        transform: "translateY(-50%) scale(1.05)",
-      },
-      _active: {
-        backgroundColor: "rgba(var(--background-secondary), 0.2)",
-        transform: "translateY(-50%) scale(0.95)",
-      },
-      _disabled: {
-        backgroundColor: "rgba(var(--background-tertiary), 0.03)",
-        color: "text-secondary",
-        opacity: 0.6,
-        _hover: {
-          transform: "translateY(-50%)",
-          backgroundColor: "rgba(var(--background-tertiary), 0.03)",
-        },
-      },
     },
   },
 } as const;
@@ -398,9 +314,27 @@ export const textAreaRecipe = defineSlotRecipe({
     size: SIZE_VARIANTS,
     type: TYPE_VARIANT,
     borderColor: {
-      base: { textarea: { borderColor: "border-color" } },
-      primary: { textarea: { borderColor: "color-primary" } },
-      error: { textarea: { borderColor: "color-error" } },
+      base: {
+        textarea: {
+          borderColor: "border-color",
+          "&:hover:not(:disabled, :focus-visible, [aria-invalid=true])": {
+            borderColor: FIELD_HOVER_BORDER,
+          },
+          "&:focus-visible:not([aria-invalid=true])": {
+            borderColor: "color-primary",
+          },
+          ...INVALID_STATE,
+        },
+      },
+      primary: {
+        textarea: { borderColor: "color-primary", ...INVALID_STATE },
+      },
+      error: {
+        textarea: {
+          borderColor: "color-error",
+          _focusVisible: { boxShadow: "focus-ring-error" },
+        },
+      },
     },
   },
   defaultVariants: {

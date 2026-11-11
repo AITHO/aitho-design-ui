@@ -14,9 +14,14 @@ export const badgeRecipe = defineSlotRecipe({
       justifyContent: "center",
       alignItems: "center",
       position: "absolute",
-      borderRadius: "full",
-      fontSize: "xs",
-      padding: "1",
+      fontSize: "11px",
+      fontWeight: "bold",
+      lineHeight: "1",
+      fontVariantNumeric: "tabular-nums",
+      whiteSpace: "nowrap",
+      userSelect: "none",
+      // Separates the badge from the element it sits on.
+      boxShadow: "0 0 0 2px {colors.background-primary}",
       zIndex: "1",
     },
   },
@@ -93,15 +98,18 @@ export const badgeRecipe = defineSlotRecipe({
     type: {
       standard: {
         badge: {
-          minWidth: "5",
-          height: "5",
+          minWidth: "18px",
+          height: "18px",
+          padding: "0 5px",
+          borderRadius: "9px",
         },
       },
       dot: {
         badge: {
-          width: "2",
-          height: "2",
+          width: "10px",
+          height: "10px",
           padding: "0",
+          borderRadius: "50%",
         },
       },
     },

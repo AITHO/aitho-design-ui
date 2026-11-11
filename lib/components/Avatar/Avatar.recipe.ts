@@ -11,9 +11,9 @@ const COLORS = [
   "white",
   "black",
   "transparent",
-  // "brand" is not a fixed hue like the others (Panda's base color scale) — it tracks the
-  // theme's own color-primary/text-on-primary, for callers that want the avatar to read as
-  // part of the active brand instead of picking one of the arbitrary fixed hues.
+  // "brand" is not a fixed hue like the others (Panda's base color scale): it tracks the
+  // theme's own color-primary (soft tint behind, full color for the initials), for callers that
+  // want the avatar to read as part of the active brand instead of one of the fixed hues.
   "brand",
 ] as const;
 const TEXT_COLORS = [...COLORS, "black"] as const;
@@ -23,10 +23,10 @@ export type ColorVariant = (typeof COLORS)[number];
 export type TextColorVariant = (typeof TEXT_COLORS)[number];
 
 const SIZE_MAPS = {
-  sm: { root: { h: "8", w: "8" }, text: { fontSize: "xs" } },
-  md: { root: { h: "10", w: "10" }, text: { fontSize: "sm" } },
-  lg: { root: { h: "12", w: "12" }, text: { fontSize: "base" } },
-  xl: { root: { h: "16", w: "16" }, text: { fontSize: "lg" } },
+  sm: { root: { h: "28px", w: "28px" }, text: { fontSize: "11px" } },
+  md: { root: { h: "36px", w: "36px" }, text: { fontSize: "13px" } },
+  lg: { root: { h: "48px", w: "48px" }, text: { fontSize: "16px" } },
+  xl: { root: { h: "64px", w: "64px" }, text: { fontSize: "20px" } },
 } as const;
 
 const BG_COLOR_MAPS = {
@@ -39,7 +39,7 @@ const BG_COLOR_MAPS = {
   white: { bg: "white" },
   transparent: { bg: "transparent" },
   black: { bg: "black" },
-  brand: { bg: "color-primary" },
+  brand: { bg: "color-primary-soft" },
 } as const;
 
 const TEXT_COLOR_MAPS = {
@@ -52,7 +52,7 @@ const TEXT_COLOR_MAPS = {
   white: { color: "white" },
   black: { color: "black" },
   transparent: { color: "transparent" },
-  brand: { color: "text-on-primary" },
+  brand: { color: "color-primary" },
 } as const;
 
 export const avatarRecipe = defineSlotRecipe({
@@ -64,7 +64,8 @@ export const avatarRecipe = defineSlotRecipe({
       display: "flex",
       flexShrink: 0,
       overflow: "hidden",
-      borderRadius: "full",
+      borderRadius: "50%",
+      userSelect: "none",
     },
     image: {
       aspectRatio: "square",
@@ -77,8 +78,9 @@ export const avatarRecipe = defineSlotRecipe({
       width: "full",
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: "full",
-      fontWeight: "semibold",
+      borderRadius: "50%",
+      fontWeight: "bold",
+      lineHeight: "1",
     },
   },
   variants: {

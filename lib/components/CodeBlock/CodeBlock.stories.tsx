@@ -32,7 +32,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "A code block with syntax highlighting. Syntax highlighting is provided via the required `highlighter` prop — pass shiki's `codeToHtml` (or any compatible async function) to enable highlighting.",
+          "A code block with syntax highlighting. Syntax highlighting is provided via the required `highlighter` prop: pass shiki's `codeToHtml` (or any compatible async function) to enable highlighting.",
       },
     },
   },

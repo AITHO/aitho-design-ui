@@ -29,8 +29,17 @@ export default defineConfig({
           custom: { value: "'quatro', sans-serif" },
           mono: { value: "'Space Mono', monospace" },
         },
+        shadows: {
+          "focus-ring": { value: "var(--focus-ring)" },
+          "focus-ring-error": { value: "var(--focus-ring-error)" },
+          raised: { value: "var(--shadow-raised)" },
+          overlay: { value: "var(--shadow-overlay)" },
+        },
         colors: {
           "color-primary": { value: "var(--color-primary)" },
+          "color-primary-soft": { value: "var(--color-primary-soft)" },
+          "color-primary-softer": { value: "var(--color-primary-softer)" },
+          "color-error-soft": { value: "var(--color-error-soft)" },
           "color-primary-hover": { value: "var(--color-primary-hover)" },
           "color-primary-active": { value: "var(--color-primary-active)" },
           "color-primary-disabled": { value: "var(--color-primary-disabled)" },
