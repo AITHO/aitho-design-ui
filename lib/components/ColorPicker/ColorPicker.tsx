@@ -6,9 +6,12 @@ import { Input } from "../Input/Input";
 import {
   clampHsv,
   hexToHsv,
+  hexToRgb,
   hsvToHex,
   normalizeHex,
+  rgbToHex,
   type Hsv,
+  type Rgb,
 } from "./colorUtils";
 
 /** Browser EyeDropper API (Chromium only), not yet in the TypeScript DOM lib. */
@@ -94,6 +97,25 @@ export interface ColorPickerProps {
   hexLabel?: string;
 
   /** *(optional)*
+   * The format the panel's field opens in: one hex field, or red, green and blue fields (0-255).
+   * The user can switch between them inside the panel.
+   * @default "hex"
+   */
+  defaultFormat?: "hex" | "rgb";
+
+  /** *(optional)*
+   * Accessible label for the HEX | RGB switch.
+   * @default "Color format"
+   */
+  formatLabel?: string;
+
+  /** *(optional)*
+   * Labels of the red, green and blue fields shown in RGB format.
+   * @default ["R", "G", "B"]
+   */
+  rgbLabels?: [string, string, string];
+
+  /** *(optional)*
    * Accessible label for the eye dropper button, shown only where the browser supports it.
    * @default "Pick a color from the screen"
    */
@@ -109,6 +131,17 @@ export interface ColorPickerProps {
 const KEY_STEP = 1;
 const KEY_STEP_LARGE = 10;
 const FULL_HEX = /^#?[0-9a-f]{6}$/i;
+const FORMATS = ["hex", "rgb"] as const;
+const DEFAULT_RGB_LABELS: [string, string, string] = ["R", "G", "B"];
+
+const isChannel = (draft: string) =>
+  /^\d{1,3}$/.test(draft.trim()) && Number(draft) <= 255;
+
+/** The three RGB fields as a color, or `null` while any of them is not a whole number 0-255. */
+const parseRgb = (drafts: string[]): Rgb | null =>
+  drafts.every(isChannel) ? (drafts.map(Number) as Rgb) : null;
+
+const rgbDraftsOf = (hex: string) => hexToRgb(hex).map(String);
 
 /** Position of a pointer inside an element, as fractions (0-1) of its width and height. */
 const relativePosition = (
@@ -126,8 +159,9 @@ const relativePosition = (
 
 /**
  * A themed color picker: a swatch button that opens a panel with a saturation/brightness area,
- * a hue slider, a hex field, optional preset colors and, where the browser supports it, an eye
- * dropper. Unlike `<input type="color">`, the panel follows the library theme in every browser.
+ * a hue slider, a hex or RGB field (switchable in the panel), optional preset colors and, where
+ * the browser supports it, an eye dropper. Unlike `<input type="color">`, the panel follows the
+ * library theme in every browser.
  *
  * @param value - Current color, as a hex string.
  * @param onChange - Function called with the new color in the `#rrggbb` form.
@@ -141,6 +175,9 @@ const relativePosition = (
  * @param saturationLabel - *(optional)* Accessible label for the saturation and brightness area.
  * @param hueLabel - *(optional)* Accessible label for the hue slider.
  * @param hexLabel - *(optional)* Label of the hex field inside the panel.
+ * @param defaultFormat - *(optional)* The format the field opens in. Options: 'hex', 'rgb'.
+ * @param formatLabel - *(optional)* Accessible label for the HEX | RGB switch.
+ * @param rgbLabels - *(optional)* Labels of the red, green and blue fields.
  * @param eyeDropperLabel - *(optional)* Accessible label for the eye dropper button.
  * @param swatchesLabel - *(optional)* Accessible label for the group of preset colors.
  */
@@ -158,6 +195,9 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   saturationLabel = "Saturation and brightness",
   hueLabel = "Hue",
   hexLabel = "Hex",
+  defaultFormat = "hex",
+  formatLabel = "Color format",
+  rgbLabels = DEFAULT_RGB_LABELS,
   eyeDropperLabel = "Pick a color from the screen",
   swatchesLabel = "Preset colors",
 }) => {
@@ -168,8 +208,18 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   // and black, and the thumbs would jump while dragging through them.
   const [hsv, setHsv] = React.useState<Hsv>(() => hexToHsv(currentHex));
   const [hexDraft, setHexDraft] = React.useState(currentHex);
+  const [rgbDrafts, setRgbDrafts] = React.useState(() =>
+    rgbDraftsOf(currentHex),
+  );
+  const [format, setFormat] = React.useState(defaultFormat);
   const [prevHex, setPrevHex] = React.useState(currentHex);
   const [open, setOpen] = React.useState(false);
+
+  // Both fields always show the current color, whichever format is on screen.
+  const showInFields = (hex: string) => {
+    setHexDraft(hex);
+    setRgbDrafts(rgbDraftsOf(hex));
+  };
 
   const generatedId = React.useId();
   const triggerId = id ?? generatedId;
@@ -185,7 +235,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   // Update state during render when the value changes from outside
   if (currentHex !== prevHex) {
     setPrevHex(currentHex);
-    setHexDraft(currentHex);
+    showInFields(currentHex);
     if (hsvToHex(hsv) !== currentHex) {
       setHsv(hexToHsv(currentHex));
     }
@@ -202,7 +252,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
     const nextHex = hsvToHex(clamped);
     setHsv(clamped);
     setPrevHex(nextHex);
-    setHexDraft(nextHex);
+    showInFields(nextHex);
     if (nextHex !== currentHex) {
       onChange(nextHex);
     }
@@ -382,32 +432,83 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           )}
         </div>
 
-        <div className={classes.hexField}>
-          <Input
-            label={hexLabel}
-            value={hexDraft}
-            maxLength={7}
-            spellCheck={false}
-            autoComplete="off"
-            aria-invalid={normalizeHex(hexDraft) === null}
-            onChange={(event) => {
-              const typed = event.target.value;
-              setHexDraft(typed);
-              // While typing only a complete `#rrggbb` is applied: `#71a` is a valid short hex and
-              // would recolor everything halfway through `#71ad00`.
-              if (FULL_HEX.test(typed.trim())) {
-                applyHex(typed);
-              }
-            }}
-            onBlur={() => {
-              const normalized = normalizeHex(hexDraft);
-              if (normalized) {
-                applyHex(normalized);
-              }
-              setHexDraft(normalized ?? currentHex);
-            }}
-          />
+        <div role="group" aria-label={formatLabel} className={classes.format}>
+          {FORMATS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={classes.formatOption}
+              aria-pressed={format === option}
+              onClick={() => setFormat(option)}
+            >
+              {option.toUpperCase()}
+            </button>
+          ))}
         </div>
+
+        {format === "hex" ? (
+          <div className={classes.hexField}>
+            <Input
+              label={hexLabel}
+              value={hexDraft}
+              maxLength={7}
+              spellCheck={false}
+              autoComplete="off"
+              aria-invalid={normalizeHex(hexDraft) === null}
+              onChange={(event) => {
+                const typed = event.target.value;
+                setHexDraft(typed);
+                // While typing only a complete `#rrggbb` is applied: `#71a` is a valid short hex and
+                // would recolor everything halfway through `#71ad00`.
+                if (FULL_HEX.test(typed.trim())) {
+                  applyHex(typed);
+                }
+              }}
+              onBlur={() => {
+                const normalized = normalizeHex(hexDraft);
+                if (normalized) {
+                  applyHex(normalized);
+                }
+                setHexDraft(normalized ?? currentHex);
+              }}
+            />
+          </div>
+        ) : (
+          <div className={classes.rgbFields}>
+            {rgbLabels.map((label, index) => (
+              <Input
+                key={label}
+                label={label}
+                value={rgbDrafts[index]}
+                inputMode="numeric"
+                maxLength={3}
+                autoComplete="off"
+                aria-invalid={!isChannel(rgbDrafts[index])}
+                onChange={(event) => {
+                  const drafts = rgbDrafts.map((draft, i) =>
+                    i === index ? event.target.value : draft,
+                  );
+                  setRgbDrafts(drafts);
+                  // Every channel 0-255 is a complete color, so it applies as soon as it is typed.
+                  const rgb = parseRgb(drafts);
+                  if (rgb) applyHex(rgbToHex(rgb));
+                }}
+                onBlur={() => {
+                  // On leaving, a number over 255 becomes 255 and an empty or non-numeric field
+                  // gets the current channel back.
+                  const current = hexToRgb(currentHex);
+                  const rgb = rgbDrafts.map((draft, i) =>
+                    /^\d+$/.test(draft.trim())
+                      ? Math.min(255, Number(draft))
+                      : current[i],
+                  ) as Rgb;
+                  applyHex(rgbToHex(rgb));
+                  setRgbDrafts(rgb.map(String));
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         {swatches && swatches.length > 0 && (
           <fieldset aria-label={swatchesLabel} className={classes.swatches}>

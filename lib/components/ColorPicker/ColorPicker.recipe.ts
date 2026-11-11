@@ -32,7 +32,10 @@ export const colorPickerRecipe = defineSlotRecipe({
     "hue",
     "hueThumb",
     "eyeDropper",
+    "format",
+    "formatOption",
     "hexField",
+    "rgbFields",
     "swatches",
     "swatch",
   ],
@@ -142,7 +145,50 @@ export const colorPickerRecipe = defineSlotRecipe({
       _focusVisible: focusRing,
     },
     // The library Input has a 15.625rem min-width, wider than the panel: let it shrink here.
+    // HEX | RGB: a small segmented switch, the pressed option raised on the tinted track.
+    format: {
+      display: "inline-flex",
+      alignSelf: "flex-start",
+      gap: "0.125rem",
+      padding: "0.125rem",
+      borderRadius: "radius-sm",
+      backgroundColor: "background-tertiary",
+    },
+    formatOption: {
+      height: "1.5rem",
+      paddingInline: "0.625rem",
+      borderRadius: "radius-sm",
+      fontSize: "0.75rem",
+      fontWeight: "600",
+      letterSpacing: "0.02em",
+      color: "text-secondary",
+      cursor: "pointer",
+      _hover: { color: "text-primary" },
+      _focusVisible: focusRing,
+      "&[aria-pressed=true]": {
+        backgroundColor: "background-secondary",
+        color: "text-primary",
+        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.16)",
+      },
+    },
     hexField: {
+      "& input": {
+        minWidth: "0",
+        fontFamily: "mono",
+      },
+    },
+    rgbFields: {
+      display: "grid",
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+      gap: "0.5rem",
+      // Three fields side by side: each label goes above its field, which keeps the full width.
+      // `> div` outweighs the Input recipe's own row layout.
+      "& > div": {
+        flexDirection: "column",
+        alignItems: "stretch",
+        gap: "0.25rem",
+        minWidth: "0",
+      },
       "& input": {
         minWidth: "0",
         fontFamily: "mono",

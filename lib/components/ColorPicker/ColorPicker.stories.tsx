@@ -96,8 +96,14 @@ export const Localized: Story = {
     hexLabel: "Esadecimale",
     eyeDropperLabel: "Preleva un colore dallo schermo",
     swatchesLabel: "Colori predefiniti",
+    formatLabel: "Formato colore",
     swatches: ["#71ad00", "#1e90ff", "#e11d48"],
   },
+  render: StatefulPicker,
+};
+
+export const RgbFormat: Story = {
+  args: { defaultFormat: "rgb" },
   render: StatefulPicker,
 };
 

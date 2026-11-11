@@ -28,6 +28,27 @@ export const normalizeHex = (input: string): string | null => {
   return `#${full}`;
 };
 
+/** A color as its red, green and blue channels, each 0-255. */
+export type Rgb = [number, number, number];
+
+/** The red, green and blue channels (0-255) of a hex color; black for anything that is not one. */
+export const hexToRgb = (hex: string): Rgb => {
+  const normalized = normalizeHex(hex) ?? "#000000";
+  return [1, 3, 5].map((start) =>
+    Number.parseInt(normalized.slice(start, start + 2), 16),
+  ) as Rgb;
+};
+
+/** Red, green and blue channels to `#rrggbb`; each channel is rounded and kept within 0-255. */
+export const rgbToHex = (rgb: Rgb): string =>
+  `#${rgb
+    .map((channel) =>
+      Math.round(clamp(channel, 0, 255))
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+
 export const hexToHsv = (hex: string): Hsv => {
   const normalized = normalizeHex(hex) ?? "#000000";
   const r = Number.parseInt(normalized.slice(1, 3), 16) / 255;

@@ -23,6 +23,10 @@ const ControlledPicker = ({
   );
 };
 
+// The library Input renders its label as "R:", with a colon.
+const fieldLabelled = (label: string) =>
+  screen.getByLabelText(new RegExp(`^${label}:?$`));
+
 const openPicker = async () => {
   await userEvent.click(screen.getByRole("button", { name: /choose color/i }));
 };
@@ -207,6 +211,86 @@ describe("ColorPicker", () => {
     await userEvent.type(field, "zz");
     fireEvent.blur(field);
     expect(field).toHaveValue("#aabbcc");
+  });
+
+  it("switches between the hex field and the red, green and blue fields", async () => {
+    render(<ControlledPicker initial="#71ad00" />);
+    await openPicker();
+
+    const hexOption = screen.getByRole("button", { name: "HEX" });
+    const rgbOption = screen.getByRole("button", { name: "RGB" });
+    expect(
+      screen.getByRole("group", { name: "Color format" }),
+    ).toBeInTheDocument();
+    expect(hexOption).toHaveAttribute("aria-pressed", "true");
+
+    await userEvent.click(rgbOption);
+    expect(rgbOption).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByLabelText(/hex/i)).not.toBeInTheDocument();
+    expect(fieldLabelled("R")).toHaveValue("113");
+    expect(fieldLabelled("G")).toHaveValue("173");
+    expect(fieldLabelled("B")).toHaveValue("0");
+
+    await userEvent.click(hexOption);
+    expect(screen.getByLabelText(/hex/i)).toHaveValue("#71ad00");
+  });
+
+  it("applies a channel typed in RGB and shows it in hex", async () => {
+    const onChange = vi.fn();
+    render(<ControlledPicker initial="#71ad00" onChange={onChange} />);
+    await openPicker();
+    await userEvent.click(screen.getByRole("button", { name: "RGB" }));
+
+    const blue = fieldLabelled("B");
+    await userEvent.clear(blue);
+    expect(blue).toHaveAttribute("aria-invalid", "true");
+    expect(onChange).not.toHaveBeenCalled();
+
+    await userEvent.type(blue, "255");
+    expect(onChange).toHaveBeenLastCalledWith("#71adff");
+
+    await userEvent.click(screen.getByRole("button", { name: "HEX" }));
+    expect(screen.getByLabelText(/hex/i)).toHaveValue("#71adff");
+  });
+
+  it("caps a channel over 255 and restores an empty one on blur", async () => {
+    const onChange = vi.fn();
+    render(<ControlledPicker initial="#71ad00" onChange={onChange} />);
+    await openPicker();
+    await userEvent.click(screen.getByRole("button", { name: "RGB" }));
+
+    const red = fieldLabelled("R");
+    await userEvent.clear(red);
+    await userEvent.type(red, "300");
+    expect(red).toHaveAttribute("aria-invalid", "true");
+    fireEvent.blur(red);
+    expect(red).toHaveValue("255");
+    expect(onChange).toHaveBeenLastCalledWith("#ffad00");
+
+    const green = fieldLabelled("G");
+    await userEvent.clear(green);
+    fireEvent.blur(green);
+    expect(green).toHaveValue("173");
+  });
+
+  it("opens in RGB with defaultFormat and uses custom labels", async () => {
+    render(
+      <ColorPicker
+        value="#1e90ff"
+        onChange={vi.fn()}
+        defaultFormat="rgb"
+        formatLabel="Formato colore"
+        rgbLabels={["Rosso", "Verde", "Blu"]}
+      />,
+    );
+    await openPicker();
+
+    expect(
+      screen.getByRole("group", { name: "Formato colore" }),
+    ).toBeInTheDocument();
+    expect(fieldLabelled("Rosso")).toHaveValue("30");
+    expect(fieldLabelled("Verde")).toHaveValue("144");
+    expect(fieldLabelled("Blu")).toHaveValue("255");
   });
 
   it("selects a preset color and marks it as pressed", async () => {

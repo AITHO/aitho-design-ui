@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { clampHsv, hexToHsv, hsvToHex, normalizeHex } from "./colorUtils";
+import {
+  clampHsv,
+  hexToHsv,
+  hexToRgb,
+  hsvToHex,
+  normalizeHex,
+  rgbToHex,
+} from "./colorUtils";
 
 describe("colorUtils", () => {
   it("normalizes short, long and unprefixed hex values", () => {
@@ -30,5 +37,16 @@ describe("colorUtils", () => {
   it("treats hue 360 as red and clamps out-of-range values", () => {
     expect(hsvToHex({ h: 360, s: 100, v: 100 })).toBe("#ff0000");
     expect(clampHsv({ h: -5, s: 120, v: -1 })).toEqual({ h: 0, s: 100, v: 0 });
+  });
+
+  it("converts between hex and RGB channels", () => {
+    expect(hexToRgb("#71AD00")).toEqual([113, 173, 0]);
+    expect(hexToRgb("#abc")).toEqual([170, 187, 204]);
+    expect(hexToRgb("not a color")).toEqual([0, 0, 0]);
+    expect(rgbToHex([113, 173, 0])).toBe("#71ad00");
+  });
+
+  it("rounds RGB channels and keeps them within 0-255", () => {
+    expect(rgbToHex([12.6, -4, 300])).toBe("#0d00ff");
   });
 });
