@@ -35,6 +35,15 @@ describe("timeUtils", () => {
     expect(parseTypedTime("10:30:45")).toBeNull();
   });
 
+  it("keeps the groups of a time written with separators", () => {
+    expect(maskTypedTime("1:23:45.678", "milliseconds")).toBe("01:23:45.678");
+    expect(maskTypedTime("1:23:45", "seconds")).toBe("01:23:45");
+    expect(maskTypedTime("10:30:45", "minutes")).toBe("10:30");
+    expect(maskTypedTime("9:3")).toBe("09:3");
+    expect(maskTypedTime("1")).toBe("1");
+    expect(maskTypedTime("093045123", "milliseconds")).toBe("09:30:45.123");
+  });
+
   it("waits for a complete time in the field's precision while typing", () => {
     expect(parseTypedTime("10:30", "seconds")).toBeNull();
     expect(parseTypedTime("10:30:4", "seconds")).toBeNull();
@@ -163,6 +172,47 @@ describe("TimePicker in forms and limits", () => {
       name: "at",
       value: "10:30",
     });
+  });
+
+  it("takes a pasted time with a one-digit hour as written", () => {
+    const Pasted = ({
+      precision,
+    }: {
+      precision: "seconds" | "milliseconds";
+    }) => {
+      const [value, setValue] = useState("");
+      return (
+        <form data-testid={precision}>
+          <TimePicker
+            aria-label={precision}
+            name="at"
+            precision={precision}
+            value={value}
+            onValueChange={setValue}
+          />
+        </form>
+      );
+    };
+    render(
+      <>
+        <Pasted precision="seconds" />
+        <Pasted precision="milliseconds" />
+      </>,
+    );
+    const seconds = screen.getByLabelText("seconds") as HTMLInputElement;
+    fireEvent.change(seconds, { target: { value: "1:23:45" } });
+    expect(seconds).toHaveValue("01:23:45");
+    fireEvent.blur(seconds);
+    const secondsForm = screen.getByTestId("seconds") as HTMLFormElement;
+    expect(new FormData(secondsForm).get("at")).toBe("01:23:45");
+
+    const millis = screen.getByLabelText("milliseconds") as HTMLInputElement;
+    fireEvent.change(millis, { target: { value: "1:23:45.678" } });
+    expect(millis).toHaveValue("01:23:45.678");
+    fireEvent.blur(millis);
+    expect(millis).toHaveValue("01:23:45.678");
+    const millisForm = screen.getByTestId("milliseconds") as HTMLFormElement;
+    expect(new FormData(millisForm).get("at")).toBe("01:23:45.678");
   });
 
   it("closes an open list when it becomes read-only", () => {

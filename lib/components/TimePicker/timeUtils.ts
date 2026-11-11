@@ -54,12 +54,32 @@ export const formatTime = (
 export const timeLength = (precision: TimePrecision) =>
   formatTime(0, precision).length;
 
-// Digits become hh:mm, hh:mm:ss or hh:mm:ss.sss as they are typed; a loose `9:3` stays as written.
+// Groups of a time already written with separators (1:23:45.678): hour, minutes, seconds, fraction.
+const SEPARATED = /^(\d{1,2})(?::(\d{0,2})(?::(\d{0,2})(?:\.(\d{0,3}))?)?)?$/;
+
+// A time typed or pasted with separators keeps its groups, up to the field's precision; an hour of
+// one digit gains its zero once followed by `:` (so 1:23:45.678 stays 01:23:45.678 and does not
+// become 12:34:56.78).
+const keepGroups = (match: RegExpExecArray, precision: TimePrecision) => {
+  const [, h, m, sec, fraction] = match;
+  const hour = m === undefined ? h : h.padStart(2, "0");
+  const minutes = m === undefined ? "" : `:${m}`;
+  const seconds = sec === undefined || precision === "minutes" ? "" : `:${sec}`;
+  const ms =
+    fraction === undefined || precision !== "milliseconds"
+      ? ""
+      : `.${fraction}`;
+  return `${hour}${minutes}${seconds}${ms}`;
+};
+
+// Digits alone become hh:mm, hh:mm:ss or hh:mm:ss.sss as they are typed; text that already has
+// separators keeps them.
 export const maskTypedTime = (
   raw: string,
   precision: TimePrecision = "minutes",
 ) => {
-  if (/^\d:\d{0,2}$/.test(raw)) return raw;
+  const separated = /[:.]/.test(raw) ? SEPARATED.exec(raw.trim()) : null;
+  if (separated) return keepGroups(separated, precision);
   const digits = raw.replace(/\D/g, "").slice(0, DIGITS[precision]);
   const hms = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 6)]
     .filter(Boolean)
