@@ -83,16 +83,18 @@ export const tableRecipe = defineSlotRecipe({
       bg: "background-primary",
       // Only when the table is wider than its box (data attributes set by Table.tsx):
       // the first column stays put while the rest scrolls under it.
+      // Colour only (bgColor, never the bg shorthand) on the fixed cell: the shorthand would also
+      // reset the background-image the row hover tint is drawn with.
       "&[data-overflow] tr > :first-child": {
         position: "sticky",
         left: 0,
         zIndex: 1,
-        bg: "background-primary",
+        bgColor: "background-primary",
         transition: "box-shadow 0.15s ease",
       },
       "&[data-overflow] thead tr > :first-child": {
         zIndex: 2,
-        bg: "background-secondary",
+        bgColor: "background-secondary",
       },
       // The row tint has to sit on an opaque base, or the scrolled cells show through.
       "&[data-overflow] tbody tr:hover > :first-child": {
@@ -178,10 +180,10 @@ export const tableRecipe = defineSlotRecipe({
         tableContainer: {
           bg: "table-base-color",
           "&[data-overflow] tbody tr > :first-child": {
-            bg: "table-base-color",
+            bgColor: "table-base-color",
           },
           "&[data-overflow] thead tr > :first-child": {
-            bg: "background-tertiary",
+            bgColor: "background-tertiary",
           },
         },
         header: {
@@ -246,7 +248,7 @@ export const tableRecipe = defineSlotRecipe({
           "& tr:nth-child(even)": { bg: "table-striped-color" },
           // The fixed first cell takes its striped row's colour.
           "& [data-overflow] tbody tr:nth-child(even) > :first-child": {
-            bg: "table-striped-color",
+            bgColor: "table-striped-color",
           },
         },
       },
@@ -258,7 +260,7 @@ export const tableRecipe = defineSlotRecipe({
         root: {
           "& tr:nth-child(even)": { bg: "background-secondary" },
           "& [data-overflow] tbody tr:nth-child(even) > :first-child": {
-            bg: "background-secondary",
+            bgColor: "background-secondary",
           },
         },
       },
