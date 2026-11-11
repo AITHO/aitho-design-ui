@@ -397,6 +397,24 @@ describe("Input date, time and datetime-local in forms", () => {
     expect(onChange.mock.calls[0][0].target.value).toBe("10:30:45.124");
   });
 
+  it("rewrites the time when the step asks for more precision", () => {
+    const field = (step: number) => (
+      <form data-testid="form">
+        <Input type="time" step={step} name="at" value="10:30" />
+      </form>
+    );
+    const { rerender } = render(field(60));
+    const [time] = document.querySelectorAll<HTMLInputElement>(
+      'input[data-type="time"]',
+    );
+    expect(time).toHaveValue("10:30");
+    rerender(field(1));
+    expect(time).toHaveValue("10:30:00");
+    expect(time.validity.valid).toBe(true);
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    expect(new FormData(form).get("at")).toBe("10:30:00");
+  });
+
   it("hands onChange a real input of the native type", () => {
     const onChange = vi.fn();
     render(<Input type="date" name="day" value="" onChange={onChange} />);
@@ -501,6 +519,31 @@ describe("Input datetime-local", () => {
     fireEvent.change(timeField(), { target: { value: "103001" } });
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(timeField()).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("reports on blur the value just applied by leaving the time part", () => {
+    const onBlur = vi.fn();
+    const Stateful = () => {
+      const [value, setValue] = useState("2026-03-07T09:00");
+      return (
+        <Input
+          type="datetime-local"
+          step={1}
+          lang="it"
+          name="when"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          onBlur={onBlur}
+        />
+      );
+    };
+    render(<Stateful />);
+    fireEvent.change(timeField(), { target: { value: "1030" } });
+    fireEvent.blur(timeField());
+    expect(onBlur.mock.calls[0][0].target).toMatchObject({
+      name: "when",
+      value: "2026-03-07T10:30",
+    });
   });
 
   it("names the time part after the field", () => {

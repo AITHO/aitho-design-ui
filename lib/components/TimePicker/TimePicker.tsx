@@ -132,8 +132,11 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
     const selected = parseTime(value);
     const [text, setText] = React.useState(() => show(selected));
     const [prevValue, setPrevValue] = React.useState(value);
-    if (value !== prevValue) {
+    const [prevShown, setPrevShown] = React.useState(shown);
+    // A new value, or a new precision for the same value (step 60 to 1), rewrites the text.
+    if (value !== prevValue || shown !== prevShown) {
       setPrevValue(value);
+      setPrevShown(shown);
       setText(show(parseTime(value)));
     }
 

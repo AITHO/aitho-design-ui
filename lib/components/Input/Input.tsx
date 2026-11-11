@@ -154,13 +154,21 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
       );
     };
 
+    // The value the field holds right now: a part applied while leaving it (10:30 taken as
+    // 10:30:00 on blur) changes it before the caller has re-rendered with the new prop.
+    const current = React.useRef(value);
+    React.useEffect(() => {
+      current.current = value;
+    }, [value]);
+
     const change = (next: { date: string; time: string }) => {
       setParts(next);
       const combined =
         next.date && next.time ? `${next.date}T${next.time}` : "";
       // A full date and time outside min/max is never emitted, like each part on its own.
       if (combined && isOutOfRange(combined)) return;
-      if (combined !== value) {
+      if (combined !== current.current) {
+        current.current = combined;
         setEmitted(combined);
         onValueChange(combined);
       }
@@ -170,7 +178,7 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
       onBlur?.(
         withTarget(
           event,
-          nativeFieldTarget("datetime-local", value, name, props.id),
+          nativeFieldTarget("datetime-local", current.current, name, props.id),
         ),
       );
 
