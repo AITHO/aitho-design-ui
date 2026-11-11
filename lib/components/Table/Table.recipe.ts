@@ -69,6 +69,8 @@ export const tableRecipe = defineSlotRecipe({
   base: {
     root: {
       display: "block",
+      // Containing block of the sideways scrollbar Table.tsx draws over the table.
+      position: "relative",
       width: "100%",
       color: "text-primary",
     },
@@ -101,11 +103,6 @@ export const tableRecipe = defineSlotRecipe({
       "&[data-scrolled] tr > :first-child": {
         boxShadow:
           "1px 0 0 {colors.border-color}, 6px 0 10px -6px rgb(0 0 0 / 0.5)",
-      },
-      // More columns to the right: the edge fades out (the last pixel stays, for the frame).
-      "&[data-more]": {
-        maskImage:
-          "linear-gradient(to right, #000 calc(100% - 32px), transparent calc(100% - 1px), #000 calc(100% - 1px))",
       },
     },
     table: {

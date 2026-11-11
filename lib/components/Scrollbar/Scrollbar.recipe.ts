@@ -6,8 +6,8 @@ export const scrollbarRecipe = defineSlotRecipe({
   base: {
     thumb: {
       position: "absolute",
-      zIndex: 1,
-      width: "6px",
+      // Above the sticky first column of a table (z-index 1, 2 in the header).
+      zIndex: 3,
       borderRadius: "3px",
       backgroundColor: "var(--scrollbar-thumb)",
       touchAction: "none",

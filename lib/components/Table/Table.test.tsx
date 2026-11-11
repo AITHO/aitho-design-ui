@@ -329,7 +329,7 @@ describe("Table", () => {
       fireEvent.scroll(el);
     };
 
-    it("should mark overflow, scroll position and hidden columns on the container", () => {
+    it("should mark overflow and scroll position on the container", () => {
       renderTable();
       const container = screen.getByRole("table").parentElement as HTMLElement;
 
@@ -341,7 +341,6 @@ describe("Table", () => {
         scrollLeft: 0,
       });
       expect(container).toHaveAttribute("data-overflow");
-      expect(container).toHaveAttribute("data-more");
       expect(container).not.toHaveAttribute("data-scrolled");
 
       setScroll(container, {
@@ -350,7 +349,6 @@ describe("Table", () => {
         scrollLeft: 600,
       });
       expect(container).toHaveAttribute("data-scrolled");
-      expect(container).not.toHaveAttribute("data-more");
 
       setScroll(container, {
         scrollWidth: 400,

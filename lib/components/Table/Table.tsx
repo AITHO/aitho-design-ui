@@ -4,6 +4,7 @@ import { table, type TableVariantProps } from "@styled/recipes";
 import { Button } from "../Button/Button";
 import { Checkbox } from "../Checkbox/Checkbox";
 import { Pagination, type PaginationProps } from "../Pagination/Pagination";
+import { Scrollbar } from "../Scrollbar/Scrollbar";
 import { Spinner } from "../Spinner/Spinner";
 import {
   CaretSortIcon,
@@ -381,12 +382,12 @@ export const Table: React.FC<TableProps> = ({
   );
 
   // Horizontal scroll state, exposed as data attributes for the sticky first
-  // column, its shadow and the right-edge fade (see the tableContainer recipe).
+  // column and its shadow (see the tableContainer recipe). More columns to the
+  // right are shown by the drawn scrollbar below the table.
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollState, setScrollState] = useState({
     overflow: false,
     scrolled: false,
-    more: false,
   });
   useEffect(() => {
     const el = containerRef.current;
@@ -394,14 +395,10 @@ export const Table: React.FC<TableProps> = ({
     const update = () => {
       const overflow = el.scrollWidth > el.clientWidth + 1;
       const scrolled = overflow && el.scrollLeft > 1;
-      const more =
-        overflow && el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
       setScrollState((prev) =>
-        prev.overflow === overflow &&
-        prev.scrolled === scrolled &&
-        prev.more === more
+        prev.overflow === overflow && prev.scrolled === scrolled
           ? prev
-          : { overflow, scrolled, more },
+          : { overflow, scrolled },
       );
     };
     update();
@@ -464,7 +461,6 @@ export const Table: React.FC<TableProps> = ({
         className={classes.tableContainer}
         data-overflow={scrollState.overflow || undefined}
         data-scrolled={scrollState.scrolled || undefined}
-        data-more={scrollState.more || undefined}
       >
         <table className={classes.table}>
           {caption && <caption className={classes.caption}>{caption}</caption>}
@@ -546,6 +542,7 @@ export const Table: React.FC<TableProps> = ({
           </tbody>
         </table>
       </div>
+      <Scrollbar targetRef={containerRef} orientation="horizontal" />
 
       {showPagination &&
         paginationPosition !== undefined &&
