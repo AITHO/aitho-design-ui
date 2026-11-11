@@ -203,6 +203,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
               className={fieldClassName ?? fieldClasses.inputField}
               value={text}
               placeholder={placeholder ?? t.placeholder}
+              form={form}
               disabled={disabled}
               readOnly={readOnly}
               maxLength={5}
@@ -244,6 +245,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                 type="hidden"
                 name={name}
                 form={form}
+                disabled={disabled}
                 value={selected === null ? "" : formatTime(selected)}
               />
             )}

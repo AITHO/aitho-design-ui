@@ -306,6 +306,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
               className={fieldClassName ?? fieldClasses.inputField}
               value={text}
               placeholder={placeholder ?? t.placeholder}
+              form={form}
               disabled={disabled}
               readOnly={readOnly}
               maxLength={10}
@@ -324,6 +325,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                 type="hidden"
                 name={name}
                 form={form}
+                disabled={disabled}
                 value={selected ? toIsoDate(selected) : ""}
               />
             )}

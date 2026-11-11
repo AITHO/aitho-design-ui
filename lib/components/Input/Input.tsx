@@ -106,14 +106,16 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
     ref,
   ) => {
     const [parts, setParts] = React.useState(() => splitDateTime(value));
-    // The last value this field emitted: when it comes back as the prop it is our own echo, and
-    // the parts typed so far stay (clearing the time keeps the day). Anything else came from
-    // outside, a reset to "" included, and replaces both parts.
+    // The value this field emitted and is waiting to see back: when it returns as the prop it is
+    // our own echo, and the parts typed so far stay (clearing the time keeps the day). Anything
+    // else came from outside, a reset to "" included, and replaces both parts.
     const [emitted, setEmitted] = React.useState<string | null>(null);
     const [prevValue, setPrevValue] = React.useState(value);
     if (value !== prevValue) {
       setPrevValue(value);
-      if (value !== emitted) setParts(splitDateTime(value));
+      // An echo is recognised once, then forgotten: a later update to the same value is external.
+      if (value === emitted) setEmitted(null);
+      else setParts(splitDateTime(value));
     }
 
     const minDay = min?.slice(0, 10);
@@ -143,6 +145,7 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
             value={parts.date}
             min={minDay}
             max={maxDay}
+            form={form}
             disabled={disabled}
             readOnly={readOnly}
             fieldClassName={fieldClassName}
@@ -164,6 +167,7 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
                 ? max?.slice(11, 16)
                 : undefined
             }
+            form={form}
             disabled={disabled}
             readOnly={readOnly}
             lang={props.lang}
@@ -177,7 +181,15 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
           />
         </div>
         {/* One form value for both parts, YYYY-MM-DDTHH:mm, like a native datetime-local. */}
-        {name && <input type="hidden" name={name} form={form} value={value} />}
+        {name && (
+          <input
+            type="hidden"
+            name={name}
+            form={form}
+            disabled={disabled}
+            value={value}
+          />
+        )}
       </div>
     );
   },

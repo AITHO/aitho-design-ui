@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { DatePicker } from "../DatePicker/DatePicker";
 import { Input } from "../Input/Input";
 import { TimePicker } from "./TimePicker";
 import { maskTypedTime, parseTypedTime } from "./timeUtils";
@@ -163,6 +164,82 @@ describe("Input date, time and datetime-local in forms", () => {
     expect(data.getAll("when")).toEqual(["2026-03-07T10:30"]);
   });
 
+  it("leaves disabled fields out of the submitted form", () => {
+    const fields = (disabled: boolean) => (
+      <form data-testid="form">
+        <Input
+          type="date"
+          name="day"
+          value="2026-03-07"
+          disabled={disabled}
+          onChange={vi.fn()}
+        />
+        <Input
+          type="time"
+          name="at"
+          value="10:30"
+          disabled={disabled}
+          onChange={vi.fn()}
+        />
+        <Input
+          type="datetime-local"
+          name="when"
+          value="2026-03-07T10:30"
+          disabled={disabled}
+          onChange={vi.fn()}
+        />
+      </form>
+    );
+    const { rerender } = render(fields(false));
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    expect(new FormData(form).getAll("when")).toEqual(["2026-03-07T10:30"]);
+    rerender(fields(true));
+    const data = new FormData(form);
+    expect(data.getAll("day")).toEqual([]);
+    expect(data.getAll("at")).toEqual([]);
+    expect(data.getAll("when")).toEqual([]);
+  });
+
+  it("keeps the visible fields tied to a form they sit outside of", () => {
+    render(
+      <>
+        <form id="booking" data-testid="booking" />
+        <DatePicker
+          aria-label="Data"
+          lang="it"
+          form="booking"
+          name="start"
+          required
+          value=""
+        />
+        <TimePicker
+          aria-label="Ora"
+          lang="it"
+          form="booking"
+          name="at"
+          value="10:00"
+          min="09:00"
+        />
+        <Input type="datetime-local" form="booking" name="when" value="" />
+      </>,
+    );
+    const booking = screen.getByTestId("booking") as HTMLFormElement;
+    const visible =
+      document.querySelectorAll<HTMLInputElement>("input[data-type]");
+    visible.forEach((field) => expect(field.form).toBe(booking));
+    // The empty required day blocks that form, as a native field would.
+    expect(booking.checkValidity()).toBe(false);
+    fireEvent.change(screen.getByLabelText("Data"), {
+      target: { value: "07/03/2026" },
+    });
+    expect(booking.checkValidity()).toBe(true);
+    // So does a typed time outside min.
+    fireEvent.change(screen.getByLabelText("Ora"), {
+      target: { value: "0830" },
+    });
+    expect(booking.checkValidity()).toBe(false);
+  });
+
   it("hands onChange a real input of the native type", () => {
     const onChange = vi.fn();
     render(<Input type="date" name="day" value="" onChange={onChange} />);
@@ -175,6 +252,41 @@ describe("Input date, time and datetime-local in forms", () => {
 });
 
 describe("Input datetime-local", () => {
+  it("follows outside updates back to a value the user had picked", () => {
+    const EchoDateTime = () => {
+      const [value, setValue] = useState("");
+      return (
+        <form data-testid="form">
+          <Input
+            type="datetime-local"
+            name="when"
+            label="Inizio"
+            lang="it"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+          />
+          <button type="button" onClick={() => setValue("2026-03-08T12:00")}>
+            B
+          </button>
+          <button type="button" onClick={() => setValue("2026-03-07T11:00")}>
+            A
+          </button>
+        </form>
+      );
+    };
+    render(<EchoDateTime />);
+    fireEvent.change(dayField(), { target: { value: "07/03/2026" } });
+    fireEvent.change(timeField(), { target: { value: "1100" } });
+    fireEvent.click(screen.getByRole("button", { name: "B" }));
+    expect(dayField()).toHaveValue("08/03/2026");
+    expect(timeField()).toHaveValue("12:00");
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    expect(dayField()).toHaveValue("07/03/2026");
+    expect(timeField()).toHaveValue("11:00");
+    const form = screen.getByTestId("form") as HTMLFormElement;
+    expect(new FormData(form).getAll("when")).toEqual(["2026-03-07T11:00"]);
+  });
+
   it("names the time part after the field", () => {
     render(<ControlledDateTime />);
     expect(screen.getByRole("textbox", { name: "Inizio, ora" })).toBe(
