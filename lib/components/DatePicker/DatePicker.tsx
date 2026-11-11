@@ -32,6 +32,7 @@ const TEXT = {
     nextYear: "Anno successivo",
     today: "Oggi",
     clear: "Cancella",
+    outOfRange: "Data fuori dall'intervallo consentito",
   },
   en: {
     placeholder: "dd/mm/yyyy",
@@ -43,6 +44,7 @@ const TEXT = {
     nextYear: "Next year",
     today: "Today",
     clear: "Clear",
+    outOfRange: "Date outside the allowed range",
   },
 } as const;
 
@@ -75,7 +77,10 @@ export type DatePickerProps = Omit<
 
 /**
  * A day picker: a text field that takes dd/mm/yyyy (typed or pasted) and a calendar popover.
- * The value is always `YYYY-MM-DD`, the same format as a native date input.
+ * The value is always `YYYY-MM-DD`, the same format as a native date input. With a `name`, a
+ * hidden field carries that value, so a form submits `YYYY-MM-DD` and not the dd/mm/yyyy text.
+ * A typed day outside `min`/`max` is not applied: the field is marked invalid until it holds a
+ * day in range, and leaving it puts the last valid day back.
  *
  * Keyboard: Arrow Down opens the calendar; in the grid the arrows move by day and week,
  * Page Up / Page Down by month (with Shift by year), Home / End to the week edges,
@@ -100,6 +105,8 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
       onClick,
       onBlur,
       className,
+      name,
+      form,
       ...props
     },
     ref,
@@ -121,6 +128,8 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     }
 
     const [open, setOpen] = React.useState(false);
+    // A picker disabled or made read-only while open closes, so nothing more can be chosen.
+    if ((disabled || readOnly) && open) setOpen(false);
     const [view, setView] = React.useState<{ y: number; m: number }>({
       y: today.y,
       m: today.m,
@@ -141,13 +150,30 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     const isOutOfRange = (iso: string) =>
       Boolean((min && iso < min) || (max && iso > max));
 
+    // The nearest day inside min/max, so keyboard focus never lands on a disabled day.
+    const clampDay = (day: Ymd): Ymd => {
+      const iso = toIsoDate(day);
+      if (min && iso < min) return parseIsoDate(min) ?? day;
+      if (max && iso > max) return parseIsoDate(max) ?? day;
+      return day;
+    };
+
+    // A complete day typed outside min/max: shown, marked invalid, never applied.
+    const typedDay = parseTypedDate(text);
+    const typedOutOfRange =
+      typedDay !== null && isOutOfRange(toIsoDate(typedDay));
+    React.useEffect(() => {
+      inputRef.current?.setCustomValidity(typedOutOfRange ? t.outOfRange : "");
+    }, [typedOutOfRange, t.outOfRange]);
+
     const commit = (iso: string) => {
+      if (disabled || readOnly || (iso && isOutOfRange(iso))) return;
       if (iso !== (selected ? toIsoDate(selected) : "")) onValueChange?.(iso);
     };
 
     const openCalendar = (withGridFocus: boolean) => {
       if (disabled || readOnly) return;
-      const base = selected ?? today;
+      const base = selected ?? clampDay(today);
       setView({ y: base.y, m: base.m });
       setFocused(toIsoDate(base));
       focusGrid.current = withGridFocus;
@@ -155,9 +181,10 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     };
 
     const moveFocus = (next: Ymd) => {
+      const day = clampDay(next);
       focusGrid.current = true;
-      setFocused(toIsoDate(next));
-      setView({ y: next.y, m: next.m });
+      setFocused(toIsoDate(day));
+      setView({ y: day.y, m: day.m });
     };
 
     React.useEffect(() => {
@@ -165,7 +192,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     }, [open, focused, view]);
 
     const selectDay = (iso: string) => {
-      if (isOutOfRange(iso)) return;
+      if (disabled || readOnly || isOutOfRange(iso)) return;
       setText(toDisplay(parseIsoDate(iso)));
       commit(iso);
       setOpen(false);
@@ -193,9 +220,12 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     };
 
     const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-      // A partial or invalid entry goes back to the last valid day.
-      const typed = parseTypedDate(text);
-      setText(typed ? toDisplay(typed) : toDisplay(selected));
+      // A partial, invalid or out-of-range entry goes back to the last valid day.
+      setText(
+        typedDay && !typedOutOfRange
+          ? toDisplay(typedDay)
+          : toDisplay(selected),
+      );
       onBlur?.(event);
     };
 
@@ -279,6 +309,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
               disabled={disabled}
               readOnly={readOnly}
               maxLength={10}
+              aria-invalid={typedOutOfRange || props["aria-invalid"]}
               onChange={handleTextChange}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
@@ -287,6 +318,15 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                 if (!open) openCalendar(false);
               }}
             />
+            {/* The form value: YYYY-MM-DD, like a native date input, not the dd/mm/yyyy text. */}
+            {name && (
+              <input
+                type="hidden"
+                name={name}
+                form={form}
+                value={selected ? toIsoDate(selected) : ""}
+              />
+            )}
             <button
               type="button"
               className={iconClassName ?? fieldClasses.iconStyle}
@@ -433,6 +473,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                 className={classes.footerButton}
                 disabled={!selected}
                 onClick={() => {
+                  if (disabled || readOnly) return;
                   setText("");
                   commit("");
                   setOpen(false);

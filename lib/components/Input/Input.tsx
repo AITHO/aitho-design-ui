@@ -7,6 +7,7 @@ import {
 import { input, type InputVariantProps } from "@styled/recipes";
 import React, { useState } from "react";
 import { DatePicker } from "../DatePicker/DatePicker";
+import { resolveLang } from "../DatePicker/dateUtils";
 import { TimePicker } from "../TimePicker/TimePicker";
 import { Label } from "../Label/Label";
 import "./Input.css";
@@ -73,10 +74,19 @@ type DateTimeFieldProps = Omit<
   onValueChange: (value: string) => void;
   min?: string;
   max?: string;
+  /** The Input label, used to name the time part ("Start, time"). */
+  fieldLabel?: string;
+};
+
+const TIME_PART = { it: "ora", en: "time" } as const;
+
+const splitDateTime = (v: string) => {
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/.exec(v);
+  return { date: match?.[1] ?? "", time: match?.[2] ?? "" };
 };
 
 // datetime-local as a DatePicker and a TimePicker side by side; the value is YYYY-MM-DDTHH:mm,
-// emitted once both parts are there (like the native field) and "" when the day is cleared.
+// emitted once both parts are there (like the native field) and "" as soon as either is cleared.
 const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
   (
     {
@@ -88,25 +98,42 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
       readOnly,
       iconClassName,
       fieldClassName,
+      fieldLabel,
+      name,
+      form,
       ...props
     },
     ref,
   ) => {
-    const split = (v: string) => {
-      const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/.exec(v);
-      return { date: match?.[1] ?? "", time: match?.[2] ?? "" };
-    };
-    const [parts, setParts] = React.useState(() => split(value));
+    const [parts, setParts] = React.useState(() => splitDateTime(value));
+    // The last value this field emitted: when it comes back as the prop it is our own echo, and
+    // the parts typed so far stay (clearing the time keeps the day). Anything else came from
+    // outside, a reset to "" included, and replaces both parts.
+    const [emitted, setEmitted] = React.useState<string | null>(null);
     const [prevValue, setPrevValue] = React.useState(value);
     if (value !== prevValue) {
       setPrevValue(value);
-      if (value) setParts(split(value));
+      if (value !== emitted) setParts(splitDateTime(value));
     }
+
+    const minDay = min?.slice(0, 10);
+    const maxDay = max?.slice(0, 10);
+    const isOutOfRange = (dateTime: string) =>
+      Boolean((min && dateTime < min) || (max && dateTime > max));
+
     const change = (next: { date: string; time: string }) => {
       setParts(next);
-      if (!next.date) onValueChange("");
-      else if (next.time) onValueChange(`${next.date}T${next.time}`);
+      const combined =
+        next.date && next.time ? `${next.date}T${next.time}` : "";
+      // A full date and time outside min/max is never emitted, like each part on its own.
+      if (combined && isOutOfRange(combined)) return;
+      if (combined !== value) {
+        setEmitted(combined);
+        onValueChange(combined);
+      }
     };
+
+    const timeWord = TIME_PART[resolveLang(props.lang)];
     return (
       <div style={{ display: "flex", gap: "8px", width: "100%" }}>
         <div style={{ flex: "1.4 1 0", minWidth: 0 }}>
@@ -114,8 +141,8 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
             {...props}
             ref={ref}
             value={parts.date}
-            min={min?.slice(0, 10)}
-            max={max?.slice(0, 10)}
+            min={minDay}
+            max={maxDay}
             disabled={disabled}
             readOnly={readOnly}
             fieldClassName={fieldClassName}
@@ -126,14 +153,31 @@ const DateTimeField = React.forwardRef<HTMLInputElement, DateTimeFieldProps>(
         <div style={{ flex: "1 1 0", minWidth: 0 }}>
           <TimePicker
             value={parts.time}
+            // The time limits only bind on the first and the last allowed day.
+            min={
+              parts.date && parts.date === minDay
+                ? min?.slice(11, 16)
+                : undefined
+            }
+            max={
+              parts.date && parts.date === maxDay
+                ? max?.slice(11, 16)
+                : undefined
+            }
             disabled={disabled}
             readOnly={readOnly}
             lang={props.lang}
             fieldClassName={fieldClassName}
             iconClassName={iconClassName}
+            aria-label={fieldLabel ? `${fieldLabel}, ${timeWord}` : timeWord}
+            aria-describedby={props["aria-describedby"]}
+            aria-invalid={props["aria-invalid"]}
+            aria-required={props["aria-required"]}
             onValueChange={(time) => change({ ...parts, time })}
           />
         </div>
+        {/* One form value for both parts, YYYY-MM-DDTHH:mm, like a native datetime-local. */}
+        {name && <input type="hidden" name={name} form={form} value={value} />}
       </div>
     );
   },
@@ -213,16 +257,16 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     };
 
     // The date field is the library DatePicker, not the browser's: callers still get a change
-    // event whose target.value is YYYY-MM-DD, like a native date input.
+    // event whose target is a real input of the native type holding the value (YYYY-MM-DD,
+    // HH:mm or YYYY-MM-DDTHH:mm), so it reads like a native date input's event.
     const emitDate = (iso: string) => {
       setVal(iso);
       if (!onChange) return;
-      const target = {
-        value: iso,
-        name: props.name ?? "",
-        id: uniqueId,
-        type,
-      };
+      const target = document.createElement("input");
+      target.type = type ?? "date";
+      target.value = iso;
+      target.name = props.name ?? "";
+      target.id = uniqueId;
       onChange({
         target,
         currentTarget: target,
@@ -290,6 +334,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 onValueChange={emitDate}
                 fieldClassName={fieldClassName}
                 iconClassName={classes.iconStyle}
+                fieldLabel={label}
                 aria-invalid={error || undefined}
                 aria-required={required || undefined}
                 aria-describedby={describedBy}

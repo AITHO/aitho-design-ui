@@ -146,6 +146,63 @@ describe("DatePicker", () => {
   });
 });
 
+describe("DatePicker in forms and limits", () => {
+  it("submits the ISO day under its name, once", () => {
+    render(
+      <form data-testid="form">
+        <DatePicker
+          aria-label="Data"
+          lang="it"
+          name="start"
+          value="2026-03-07"
+          onValueChange={vi.fn()}
+        />
+      </form>,
+    );
+    const data = new FormData(screen.getByTestId("form") as HTMLFormElement);
+    expect(data.getAll("start")).toEqual(["2026-03-07"]);
+    expect(field()).not.toHaveAttribute("name");
+  });
+
+  it("does not apply a typed day outside min and max", () => {
+    const onValueChange = vi.fn();
+    render(
+      <Controlled
+        initial="2026-03-10"
+        min="2026-03-05"
+        max="2026-03-20"
+        onValueChange={onValueChange}
+      />,
+    );
+    fireEvent.change(field(), { target: { value: "04/03/2026" } });
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(field()).toHaveAttribute("aria-invalid", "true");
+    expect(field().validity.valid).toBe(false);
+    fireEvent.blur(field());
+    expect(field()).toHaveValue("10/03/2026");
+    expect(field().validity.valid).toBe(true);
+  });
+
+  it("keeps keyboard focus on enabled days at the edge of the range", () => {
+    render(<Controlled initial="2026-03-05" min="2026-03-05" />);
+    fireEvent.keyDown(field(), { key: "ArrowDown" });
+    fireEvent.keyDown(screen.getByRole("grid"), { key: "ArrowLeft" });
+    expect(document.activeElement).toHaveAccessibleName(/ 5 marzo 2026/i);
+  });
+
+  it("closes an open calendar when it becomes disabled", () => {
+    const { rerender } = render(
+      <DatePicker aria-label="Data" lang="it" value="2026-03-07" />,
+    );
+    openCalendar();
+    expect(screen.getByRole("grid")).toBeInTheDocument();
+    rerender(
+      <DatePicker aria-label="Data" lang="it" value="2026-03-07" disabled />,
+    );
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+  });
+});
+
 describe("Input type=date", () => {
   it("renders the library picker and keeps the change event contract", () => {
     const onChange = vi.fn();
