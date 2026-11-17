@@ -335,6 +335,11 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
               aria-label={t.list}
               className={classes.list}
               onKeyDown={handleListKeyDown}
+              // The list sits in a portal, outside a Dialog's content: the Dialog's scroll lock,
+              // listening on the document, would cancel the wheel and the drag here and the list
+              // would not move. Stopped here they never reach it; the browser still scrolls.
+              onWheel={(event) => event.stopPropagation()}
+              onTouchMove={(event) => event.stopPropagation()}
             >
               {options.map((time) => (
                 <button

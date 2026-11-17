@@ -22,6 +22,8 @@ export const timePickerRecipe = defineSlotRecipe({
       gap: "2px",
       maxHeight: "14rem",
       overflowY: "auto",
+      // At the end of the list the wheel stops there instead of scrolling the page behind.
+      overscrollBehavior: "contain",
       outline: "none",
     },
     option: {

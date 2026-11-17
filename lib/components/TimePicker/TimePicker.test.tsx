@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { DatePicker } from "../DatePicker/DatePicker";
+import { Dialog } from "../Dialog/Dialog";
 import { Input } from "../Input/Input";
 import { TimePicker } from "./TimePicker";
 import {
@@ -86,6 +87,22 @@ describe("TimePicker", () => {
     fireEvent.click(within(list).getByRole("option", { name: "08:15" }));
     expect(onValueChange).toHaveBeenLastCalledWith("08:15");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("scrolls its list inside a Dialog", () => {
+    render(
+      <Dialog open title="Permesso" footer={false}>
+        <Controlled />
+      </Dialog>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Scegli l'ora" }));
+    const list = screen.getByRole("listbox", { name: "Orari" });
+    // The list sits in a portal outside the dialog, whose scroll lock cancels the wheel and the
+    // drag on anything outside its content: the list would not move.
+    expect(fireEvent.wheel(list, { deltaY: 100 })).toBe(true);
+    expect(fireEvent.touchMove(list, { touches: [{ clientY: 10 }] })).toBe(
+      true,
+    );
   });
 
   it("moves through the list with the keyboard", () => {
