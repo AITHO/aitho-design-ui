@@ -97,12 +97,22 @@ describe("TimePicker", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Scegli l'ora" }));
     const list = screen.getByRole("listbox", { name: "Orari" });
-    // The list sits in a portal outside the dialog, whose scroll lock cancels the wheel and the
-    // drag on anything outside its content: the list would not move.
-    expect(fireEvent.wheel(list, { deltaY: 100 })).toBe(true);
-    expect(fireEvent.touchMove(list, { touches: [{ clientY: 10 }] })).toBe(
-      true,
-    );
+    // The list sits in a portal outside the dialog, whose scroll lock listens on the document and
+    // cancels the wheel and the drag on anything outside its content: the list would not move.
+    const reachedDocument = vi.fn();
+    document.addEventListener("wheel", reachedDocument);
+    document.addEventListener("touchmove", reachedDocument);
+    try {
+      expect(fireEvent.wheel(list, { deltaY: 100 })).toBe(true);
+      fireEvent.touchStart(list, { touches: [{ clientX: 40, clientY: 200 }] });
+      expect(
+        fireEvent.touchMove(list, { touches: [{ clientX: 40, clientY: 120 }] }),
+      ).toBe(true);
+      expect(reachedDocument).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener("wheel", reachedDocument);
+      document.removeEventListener("touchmove", reachedDocument);
+    }
   });
 
   it("moves through the list with the keyboard", () => {
