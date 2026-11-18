@@ -102,12 +102,15 @@ describe("TimePicker", () => {
     const reachedDocument = vi.fn();
     document.addEventListener("wheel", reachedDocument);
     document.addEventListener("touchmove", reachedDocument);
+    // A real touch always carries changedTouches, and the scroll lock reads it on touchstart.
+    const touchAt = (clientY: number) => {
+      const touches = [{ clientX: 40, clientY }];
+      return { touches, changedTouches: touches };
+    };
     try {
       expect(fireEvent.wheel(list, { deltaY: 100 })).toBe(true);
-      fireEvent.touchStart(list, { touches: [{ clientX: 40, clientY: 200 }] });
-      expect(
-        fireEvent.touchMove(list, { touches: [{ clientX: 40, clientY: 120 }] }),
-      ).toBe(true);
+      fireEvent.touchStart(list, touchAt(200));
+      expect(fireEvent.touchMove(list, touchAt(120))).toBe(true);
       expect(reachedDocument).not.toHaveBeenCalled();
     } finally {
       document.removeEventListener("wheel", reachedDocument);
