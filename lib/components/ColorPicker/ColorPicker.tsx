@@ -247,7 +247,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   }
 
   const applyHsv = (next: Hsv) => {
-    if (disabledRef.current) return;
+    if (disabled) return;
     const clamped = clampHsv(next);
     const nextHex = hsvToHex(clamped);
     setHsv(clamped);
@@ -318,9 +318,11 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   };
 
   const EyeDropper = getEyeDropper();
-  const pickFromScreen = async (dropper: EyeDropperConstructor) => {
+  const handlePickFromScreen = async () => {
+    if (!EyeDropper) return;
     try {
-      const result = await new dropper().open();
+      const result = await new EyeDropper().open();
+      if (disabledRef.current) return;
       applyHex(result.sRGBHex);
     } catch {
       // The user dismissed the eye dropper with Esc: nothing to apply.
@@ -425,7 +427,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               type="button"
               className={classes.eyeDropper}
               aria-label={eyeDropperLabel}
-              onClick={() => pickFromScreen(EyeDropper)}
+              onClick={handlePickFromScreen}
             >
               <Crosshair1Icon aria-hidden="true" />
             </button>

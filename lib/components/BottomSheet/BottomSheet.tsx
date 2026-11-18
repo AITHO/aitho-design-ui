@@ -52,6 +52,10 @@ export interface BottomSheetProps {
 }
 
 const SWIPE_CLOSE_THRESHOLD_PX = 80;
+const unsubscribeFromNothing = () => undefined;
+const subscribeToNothing = () => unsubscribeFromNothing;
+const getClientMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
 
 /**
  * Mobile bottom sheet: bottom-anchored panel with grabber, swipe-down / overlay
@@ -84,14 +88,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const panelRef = React.useRef<HTMLDivElement>(null);
   const previouslyFocused = React.useRef<HTMLElement | null>(null);
   const touchStartY = React.useRef<number | null>(null);
-  // The portal needs document.body, which does not exist on the server: it is
-  // created only after mount, so the first client render matches the server
-  // HTML (null) during hydration.
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // The portal needs document.body, which does not exist on the server. The
+  // server snapshot keeps the first client render in sync during hydration;
+  // useSyncExternalStore then switches to the client snapshot after hydration.
+  const isMounted = React.useSyncExternalStore(
+    subscribeToNothing,
+    getClientMountedSnapshot,
+    getServerMountedSnapshot,
+  );
 
   React.useEffect(() => {
     if (!isOpen || !isMounted) {

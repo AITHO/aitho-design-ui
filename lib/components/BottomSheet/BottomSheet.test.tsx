@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { BottomSheet, BottomSheetProps } from "./BottomSheet";
@@ -118,32 +118,87 @@ describe("BottomSheet", () => {
     expect(screen.queryByTestId("bottom-sheet-grabber")).toBeNull();
   });
 
-  it("should hydrate an initially open sheet without mismatch and focus the panel", async () => {
-    const ui = (
-      <BottomSheet isOpen onClose={vi.fn()} title="Sheet title">
-        <div>Sheet content</div>
-      </BottomSheet>
-    );
-    const container = document.createElement("div");
-    container.innerHTML = renderToString(ui);
-    document.body.appendChild(container);
-    const onRecoverableError = vi.fn();
-
-    expect(container.innerHTML).toBe("");
-
+  it("should hydrate an initially open sheet without mismatch and restore focus and scroll", async () => {
+    const previousOverflow = document.body.style.overflow;
+    let trigger: HTMLButtonElement | undefined;
+    let container: HTMLDivElement | undefined;
     let root: Root | undefined;
     try {
+      document.body.style.overflow = "auto";
+      trigger = document.createElement("button");
+      trigger.textContent = "Open sheet";
+      document.body.appendChild(trigger);
+      trigger.focus();
+
+      const ui = (
+        <BottomSheet isOpen onClose={vi.fn()} title="Sheet title">
+          <div>Sheet content</div>
+        </BottomSheet>
+      );
+      const hydrationContainer = document.createElement("div");
+      container = hydrationContainer;
+      hydrationContainer.innerHTML = renderToString(ui);
+      document.body.appendChild(hydrationContainer);
+      const onRecoverableError = vi.fn();
+
+      expect(hydrationContainer.innerHTML).toBe("");
+
       await act(async () => {
-        root = hydrateRoot(container, ui, { onRecoverableError });
+        root = hydrateRoot(hydrationContainer, ui, { onRecoverableError });
       });
 
       expect(onRecoverableError).not.toHaveBeenCalled();
       expect(screen.getByRole("dialog")).toBeInTheDocument();
       expect(screen.getByRole("dialog")).toHaveFocus();
+      expect(document.body.style.overflow).toBe("hidden");
+
+      const hydratedRoot = root;
+      await act(async () => hydratedRoot?.unmount());
+      root = undefined;
+
+      expect(trigger).toHaveFocus();
+      expect(document.body.style.overflow).toBe("auto");
     } finally {
       // hydrateRoot is not tracked by Testing Library's automatic cleanup.
       act(() => root?.unmount());
-      container.remove();
+      container?.remove();
+      trigger?.remove();
+      document.body.style.overflow = previousOverflow;
+    }
+  });
+
+  it("should restore trigger focus and body scroll after StrictMode effect cleanup", () => {
+    const previousOverflow = document.body.style.overflow;
+    let trigger: HTMLButtonElement | undefined;
+    let unmount: (() => void) | undefined;
+    let isUnmounted = false;
+    try {
+      document.body.style.overflow = "auto";
+      trigger = document.createElement("button");
+      trigger.textContent = "Open sheet";
+      document.body.appendChild(trigger);
+      trigger.focus();
+
+      unmount = render(
+        <StrictMode>
+          <BottomSheet isOpen onClose={vi.fn()} title="Sheet title">
+            <div>Sheet content</div>
+          </BottomSheet>
+        </StrictMode>,
+      ).unmount;
+
+      expect(screen.getByRole("dialog")).toHaveFocus();
+      expect(document.body.style.overflow).toBe("hidden");
+
+      unmount();
+      isUnmounted = true;
+
+      expect(trigger).toHaveFocus();
+      expect(document.body.style.overflow).toBe("auto");
+    } finally {
+      if (!isUnmounted) unmount?.();
+      trigger?.remove();
+      document.body.style.overflow = previousOverflow;
     }
   });
 });
