@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { DatePicker } from "../DatePicker/DatePicker";
+import { Dialog } from "../Dialog/Dialog";
 import { Input } from "../Input/Input";
 import { TimePicker } from "./TimePicker";
 import {
@@ -86,6 +87,35 @@ describe("TimePicker", () => {
     fireEvent.click(within(list).getByRole("option", { name: "08:15" }));
     expect(onValueChange).toHaveBeenLastCalledWith("08:15");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("scrolls its list inside a Dialog", () => {
+    render(
+      <Dialog open title="Permesso" footer={false}>
+        <Controlled />
+      </Dialog>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Scegli l'ora" }));
+    const list = screen.getByRole("listbox", { name: "Orari" });
+    // The list sits in a portal outside the dialog, whose scroll lock listens on the document and
+    // cancels the wheel and the drag on anything outside its content: the list would not move.
+    const reachedDocument = vi.fn();
+    document.addEventListener("wheel", reachedDocument);
+    document.addEventListener("touchmove", reachedDocument);
+    // A real touch always carries changedTouches, and the scroll lock reads it on touchstart.
+    const touchAt = (clientY: number) => {
+      const touches = [{ clientX: 40, clientY }];
+      return { touches, changedTouches: touches };
+    };
+    try {
+      expect(fireEvent.wheel(list, { deltaY: 100 })).toBe(true);
+      fireEvent.touchStart(list, touchAt(200));
+      expect(fireEvent.touchMove(list, touchAt(120))).toBe(true);
+      expect(reachedDocument).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener("wheel", reachedDocument);
+      document.removeEventListener("touchmove", reachedDocument);
+    }
   });
 
   it("moves through the list with the keyboard", () => {
