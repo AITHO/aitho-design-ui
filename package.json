@@ -69,7 +69,13 @@
   ],
   "peerDependencies": {
     "react": "^18 || ^19",
-    "react-dom": "^18 || ^19"
+    "react-dom": "^18 || ^19",
+    "pdfjs-dist": "^6.5.438"
+  },
+  "peerDependenciesMeta": {
+    "pdfjs-dist": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
@@ -121,6 +127,7 @@
     "husky": "^9.1.7",
     "jsdom": "^29.0.1",
     "lint-staged": "^16.4.0",
+    "pdfjs-dist": "^6.5.438",
     "postcss": "^8.5.10",
     "prettier": "^3.8.1",
     "shiki": "^4.0.0",

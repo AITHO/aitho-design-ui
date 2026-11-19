@@ -32,4 +32,11 @@ describe("Spinner", () => {
     const { element } = renderSpinner({ type });
     expect(element.className).toContain(type);
   });
+
+  it("should wait before showing by default, and show at once when not delayed", () => {
+    expect(renderSpinner().root.className).toContain("delayed_true");
+    expect(renderSpinner({ delayed: false }).root.className).not.toContain(
+      "delayed_true",
+    );
+  });
 });

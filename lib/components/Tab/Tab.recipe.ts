@@ -2,7 +2,7 @@ import { defineSlotRecipe } from "@pandacss/dev";
 
 export const tabRecipe = defineSlotRecipe({
   className: "tab",
-  slots: ["root", "list", "trigger", "content"],
+  slots: ["root", "list", "trigger", "content", "indicator"],
   base: {
     root: {
       display: "flex",
@@ -11,6 +11,7 @@ export const tabRecipe = defineSlotRecipe({
       height: "100%",
     },
     list: {
+      position: "relative",
       display: "flex",
       flexDirection: "row",
       gap: "0.25rem",
@@ -39,17 +40,6 @@ export const tabRecipe = defineSlotRecipe({
         _hover: {
           color: "color-primary",
         },
-        "&::after": {
-          content: '""',
-          position: "absolute",
-          bottom: "0",
-          left: "0",
-          right: "0",
-          height: "2px",
-          borderRadius: "1px",
-          backgroundColor: "color-primary",
-          animation: "tabAnimateBorder 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-        },
       },
       _disabled: {
         cursor: "not-allowed",
@@ -73,12 +63,28 @@ export const tabRecipe = defineSlotRecipe({
       flexGrow: 1,
       width: "100%",
       height: "100%",
-      "&[data-state='active']": {
-        animation: "fadeIn 0.2s ease-out",
-      },
       _focusVisible: {
         outline: "none",
         boxShadow: "focus-ring",
+      },
+    },
+    // The underline of the selected tab, one for the whole list: it slides to the new tab while the
+    // panel changes at once, so it shows where the selection went without making anyone wait.
+    indicator: {
+      position: "absolute",
+      top: "0",
+      left: "0",
+      width: "0",
+      height: "2px",
+      borderRadius: "1px",
+      backgroundColor: "color-primary",
+      pointerEvents: "none",
+      "&[data-ready]": {
+        transition:
+          "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1), height 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+      "@media (prefers-reduced-motion: reduce)": {
+        "&[data-ready]": { transition: "none" },
       },
     },
   },
@@ -96,24 +102,24 @@ export const tabRecipe = defineSlotRecipe({
           borderRight: "1px solid",
           borderColor: "border-color",
         },
-        trigger: {
-          _selected: {
-            "&::after": {
-              top: "0",
-              left: "auto",
-              width: "2px",
-              height: "auto",
-              animationName: "growY",
-            },
-          },
+        indicator: {
+          width: "2px",
+          height: "0",
         },
         content: {
           padding: "0.5625rem 0 0 1rem",
         },
       },
     },
+    // Many tabs go onto more rows instead of pushing the page sideways; the indicator follows the
+    // selected tab on whatever row it lands.
+    wrap: {
+      true: { list: { flexWrap: "wrap" } },
+      false: {},
+    },
   },
   defaultVariants: {
     orientation: "horizontal",
+    wrap: false,
   },
 });
