@@ -8,10 +8,16 @@ export type SpinnerProps = SpinnerVariantProps;
  *
  * @param size - *(optional)* The size of the component. Options: 'sm', 'md', 'lg', 'xl'.
  * @param type - *(optional)* The variant of the spinner. Options: 'linearFlashingDots', 'spinningSlashes', 'circularFlashingDots', 'rotatingSquares', 'rotatingDots'.
+ * @param delayed - *(optional)* Show the spinner only if the load lasts more than 300ms, so a fast load never flashes it. @default true
  */
 
-export const Spinner: React.FC<SpinnerProps> = ({ size, type, ...props }) => {
-  const classes = spinner({ size, type });
+export const Spinner: React.FC<SpinnerProps> = ({
+  size,
+  type,
+  delayed,
+  ...props
+}) => {
+  const classes = spinner({ size, type, delayed });
 
   return (
     <div className={classes.root} {...props}>

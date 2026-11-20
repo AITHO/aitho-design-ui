@@ -126,9 +126,16 @@ export const spinnerRecipe = defineSlotRecipe({
       ]),
     ),
     type: Object.fromEntries(TYPES.map((type) => [type, TYPE_MAPS[type]])),
+    // Most loads end within 300ms, and a spinner seen for two frames reads as a flicker: until then
+    // it stays transparent, and only a load that really takes time shows it, with a short fade.
+    delayed: {
+      true: { root: { animation: "fadeIn 0.15s ease-out 0.3s both" } },
+      false: {},
+    },
   },
   defaultVariants: {
     size: "md",
     type: "linearFlashingDots",
+    delayed: true,
   },
 });

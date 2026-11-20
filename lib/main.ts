@@ -78,6 +78,10 @@ export {
   Pagination,
   type PaginationProps,
 } from "./components/Pagination/Pagination";
+export {
+  PdfPreview,
+  type PdfPreviewProps,
+} from "./components/PdfPreview/PdfPreview";
 export { Popover, type PopoverProps } from "./components/Popover/Popover";
 export { Progress, type ProgressProps } from "./components/Progress/Progress";
 export {

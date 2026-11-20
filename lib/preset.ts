@@ -19,6 +19,7 @@ import { listRecipe } from "./components/List/List.recipe";
 import { monthStepperRecipe } from "./components/MonthStepper/MonthStepper.recipe";
 import { numberStepperRecipe } from "./components/NumberStepper/NumberStepper.recipe";
 import { paginationRecipe } from "./components/Pagination/Pagination.recipe";
+import { pdfPreviewRecipe } from "./components/PdfPreview/PdfPreview.recipe";
 import { popoverRecipe } from "./components/Popover/Popover.recipe";
 import { progressRecipe } from "./components/Progress/Progress.recipe";
 import { rangeDatePickerRecipe } from "./components/RangeDatePicker/RangeDatePicker.recipe";
@@ -61,6 +62,7 @@ export const preset = definePreset({
       monthStepper: monthStepperRecipe,
       numberStepper: numberStepperRecipe,
       pagination: paginationRecipe,
+      pdfPreview: pdfPreviewRecipe,
       popover: popoverRecipe,
       progress: progressRecipe,
       rangeDatePicker: rangeDatePickerRecipe,
@@ -103,6 +105,7 @@ export const preset = definePreset({
       monthStepper: ["*"],
       numberStepper: ["*"],
       pagination: ["*"],
+      pdfPreview: ["*"],
       popover: ["*"],
       progress: ["*"],
       rangeDatePicker: ["*"],
