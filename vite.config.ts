@@ -76,6 +76,7 @@ export default defineConfig({
       "lib/providers/**/*.test.{ts,tsx}",
       "lib/utils/*.test.{ts,tsx}",
       "lib/hooks/*.test.{ts,tsx}",
+      "test/**/*.test.ts",
     ],
     exclude: ["node_modules", "dist"],
     testTimeout: 10000,
@@ -88,6 +89,7 @@ export default defineConfig({
         "lib/providers/**/*.{ts,tsx}",
         "lib/utils/*.{ts,tsx}",
         "lib/hooks/*.{ts,tsx}",
+        "test/localStorage.ts",
       ],
       exclude: [
         "lib/components/**/*.stories.tsx",
