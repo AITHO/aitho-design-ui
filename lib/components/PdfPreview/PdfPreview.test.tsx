@@ -230,6 +230,7 @@ describe("PdfPreview", () => {
     expect(second).toHaveStyle({ aspectRatio: "0.75" });
     expect(renderPage).not.toHaveBeenCalled();
 
+    await waitFor(() => expect(watched.has(second)).toBe(true));
     act(() => watched.get(second)?.([{ isIntersecting: true }]));
 
     await waitFor(() => expect(renderPage).toHaveBeenCalledTimes(1));
@@ -280,5 +281,63 @@ describe("PdfPreview", () => {
     expect(getDocument).toHaveBeenLastCalledWith(
       expect.objectContaining({ url: "/second.pdf" }),
     );
+  });
+
+  it("does not reuse a destroyed document when returning to its source", async () => {
+    let resolveSecondLoad!: (document: ReturnType<typeof fakeDocument>) => void;
+    const secondLoad = new Promise<ReturnType<typeof fakeDocument>>(
+      (resolve) => {
+        resolveSecondLoad = resolve;
+      },
+    );
+    const firstDocument = fakeDocument(1);
+    const returnedDocument = fakeDocument(1);
+    const firstDestroy = vi.fn(() => Promise.resolve());
+    const secondDestroy = vi.fn(() => Promise.resolve());
+    const returnedDestroy = vi.fn(() => Promise.resolve());
+
+    getDocument
+      .mockReturnValueOnce({
+        promise: Promise.resolve(firstDocument),
+        destroy: firstDestroy,
+      })
+      .mockReturnValueOnce({ promise: secondLoad, destroy: secondDestroy })
+      .mockReturnValueOnce({
+        promise: Promise.resolve(returnedDocument),
+        destroy: returnedDestroy,
+      });
+
+    const onError = vi.fn();
+    const { rerender } = render(
+      <PdfPreview src="/first.pdf" onError={onError} />,
+    );
+    expect(
+      await screen.findByRole("figure", { name: "Page 1 of 1" }),
+    ).toBeInTheDocument();
+    const firstDocumentPageCalls = firstDocument.getPage.mock.calls.length;
+
+    rerender(<PdfPreview src="/second.pdf" onError={onError} />);
+    await waitFor(() => expect(getDocument).toHaveBeenCalledTimes(2));
+    expect(firstDestroy).toHaveBeenCalled();
+
+    rerender(<PdfPreview src="/first.pdf" onError={onError} />);
+
+    expect(screen.queryByRole("figure")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await waitFor(() => expect(getDocument).toHaveBeenCalledTimes(3));
+    expect(getDocument).toHaveBeenLastCalledWith(
+      expect.objectContaining({ url: "/first.pdf" }),
+    );
+
+    await act(async () => {
+      resolveSecondLoad(fakeDocument(1));
+    });
+
+    expect(
+      await screen.findByRole("figure", { name: "Page 1 of 1" }),
+    ).toBeInTheDocument();
+    expect(onError).not.toHaveBeenCalled();
+    expect(returnedDocument.getPage).toHaveBeenCalled();
+    expect(firstDocument.getPage).toHaveBeenCalledTimes(firstDocumentPageCalls);
   });
 });

@@ -74,6 +74,31 @@ const MAX_PIXEL_RATIO = 2;
 const isCancellation = (error: unknown) =>
   error instanceof Error && error.name === "RenderingCancelledException";
 
+interface PdfLoadState {
+  src: Blob | string;
+  workerSrc?: string;
+  document: PDFDocumentProxy | null;
+  failed: boolean;
+}
+
+const blobSourceIds = new WeakMap<Blob, number>();
+let nextBlobSourceId = 0;
+
+const getSourceKey = (src: Blob | string, workerSrc?: string) => {
+  const sourceKey =
+    typeof src === "string" ? ["url", src] : ["blob", getBlobSourceId(src)];
+  return JSON.stringify([sourceKey, workerSrc]);
+};
+
+const getBlobSourceId = (src: Blob) => {
+  let id = blobSourceIds.get(src);
+  if (id === undefined) {
+    id = nextBlobSourceId++;
+    blobSourceIds.set(src, id);
+  }
+  return id;
+};
+
 /**
  * Whether the element is within a screen of the visible area, kept up to date while it scrolls:
  * a page is drawn when it comes near and gives its canvas back when it moves away.
@@ -195,7 +220,7 @@ const PdfPage = ({
  * @param workerSrc - *(optional)* URL of pdf.js's worker: with it the PDF is read off the main thread.
  * @param className - *(optional)* Extra class for the root element.
  */
-export const PdfPreview: React.FC<PdfPreviewProps> = ({
+const PdfPreviewSession: React.FC<PdfPreviewProps> = ({
   src,
   lang,
   "aria-label": ariaLabel,
@@ -207,8 +232,16 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({
   const classes = pdfPreview();
   const text = TEXT[resolveLang(lang)];
   const rootRef = React.useRef<HTMLElement>(null);
-  const [document, setDocument] = React.useState<PDFDocumentProxy | null>(null);
-  const [failed, setFailed] = React.useState(false);
+  const [loadState, setLoadState] = React.useState<PdfLoadState>(() => ({
+    src,
+    workerSrc,
+    document: null,
+    failed: false,
+  }));
+  const isCurrentSource =
+    loadState.src === src && loadState.workerSrc === workerSrc;
+  const document = isCurrentSource ? loadState.document : null;
+  const failed = isCurrentSource && loadState.failed;
   const [width, setWidth] = React.useState(0);
   const [aspectRatio, setAspectRatio] = React.useState(1);
   // The latest callbacks, without reloading the PDF when the parent passes new functions.
@@ -217,16 +250,21 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({
     callbacksRef.current = { onLoad, onError };
   }, [onLoad, onError]);
 
-  const handlePageError = React.useCallback((error: unknown) => {
-    setFailed(true);
-    callbacksRef.current.onError?.(error);
-  }, []);
+  const handlePageError = React.useCallback(
+    (error: unknown) => {
+      setLoadState((current) =>
+        current.src === src && current.workerSrc === workerSrc
+          ? { ...current, failed: true }
+          : current,
+      );
+      callbacksRef.current.onError?.(error);
+    },
+    [src, workerSrc],
+  );
 
   React.useEffect(() => {
     let cancelled = false;
     let task: PDFDocumentLoadingTask | undefined;
-    setDocument(null);
-    setFailed(false);
 
     void (async () => {
       try {
@@ -246,11 +284,11 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({
         const first = firstPage.getViewport({ scale: 1 });
         if (cancelled) return;
         setAspectRatio(first.width / first.height);
-        setDocument(loaded);
+        setLoadState({ src, workerSrc, document: loaded, failed: false });
         callbacksRef.current.onLoad?.(loaded.numPages);
       } catch (error) {
         if (cancelled) return;
-        setFailed(true);
+        setLoadState({ src, workerSrc, document: null, failed: true });
         callbacksRef.current.onError?.(error);
       }
     })();
@@ -308,3 +346,10 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({
     </article>
   );
 };
+
+export const PdfPreview: React.FC<PdfPreviewProps> = (props) => (
+  <PdfPreviewSession
+    key={getSourceKey(props.src, props.workerSrc)}
+    {...props}
+  />
+);
